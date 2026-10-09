@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';
+import {story,endings,fresh,advance,validSave} from '../story.js';
+const reached=new Set();function walk(s,depth=0){assert(depth<30,'No cyclic story');assert(validSave(s));const n=story[s.node];if(n.ending){assert(endings[n.ending]);reached.add(n.ending);return;}if(n.choices)n.choices.forEach((_,i)=>walk(advance(s,i),depth+1));else{assert(n.next&&story[n.next]);walk(advance(s),depth+1);}}
+walk(fresh());assert.equal(reached.size,3);assert(!validSave({version:1,node:'toString',history:[]}));assert(!validSave({version:1,node:'arrival',history:['bad']}));const s=advance(fresh());assert.deepEqual(JSON.parse(JSON.stringify(s)),s);assert.equal(advance({...s,node:'umbrella'},99).node,'umbrella');console.log('PASS: every route terminates, all three endings reachable, invalid saves rejected, state round-trip and invalid choices safe.');
