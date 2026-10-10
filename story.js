@@ -1,3 +1,5 @@
+import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=3';
+export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
 export const media={voices:{}};
 export const scenes={street:'雨后的街角',room:'留一盏灯',park:'傍晚的公园'};
@@ -20,6 +22,21 @@ export const story={
  laugh:{scene:'room',speaker:'旁白',text:'你们最后写了满满一页清单，却忘记买晚饭。没关系，今天最先被填满的，是屋子里的笑声。',ending:'snacks'}
 };
 export const endings={light:{title:'为你留一盏灯',note:'有时候，陪伴就是最好的回答。'},journey:{title:'下一站，一起去',note:'故事没有结束，只是换了一条路。'},snacks:{title:'零食同盟成立',note:'从今天起，快乐按双人份计算。'}};
-export const fresh=()=>({version:1,node:'arrival',history:[]});
+Object.assign(scenes,newScenes);Object.assign(story,newStory);Object.assign(endings,newEndings);
+story.lamp.text+='\n雨停时，奶蛙展开信背面的海图：明天，和我一起去冒险吧。';
+story.trip.text+='\n它把地图递给你：第一站，星图失落之岛。你愿意来吗？';
+story.laugh.text+='\n奶蛙把清单塞进旅行包：补给准备好了。明天，我们去地图上的岛冒险！';
+for(const n of Object.values(story))n.chapter??='prologue';
+for(const e of Object.values(endings))e.chapter??='prologue';
+story.arrival.text+=' 信封角落，绣着十三道细小的蓝线。';
+story.letter.text+='\n奇怪的是，信里还写着：如果钟敲十三下，别急着回头。';
+story.departure_3.text+=' 你摸了摸信封上的蓝线，数目恰好与钟声一致。';
+story.open_horizon_3.text+=' 你终于看懂那十三道蓝线：它们不是倒计时，而是十三条等待被重新连接的航路。';
+export const secrets={
+ home:{title:'信纸的另一面',text:'把信纸对着窗光，能看见一行很淡的字：给未来的旅伴——请别只寻找宝藏，也看看等你经过的人。字迹和奶蛙刚写的零食清单并不相同。'},
+ cloud:{title:'第十四张票',text:'气球篮底有一张盖着“第十四航次”的旧票。背面写着：前十三次，我都一个人出发。这一次，想试试有人同行。署名处画着一盏小灯。'},
+ forest_start:{title:'第一页的折角',text:'观察册的折角里夹着一枚贝壳。小字写着：海边的风，也会来到森林。你想起信上的蓝线——也许不同的路线，一直在悄悄连接。'}
+};
+export const fresh=(chapter='prologue')=>({version:1,node:chapters[chapter]?.entry||'arrival',history:[]});
 export function validSave(s){return !!s&&s.version===1&&Object.hasOwn(story,s.node)&&Array.isArray(s.history)&&s.history.length<=200&&s.history.every(id=>typeof id==='string'&&Object.hasOwn(story,id));}
 export function advance(s,choice){if(!validSave(s))throw Error('Invalid save');const n=story[s.node];const target=n.choices?n.choices[choice]?.to:n.next;if(!target)return s;return {...s,node:target,history:[...s.history,s.node].slice(-200)};}

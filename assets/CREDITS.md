@@ -6,3 +6,5 @@
 - Character artwork: 17 images selected and supplied by the project owner from 奶蛙图片素材文件. AI background removal was used to create transparent PNGs in portraits/. Original source files were preserved. Character artwork remains subject to the original rights holders; the background/music licenses above do not apply to these images. Character voice is pending owner selection.
 
 Downloaded 2026-10-09. Third-party assets retain their respective licenses.
+
+Update 2026-10-10: WebP delivery copies preserve the transparent PNG dimensions and alpha channel; PNG originals remain available. Main-menu art and beach/sky/forest/ruins/night environments are CSS compositions created for this project.

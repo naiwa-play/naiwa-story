@@ -6,6 +6,6 @@ export const portraits={
  peace1:{label:'比耶',frame:'half'},peace2:{label:'双手比耶',frame:'half'},arms:{label:'叉腰 / 抱臂',frame:'half'},angry:{label:'愤怒',frame:'half'},
  rest:{label:'趴着',frame:'wide'},flowers:{label:'手捧鲜花',frame:'full'},angel:{label:'天使',frame:'full'},hero:{label:'侠客',frame:'half'}
 };
-for(const [id,p] of Object.entries(portraits))p.src='./assets/portraits/'+id+'.png';
-export const scenePortraits={arrival:'normal',hello:'arms',question:'sideeye',answer:'peace1',umbrella:'sad',kind:'daily3',letter:'normal',snack:'tongue',home:'rest',wish:'daily1',stay:'happy',lamp:'flowers',walk:'back',trip:'daily2',food:'arms',laugh:'peace2'};
-export function portraitFor(node){return portraits[scenePortraits[node]||'normal'];}
+for(const [id,p] of Object.entries(portraits))p.src='./assets/portraits/'+id+'.webp';
+export const scenePortraits={arrival:'normal',hello:'arms',question:'normal',answer:'happy',umbrella:'normal',kind:'happy',letter:'normal',snack:'tongue',home:'normal',wish:'normal',stay:'happy',lamp:'normal',walk:'back',trip:'daily2',food:'tongue',laugh:'happy'};
+export function portraitFor(node){return portraits[scenePortraits[node]]||null;}
