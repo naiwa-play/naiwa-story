@@ -10,9 +10,9 @@ npm test
 ```
 打开 http://127.0.0.1:5191 。GitHub Pages 使用 main 分支根目录发布。
 
-## 后续素材交接
-奶蛙本体形象与角色语音由项目主人选定，当前没有使用未经选定的奶蛙图片或声音。
-- 将透明背景立绘放进 assets，在 story.js 的 media.portraits.normal/happy/shy 填写相对路径。
+## 角色素材与后续交接
+已接入项目主人提供的 17 张奶蛙图片，并使用 AI 去除背景；原始素材保留不动。剧情按节点切换表情，角色图鉴可查看全部姿态。角色语音等待主人提供。
+- 透明立绘位于 assets/portraits；portraits.js 管理图片、节点对应关系和 full / half / head / wide 四种构图，分别适配全身、半身、头像和趴姿。AI 抠图可能对细小边缘产生变化，后续可替换为精修透明 PNG。
 - 将语音放进 assets，在 media.voices 中以剧情节点 ID 为键填写路径。播放时背景音乐自动降低音量。
 - 剧情集中在 story.js；每个节点填写 scene、speaker、text，以及 next、choices 或 ending。
 - 背景和 BGM 由开发侧寻找与整合，见 assets/CREDITS.md。

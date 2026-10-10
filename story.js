@@ -1,5 +1,5 @@
-// All character images and voice clips are intentionally empty until selected by the owner.
-export const media={portraits:{normal:null,happy:null,shy:null},voices:{}};
+// Character portraits are defined in portraits.js; owner-selected voice clips are pending.
+export const media={voices:{}};
 export const scenes={street:'雨后的街角',room:'留一盏灯',park:'傍晚的公园'};
 export const story={
  arrival:{scene:'street',speaker:'旁白',text:'雨刚停。你在便利店门口，发现了一封没有收件人的信。信封旁边，还站着一位不肯走的小客人。',next:'hello'},
