@@ -1,0 +1,50 @@
+/* Each ending is a small moving landscape. Text settles and stays readable. */
+.ending-reveal{padding:38px 22px 32px;min-height:390px;border-radius:48% 48% 18px 18px / 28px 28px 18px 18px;box-shadow:inset 0 0 0 7px #ffffff05,0 14px 35px #172c3924}
+.ending-fluid{opacity:.65}.ending-art{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}.ending-art i{position:absolute;display:block}
+.ending-reveal .eyebrow{display:block;animation:memory-caption 3.6s ease both;letter-spacing:.3em}
+.ending-reveal h2{font-family:Georgia,'Songti SC','SimSun',serif;line-height:1.65;animation:memory-unfold 2.8s .25s cubic-bezier(.2,.7,.2,1) both}
+.ending-reveal p{max-width:30em;margin:14px auto 0;animation:memory-note 2.6s 1s ease both}
+.ending-sparks{animation:memory-breath 5s ease-in-out infinite;opacity:.75;margin:14px 0}
+#ending-frog{width:105px;height:105px;animation:frog-arrival 1.6s ease both}
+/* Restored rotating light, now behind a slow opening halo. */
+.theme-rays .ending-art:before{content:'';position:absolute;inset:-80%;background:repeating-conic-gradient(from 15deg,#f7dcac00 0deg 20deg,#f7dcac28 21deg 24deg,#f7dcac00 25deg 45deg);animation:memory-rays 40s linear infinite}
+.theme-rays .ending-art:after{content:'';position:absolute;width:250px;height:250px;border:1px solid #fbe3ac66;border-radius:50%;left:calc(50% - 125px);top:-60px;box-shadow:0 0 60px #eecb8140,inset 0 0 40px #eecb8120;animation:halo-open 4s ease both}
+/* Sea: broad translucent ribbons wash across the shore. */
+.theme-tide{background:linear-gradient(#16334b,#245a66 65%,#706146)}
+.theme-tide .ending-art i{width:160%;height:60%;left:-30%;bottom:-35%;border-radius:45%;border-top:1px solid #b7f3e680;background:linear-gradient(#a1e5db40,#5b9ca622);animation:tide-roll 9s ease-in-out infinite alternate}
+.theme-tide .ending-art i:nth-child(2){bottom:-27%;animation-delay:-4s;animation-duration:12s}.theme-tide .ending-art i:nth-child(3){bottom:-19%;animation-delay:-7s;opacity:.45}.theme-tide .ending-art i:nth-child(n+4){display:none}
+/* Sky: fine elliptical orbits and rising constellations. */
+.theme-stars{background:linear-gradient(145deg,#151e3b,#3e4265,#74566c)}
+.theme-stars .ending-art:before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 12% 30%,#ffdfab 0 1px,transparent 2px),radial-gradient(circle at 82% 15%,#fff9d0 0 2px,transparent 3px),radial-gradient(circle at 72% 75%,#ffdfab 0 1px,transparent 2px);background-size:140px 160px;animation:stars-drift 18s linear infinite}
+.theme-stars .ending-art i{left:10%;top:18%;width:80%;height:60%;border:1px solid #e5d8bc35;border-radius:50%;transform:rotate(-28deg)}
+.theme-stars .ending-art i:after{content:'';position:absolute;left:18%;top:9%;width:5px;height:5px;border-radius:50%;background:#f9e2b2;box-shadow:0 0 16px 3px #ffe6bc70}
+.theme-stars .ending-art i:nth-child(2){transform:rotate(28deg);animation:orbit-breathe 8s ease-in-out infinite alternate}.theme-stars .ending-art i:nth-child(n+3){display:none}
+/* Forest: fireflies rise through pools of green light. */
+.theme-fireflies{background:linear-gradient(160deg,#112e30,#2b5146,#526342)}
+.theme-fireflies .ending-art i{width:5px;height:5px;border-radius:50%;background:#e5f1a6;box-shadow:0 0 18px 6px #d9ee8a45;left:12%;bottom:-8%;animation:firefly-rise 9s ease-in-out infinite}
+.theme-fireflies .ending-art i:nth-child(2){left:28%;animation-delay:-6s}.theme-fireflies .ending-art i:nth-child(3){left:46%;animation-delay:-3s;animation-duration:11s}.theme-fireflies .ending-art i:nth-child(4){left:65%;animation-delay:-8s}.theme-fireflies .ending-art i:nth-child(5){left:82%;animation-delay:-2s;animation-duration:13s}.theme-fireflies .ending-art i:nth-child(6){left:94%;animation-delay:-5s}
+/* Opera: velvet curtains part, leaving a golden proscenium. */
+.theme-curtain{background:radial-gradient(ellipse at 50% 0,#947443,#312339 60%,#211e31)}
+.theme-curtain .ending-art:before,.theme-curtain .ending-art:after{content:'';position:absolute;top:0;bottom:0;width:51%;background:repeating-linear-gradient(90deg,#482539,#704054 15%,#382238 30%);box-shadow:0 0 18px #0008;border-bottom:1px solid #bf9b69;animation:curtain-left 3s cubic-bezier(.2,.7,.2,1) both}
+.theme-curtain .ending-art:before{left:0}.theme-curtain .ending-art:after{right:0;animation-name:curtain-right}
+.theme-curtain .ending-art i:first-child{inset:16px;border:1px solid #ebcb8b55;border-radius:45% 45% 5px 5px;box-shadow:inset 0 0 35px #cda77518}
+/* Unresolved dreams: concentric ripples dissolve into ink. */
+.theme-dream{background:radial-gradient(ellipse at top,#4d426c,#172436 70%)}
+.theme-dream .ending-art i{width:250px;height:250px;left:calc(50% - 125px);top:-60px;border:1px solid #c7b3e875;border-radius:50%;animation:dream-ripple 9s ease-out infinite}
+.theme-dream .ending-art i:nth-child(2){animation-delay:-3s}.theme-dream .ending-art i:nth-child(3){animation-delay:-6s}.theme-dream .ending-art i:nth-child(n+4){display:none}
+/* Awakening: a soft aurora rises through the window of morning. */
+.theme-aurora{background:linear-gradient(#233553,#396567,#89774f)}
+.theme-aurora .ending-art i{width:60%;height:160%;left:-10%;top:-40%;background:linear-gradient(90deg,transparent,#b5edcf50,transparent);transform:rotate(25deg);animation:aurora-sway 10s ease-in-out infinite alternate}
+.theme-aurora .ending-art i:nth-child(2){left:35%;animation-delay:-5s;background:linear-gradient(90deg,transparent,#e5c5e050,transparent)}.theme-aurora .ending-art i:nth-child(n+3){display:none}
+@keyframes memory-unfold{0%{opacity:0;clip-path:inset(0 50%);letter-spacing:.65em;transform:translateY(12px)}65%{opacity:1;clip-path:inset(0);letter-spacing:.16em;transform:translateY(0)}80%{opacity:.7}100%{opacity:1;clip-path:inset(0);letter-spacing:3px;transform:translateY(0)}}
+@keyframes memory-caption{0%,10%{opacity:0;transform:translateY(8px)}45%{opacity:1}65%{opacity:.35}100%{opacity:.85;transform:translateY(0)}}
+@keyframes memory-note{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes memory-breath{0%,100%{opacity:.3;transform:scale(.96)}50%{opacity:.9;transform:scale(1.04)}}
+@keyframes memory-rays{to{transform:rotate(360deg)}}@keyframes halo-open{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:scale(1)}}
+@keyframes tide-roll{from{transform:translateX(-8%) rotate(-8deg)}to{transform:translateX(8%) rotate(8deg)}}
+@keyframes stars-drift{to{background-position:0 -160px}}@keyframes orbit-breathe{from{transform:rotate(28deg) scale(.85)}to{transform:rotate(38deg) scale(1.08)}}
+@keyframes firefly-rise{0%{opacity:0;transform:translate(0,0)}25%{opacity:1}70%{opacity:.7}100%{opacity:0;transform:translate(-22px,-440px)}}
+@keyframes curtain-left{from{transform:translateX(0)}to{transform:translateX(-88%) skewY(-8deg)}}@keyframes curtain-right{from{transform:translateX(0)}to{transform:translateX(88%) skewY(8deg)}}
+@keyframes dream-ripple{from{opacity:.8;transform:scale(.2)}to{opacity:0;transform:scale(2.5)}}@keyframes aurora-sway{from{transform:translateX(-10%) rotate(18deg);opacity:.4}to{transform:translateX(15%) rotate(38deg);opacity:1}}
+@media(max-width:600px){.ending-reveal{padding:32px 14px 28px;min-height:360px}.ending-reveal h2{font-size:26px!important;letter-spacing:2px}.ending-reveal p{font-size:13px!important}}
+@media(prefers-reduced-motion:reduce){.ending-reveal,.ending-reveal *,.ending-reveal *:before,.ending-reveal *:after{animation:none!important}.theme-curtain .ending-art:before{transform:translateX(-88%)}.theme-curtain .ending-art:after{transform:translateX(88%)}}

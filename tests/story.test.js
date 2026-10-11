@@ -17,3 +17,5 @@ for(const [id,n]of Object.entries(story)){if(n.chapter!=='nightmares'||!n.choice
 console.log('PASS: all 6 chapters, 41 endings, 12 main endings; no broken branches; legacy saves, secret nodes and all portrait files valid.');
 
 for(const [id,p]of Object.entries(scenePortraits)){assert(story[id],id);assert(portraits[p],p);}for(const [id,e]of Object.entries(endings)){const m=endingMood(id,e);assert(m.portrait);if(e.note.includes('困局'))assert.equal(m.tone,'dream');}assert.equal(portraitFor('opera_script_2'),portraits.laughing);assert(!fs.readFileSync(new URL('../index.html',import.meta.url),'utf8').includes('skip-ending'));
+
+const themes=new Set(Object.entries(endings).map(([id,e])=>endingMood(id,e).theme));assert.equal(themes.size,7);assert.equal(endingMood('crab_castle',endings.crab_castle).theme,'tide');assert.equal(endingMood('opera_blank',endings.opera_blank).theme,'curtain');

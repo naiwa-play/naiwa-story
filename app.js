@@ -1,6 +1,6 @@
-import {portraits,portraitFor,endingMood} from './portraits.js?v=5';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=6';
 import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=4';
-import {imageCache,mediaCache,preloadAssets} from './loader.js?v=4';
+import {imageCache,mediaCache,preloadAssets} from './loader.js?v=6';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
@@ -39,7 +39,7 @@ function render(){
  if(n.choices){stopAuto();n.choices.forEach((c,index)=>$('choices').append(button(c.text,()=>go(index))));}
  $('next').hidden=!!n.choices;$('next').textContent=n.ending?(n.chapter==='prologue'?'接受邀请，开启大冒险':'返回旅行地图'):'下一句';$('ending').hidden=!n.ending;
  $('clue').hidden=!secrets[state.node];
- $('ending').className='';if(n.ending){void $('ending').offsetWidth;const mood=endingMood(n.ending,endings[n.ending]);$('ending').className='ending-reveal '+mood.tone;const mini=$('ending-frog');mini.hidden=textOnly;mini.src=mood.portrait.src;mini.alt='奶蛙 · '+mood.portrait.label;mini.className=mood.portrait.frame;}
+ $('ending').className='';if(n.ending){void $('ending').offsetWidth;const mood=endingMood(n.ending,endings[n.ending]);$('ending').className='ending-reveal '+mood.tone+' theme-'+mood.theme;const mini=$('ending-frog');mini.hidden=textOnly||!imageCache.has(mood.portrait.src);mini.src=mood.portrait.src;mini.alt='奶蛙 · '+mood.portrait.label;mini.className=mood.portrait.frame;}
  if(n.ending){stopAuto();$('ending-title').textContent=endings[n.ending].title;$('ending-note').textContent=endings[n.ending].note;if(!unlocked.includes(n.ending)){unlocked.push(n.ending);write(ENDS,unlocked);}album();}
  paths[state.node]=state;write(PATHS,paths);write(AUTO,state);$('load').disabled=!validSave(read(KEY));updateDlc();schedule();
 }
@@ -86,7 +86,7 @@ async function boot(){
  clearTimeout(timeout);loading=false;$('retry-load').disabled=false;
  if(mediaCache.has('music'))bgm.src=mediaCache.get('music');
  if(ready)return;
- if(failed.length){$('loading-label').textContent='有 '+failed.length+' 项素材未能加载，可重试或使用纯文字模式。';$('loading-actions').hidden=false;return;}
+ if(failed.length)notify('已进入游戏：有 '+failed.length+' 张图片暂未加载，文字与已加载图片可正常使用。网络恢复后刷新可补齐。');
  ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();
 }
 $('text-mode').onclick=()=>{textOnly=true;ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();notify('已进入纯文字模式，刷新页面可重新加载立绘');};
