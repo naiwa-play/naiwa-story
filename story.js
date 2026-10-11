@@ -1,4 +1,6 @@
 import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=3';
+import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=4';
+export {canEnterNightmares};
 export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
 export const media={voices:{}};
@@ -23,6 +25,7 @@ export const story={
 };
 export const endings={light:{title:'为你留一盏灯',note:'有时候，陪伴就是最好的回答。'},journey:{title:'下一站，一起去',note:'故事没有结束，只是换了一条路。'},snacks:{title:'零食同盟成立',note:'从今天起，快乐按双人份计算。'}};
 Object.assign(scenes,newScenes);Object.assign(story,newStory);Object.assign(endings,newEndings);
+chapters.nightmares=nightmareChapter;Object.assign(scenes,nightmareScenes);Object.assign(story,nightmareStory);Object.assign(endings,nightmareEndings);
 story.lamp.text+='\n雨停时，奶蛙展开信背面的海图：明天，和我一起去冒险吧。';
 story.trip.text+='\n它把地图递给你：第一站，星图失落之岛。你愿意来吗？';
 story.laugh.text+='\n奶蛙把清单塞进旅行包：补给准备好了。明天，我们去地图上的岛冒险！';

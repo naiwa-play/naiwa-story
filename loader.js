@@ -2,7 +2,7 @@
 export const imageCache=new Map();
 export const mediaCache=new Map();
 export async function preloadAssets(portraits,onProgress){
- const images=[...Object.values(portraits).map(p=>p.src),'./assets/landscape.png'];
+ const images=[...Object.values(portraits).map(p=>p.src),'./assets/landscape.png',...['liner','trail','hospital','opera'].map(id=>'./assets/nightmares/'+id+'.svg')];
  const jobs=images.map(src=>async()=>{if(imageCache.has(src))return;const img=new Image();img.src=src;await img.decode();imageCache.set(src,img);});
  jobs.push(async()=>{if(mediaCache.has('music'))return;const r=await fetch('./assets/calm.ogg');if(!r.ok)throw Error('Music unavailable');mediaCache.set('music',URL.createObjectURL(await r.blob()));});
  let done=0;const failed=[];

@@ -8,3 +8,5 @@
 Downloaded 2026-10-09. Third-party assets retain their respective licenses.
 
 Update 2026-10-10: WebP delivery copies preserve the transparent PNG dimensions and alpha channel; PNG originals remain available. Main-menu art and beach/sky/forest/ruins/night environments are CSS compositions created for this project.
+
+DLC update 2026-10-11: assets/nightmares/{liner,trail,hospital,opera}.svg are original geometric vector illustrations created for this project. Sources are reproducible with make-night-scenes.mjs. They are not downloaded third-party paintings. The existing Kenney CC0 background library and OpenGameArt forest candidates were reviewed for style continuity; no new third-party asset was incorporated for the DLC. The four SVG files are included in startup preloading.
