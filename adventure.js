@@ -1,4 +1,4 @@
-// Handwritten branches. New chapters deliberately have no character portraits yet.
+// Handwritten branches. Portrait cues are maintained separately in portraits.js.
 export const chapters={
  prologue:{title:'奶蛙来信',tag:'序章',entry:'arrival',scene:'street',description:'从一封没有收件人的信开始，成为彼此的旅伴。'},
  adventure:{title:'星图失落之岛',tag:'主线 · 大冒险',entry:'departure',scene:'island',description:'海岸、天空、雨林。追寻消失的星图，决定这座岛的未来。'},

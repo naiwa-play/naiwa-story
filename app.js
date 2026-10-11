@@ -1,4 +1,4 @@
-import {portraits,portraitFor} from './portraits.js?v=3';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=5';
 import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=4';
 import {imageCache,mediaCache,preloadAssets} from './loader.js?v=4';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
@@ -39,7 +39,7 @@ function render(){
  if(n.choices){stopAuto();n.choices.forEach((c,index)=>$('choices').append(button(c.text,()=>go(index))));}
  $('next').hidden=!!n.choices;$('next').textContent=n.ending?(n.chapter==='prologue'?'接受邀请，开启大冒险':'返回旅行地图'):'下一句';$('ending').hidden=!n.ending;
  $('clue').hidden=!secrets[state.node];
- $('ending').className='';if(n.ending){void $('ending').offsetWidth;$('ending').className='ending-reveal';}
+ $('ending').className='';if(n.ending){void $('ending').offsetWidth;const mood=endingMood(n.ending,endings[n.ending]);$('ending').className='ending-reveal '+mood.tone;const mini=$('ending-frog');mini.hidden=textOnly;mini.src=mood.portrait.src;mini.alt='奶蛙 · '+mood.portrait.label;mini.className=mood.portrait.frame;}
  if(n.ending){stopAuto();$('ending-title').textContent=endings[n.ending].title;$('ending-note').textContent=endings[n.ending].note;if(!unlocked.includes(n.ending)){unlocked.push(n.ending);write(ENDS,unlocked);}album();}
  paths[state.node]=state;write(PATHS,paths);write(AUTO,state);$('load').disabled=!validSave(read(KEY));updateDlc();schedule();
 }
@@ -70,11 +70,10 @@ $('restart').onclick=()=>{modal('重新开始当前章节？');const p=document.
 $('routes').onclick=()=>routeTree(story[state.node].chapter);
 $('clue').onclick=()=>{const secret=secrets[state.node];if(!secret)return;if(!discovered.includes(state.node)){discovered.push(state.node);write('naiwa-secrets-v1',discovered);}modal(secret.title);const p=document.createElement('p');p.textContent=secret.text;$('modal-body').append(p);};
 $('secrets').onclick=()=>{modal('旅途拾遗 · '+discovered.length+' / '+Object.keys(secrets).length);for(const [id,s]of Object.entries(secrets)){const p=document.createElement('p');p.textContent=discovered.includes(id)?s.title+'：'+s.text:'尚未发现 · 留意故事中可以查看的小物件。';$('modal-body').append(p);}};
-$('skip-ending').onclick=()=>{$('ending').className='ending-reveal settled';};
 $('auto').onclick=()=>{auto=!auto;$('auto').textContent=auto?'自动 · 开':'自动 · 关';$('auto').setAttribute('aria-pressed',String(auto));if(story[state.node].choices||story[state.node].ending){stopAuto();notify('请先选择回答，自动播放不会替你选择');}else schedule();};
 $('history').onclick=()=>{modal('已经说过的话');for(const id of [...state.history,state.node]){const n=story[id],p=document.createElement('p'),b=document.createElement('strong');b.textContent=n.speaker+'：';p.append(b,document.createTextNode(n.text));$('modal-body').append(p);}};
 $('music').onclick=async()=>{if(!bgm.paused){bgm.pause();$('music').textContent='音乐 · 关';$('music').setAttribute('aria-pressed','false');}else{try{await bgm.play();$('music').textContent='音乐 · 开';$('music').setAttribute('aria-pressed','true');}catch{notify('音乐暂时无法播放，请稍后重试');}}};
-$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。新章节暂不使用角色立绘，等待主人提供更贴合情节的图片和语音。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；DLC 四幅夜景为项目原创 SVG 插画。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
+$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；DLC 四幅夜景为项目原创 SVG 插画。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
 $('close').onclick=()=>$('modal').close();
 $('gallery').onclick=()=>{modal('奶蛙的表情与姿态');const grid=document.createElement('div');grid.className='portrait-grid';for(const p of Object.values(portraits)){const card=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.src=p.src;img.alt=p.label;label.textContent=p.label;card.append(img,label);grid.append(card);}$('modal-body').append(grid);};
 document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});

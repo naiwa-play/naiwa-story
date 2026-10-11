@@ -23,7 +23,7 @@ npm test
 打开 http://127.0.0.1:5191 。
 
 ## 素材与剧情交接
-- portraits.js 管理序章立绘情绪和 full / half / head / wide 构图。只采用与叙述一致的形象；主线及新增支线暂不放角色图片。
+- portraits.js 管理 31 张立绘的情绪与 full / half / head / wide 构图，并按具体台词匹配主线、支线和 DLC。服装/战士造型先在角色图鉴展示，避免与剧情道具冲突。
 - story.js 保留序章和存档逻辑，adventure.js 是新章节、分支、结局。secrets 位于 story.js。
 - 角色语音待主人提供，放入 assets 并在 media.voices 中按节点 ID 填路径；配音播放时背景音乐降低音量。
 - 加入新语音时，需同时加入 loader.js 的预载清单。
@@ -36,4 +36,6 @@ npm test
 
 解锁规则：主线第二次路线选择后进入 lighthouse / tide / station / whale / creek / gate 任一地点；已有任一主线结局的旧存档也可解锁。序章或支线结局不会提前解锁。DLC 用独立的 naiwa-before-dream-v1 记录入梦前位置，“醒来”按钮恢复该位置；手动存档保持原有规则。
 
-nightmares.js 保存故事与解锁规则；nightmares.css 负责梦境场景。四张原创 SVG 背景位于 assets/nightmares，源码生成器为 make-night-scenes.mjs，运行 node make-night-scenes.mjs 可重建。没有强制限时、闪屏或突然音量增大的音效，慢雾动画遵循减少动态效果设置。新增故事继续不使用角色立绘，待主人提供合适素材。
+nightmares.js 保存故事与解锁规则；nightmares.css 负责梦境场景。四张原创 SVG 背景位于 assets/nightmares，源码生成器为 make-night-scenes.mjs，运行 node make-night-scenes.mjs 可重建。没有强制限时、闪屏或突然音量增大的音效，慢雾动画遵循减少动态效果设置。新增情绪素材已接入对应剧情。
+
+2026-10-11：仅处理新增 14 张图片，旧 17 张保持不变。结局增加流动色彩、四种情绪色调与小奶蛙，移除跳过动画按钮；返回地图仍即时可用，减少动态效果设置关闭结局动画。
