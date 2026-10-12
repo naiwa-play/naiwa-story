@@ -17,7 +17,7 @@ Object.assign(scenePortraits,{
  dream_entry_2:'glance',dream_entry_4:'hush',ship_start_1:'shocked',ship_dinner_2:'glance',ship_pipe_1:'thinking',ship_valve_1:'thinking',wood_pavilion_1:'thinking',wood_silence_1:'hush',wood_stream_2:'glance',wood_memory_1:'laughing',hospital_start_1:'unhappy',hospital_archive_1:'thinking',hospital_courtyard_1:'shocked',hospital_signature_1:'crying',opera_start_1:'thinking',opera_lights_1:'hush',opera_audience_1:'glance',opera_script_1:'unhappy',opera_script_2:'laughing'
 });
 export function endingMood(id,ending){
- const theme=ending.chapter==='nightmares'?(id.startsWith('opera_')?'curtain':ending.note.includes('困局')?'dream':id.startsWith('ship_')?'tide':id.startsWith('wood_')?'fireflies':'aurora'):ending.chapter==='beach'||/harbor|compass|silver|tide_/.test(id)?'tide':ending.chapter==='forest'||/forest_|root_|island_/.test(id)?'fireflies':ending.chapter==='balloon'||/train|station|wish_|whale|horizon/.test(id)?'stars':'rays';
+ const theme=ending.chapter==='nightmares'?(id.startsWith('opera_')?'curtain':ending.note.includes('困局')?'dream':id.startsWith('ship_')?'tide':id.startsWith('wood_')?'fireflies':'aurora'):ending.chapter==='beach'||/harbor|compass|silver|tide_|shared_lantern/.test(id)?'tide':ending.chapter==='forest'||/forest_|root_|island_|season_map/.test(id)?'fireflies':ending.chapter==='balloon'||/train|station|wish_|whale|horizon|cloud_post/.test(id)?'stars':'rays';
  if(ending.note.includes('困局'))return {theme,tone:'dream',portrait:portraits.disappointed};
  if(['forest_home','sea_photo','sunset_post','last_train','whale_keeper'].includes(id))return {theme,tone:'tender',portrait:portraits.eager};
  if(ending.chapter==='nightmares')return {theme,tone:'dawn',portrait:portraits.glance};

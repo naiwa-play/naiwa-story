@@ -1,14 +1,16 @@
-// Decode before exposing the story. Keep decoded images alive for instant swaps.
-export const imageCache=new Map();
-export const mediaCache=new Map();
-export async function preloadAssets(portraits,onProgress){
- const images=[...Object.values(portraits).map(p=>p.src),'./assets/landscape.png',...['liner','trail','hospital','opera'].map(id=>'./assets/nightmares/'+id+'.svg')];
- // Music is optional and loads only when the player presses its button.
- // One deadline covers the whole queue, including stalled image decoding.
- const deadline=Date.now()+4500;
- const jobs=images.map(src=>async()=>{if(imageCache.has(src))return;const img=new Image();let timer;try{await Promise.race([(async()=>{img.src=src;await img.decode();})(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Image timeout')),Math.max(0,deadline-Date.now()));})]);imageCache.set(src,img);}catch(error){img.src='';throw error;}finally{clearTimeout(timer);}});
- let done=0;const failed=[];
- // Six concurrent requests avoid opening a connection for every file at once.
- let cursor=0;await Promise.all(Array.from({length:6},async()=>{while(cursor<jobs.length){const i=cursor++;try{await jobs[i]();}catch{failed.push(i);}onProgress(++done,jobs.length);}}));
+// Decode upcoming portraits and share in-flight requests.
+export const imageCache=new Map(),mediaCache=new Map();
+const pending=new Map();
+export function loadImage(src,timeout=4000){
+ if(imageCache.has(src))return Promise.resolve(imageCache.get(src));
+ if(pending.has(src))return pending.get(src);
+ const img=new Image();let timer;
+ const job=Promise.race([(async()=>{img.src=src;await img.decode();return img;})(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Image timeout')),timeout);})]).then(image=>{imageCache.set(src,image);return image;}).catch(error=>{img.src='';throw error;}).finally(()=>{clearTimeout(timer);pending.delete(src);});
+ pending.set(src,job);return job;
+}
+export async function preloadAssets(portraits,onProgress,backgrounds=[]){
+ const sources=[...new Set([...Object.values(portraits).map(p=>p.src),...backgrounds])];
+ const deadline=Date.now()+2500;let cursor=0,done=0;const failed=[];
+ await Promise.all(Array.from({length:3},async()=>{while(cursor<sources.length){const i=cursor++;try{await loadImage(sources[i],Math.max(1,deadline-Date.now()));}catch{failed.push(i);}onProgress(++done,sources.length);}}));
  return failed;
 }

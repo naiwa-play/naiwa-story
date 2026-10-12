@@ -1,5 +1,7 @@
-import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=3';
-import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=4';
+import {expandDreams} from './dream-expansion.js?v=7';
+import {expandJourneys} from './journeys.js?v=7';
+import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=7';
+import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=7';
 export {canEnterNightmares};
 export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
@@ -40,6 +42,8 @@ export const secrets={
  cloud:{title:'第十四张票',text:'气球篮底有一张盖着“第十四航次”的旧票。背面写着：前十三次，我都一个人出发。这一次，想试试有人同行。署名处画着一盏小灯。'},
  forest_start:{title:'第一页的折角',text:'观察册的折角里夹着一枚贝壳。小字写着：海边的风，也会来到森林。你想起信上的蓝线——也许不同的路线，一直在悄悄连接。'}
 };
+expandJourneys(story,endings,secrets);
+expandDreams(story,endings,secrets);
 export const fresh=(chapter='prologue')=>({version:1,node:chapters[chapter]?.entry||'arrival',history:[]});
 export function validSave(s){return !!s&&s.version===1&&Object.hasOwn(story,s.node)&&Array.isArray(s.history)&&s.history.length<=200&&s.history.every(id=>typeof id==='string'&&Object.hasOwn(story,id));}
 export function advance(s,choice){if(!validSave(s))throw Error('Invalid save');const n=story[s.node];const target=n.choices?n.choices[choice]?.to:n.next;if(!target)return s;return {...s,node:target,history:[...s.history,s.node].slice(-200)};}

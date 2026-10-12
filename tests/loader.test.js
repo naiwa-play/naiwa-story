@@ -5,9 +5,9 @@ globalThis.Image=class {decode(){return this.src.includes('stalled')?new Promise
 globalThis.fetch=()=>{throw Error('Optional audio must not block startup');};
 let start=Date.now(),progress=[];
 assert.deepEqual(await preloadAssets({good:{src:'good.webp'}},(n,total)=>progress.push([n,total])),[]);
-assert(Date.now()-start<1000,'No deliberate minimum wait');assert.deepEqual(progress.at(-1),[6,6]);
+assert(Date.now()-start<1000,'No deliberate minimum wait');assert.deepEqual(progress.at(-1),[1,1]);
 start=Date.now();progress=[];
 const failures=await preloadAssets({good:{src:'good.webp'},slow:{src:'stalled.webp'},bad:{src:'broken.webp'}},(n,total)=>progress.push([n,total]));
-assert.deepEqual(failures.sort(),[1,2]);assert(Date.now()-start<5500,'Stalled decode must settle within global deadline');assert.deepEqual(progress.at(-1),[8,8]);assert(imageCache.has('good.webp'));assert(!imageCache.has('stalled.webp'));
+assert.deepEqual(failures.sort(),[1,2]);assert(Date.now()-start<3500,'Stalled decode must settle within global deadline');assert.deepEqual(progress.at(-1),[3,3]);assert(imageCache.has('good.webp'));assert(!imageCache.has('stalled.webp'));
 release();await Promise.resolve();assert(!imageCache.has('stalled.webp'),'Timed-out images cannot arrive unexpectedly later');
 console.log('PASS: real loader, stalled/failed decode deadline, cached images preserved, no audio gate, no artificial delay.');

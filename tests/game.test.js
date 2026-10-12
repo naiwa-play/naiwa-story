@@ -1,8 +1,9 @@
+import * as relics from '../relics.js';
 import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js';
 function setup(preload,initial=[]){
  const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
- const timers=[],context=vm.createContext({...story,...portraits,imageCache,mediaCache:new Map(),preloadAssets:preload,document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(){},activeElement:null},window:{scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
+ const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(){},activeElement:null},window:{scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
  vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache};
 }
 let release;const loading=new Promise(r=>release=r);const g=setup(()=>loading),{$,saved,context,imageCache}=g;
@@ -17,9 +18,19 @@ $('load').onclick();assert.equal(vm.runInContext('state.node',context),'umbrella
 $('gallery').onclick();assert.equal($('modal-body').children[0].children.length,31);$('close').onclick();await $('music').onclick();assert(! $('bgm').paused);await $('music').onclick();assert($('bgm').paused);
 const failure=setup(async()=>[0]);await vm.runInContext('bootPromise',failure.context);assert(failure.$('loading-screen').hidden);assert.equal(vm.runInContext('ready',failure.context),true);assert(failure.$('notice').textContent.includes('暂未加载'));
 const slow=setup(()=>new Promise(()=>{}));slow.timers.find(t=>t.ms===5000).fn();assert(!slow.$('loading-actions').hidden);slow.$('text-mode').onclick();assert.equal(vm.runInContext('ready',slow.context),true);
+assert($('reward').textContent.includes('蓝线旅伴信'));$('relics').onclick();assert($('modal-body').children[0].children.some(c=>c.className.includes('owned')));$('close').onclick();
 console.log('PASS: loading gate, 5-second fallback, failed downloads, decoded portrait swap, prologue-to-main invitation, legacy saves, secrets, gallery and navigation.');
 const locked=setup(async()=>[]);await vm.runInContext('bootPromise',locked.context);assert(locked.$('dlc-start').disabled);locked.$('dlc-start').onclick();assert.equal(vm.runInContext('state.node',locked.context),'arrival');vm.runInContext("enter(fresh('nightmares'))",locked.context);assert.equal(vm.runInContext('state.node',locked.context),'arrival');
 vm.runInContext("enter({...fresh('adventure'),node:'coast_2'})",locked.context);assert(locked.$('dlc-start').disabled);locked.$('choices').children[0].onclick();assert(!locked.$('dlc-start').disabled);const before=vm.runInContext('JSON.stringify(state)',locked.context);locked.$('dlc-start').onclick();assert.equal(vm.runInContext('state.node',locked.context),'dream_entry');assert.equal(locked.saved.get('naiwa-before-dream-v1'),before);locked.$('dream-return').onclick();assert.equal(vm.runInContext('JSON.stringify(state)',locked.context),before);
 const resumed=setup(async()=>[],[...locked.saved]);await vm.runInContext('bootPromise',resumed.context);assert(!resumed.$('dlc-start').disabled);
 const veteran=setup(async()=>[],[['naiwa-letter-endings-v1',JSON.stringify(['harbor_light'])]]);await vm.runInContext('bootPromise',veteran.context);assert(!veteran.$('dlc-start').disabled);
 console.log('PASS: DLC locked for fresh saves, unlocked at second route choice, saved unlock survives reload, completed-main migration and exact pre-dream restoration.');
+
+const explore=setup(async()=>[]);await vm.runInContext('bootPromise',explore.context);
+vm.runInContext("enter({version:1,node:'crab_castle_3',history:['beach_start','beach_start_4','crab_castle','crab_castle_1','crab_castle_2']})",explore.context);
+explore.$('save').onclick();const kept=explore.saved.get('naiwa-letter-save-v1');assert(explore.$('reward').textContent.includes('今天开放的小门牌'));
+explore.$('rewind').onclick();assert.equal(vm.runInContext('state.node',explore.context),'beach_start_4');assert.equal(vm.runInContext('state.history.length',explore.context),1);
+assert(explore.$('reward').hidden);explore.$('choices').children[2].onclick();for(let i=0;i<9;i++)explore.$('next').onclick();assert.equal(vm.runInContext('story[state.node].ending',explore.context),'shore_atlas');assert.equal(explore.saved.get('naiwa-letter-save-v1'),kept);
+assert.equal(vm.runInContext('collectedRelics(unlocked).length',explore.context),2);explore.$('routes').onclick();assert(explore.$('modal-body').children.some(e=>e.className==='checkpoint-list'));assert(!explore.$('rewind').hidden);
+const collector=setup(async()=>[],[['naiwa-letter-endings-v1',JSON.stringify(['light','journey','snacks'])]]);await vm.runInContext('bootPromise',collector.context);assert.equal(vm.runInContext('collectedRelics(unlocked).length',collector.context),3);
+console.log('PASS: exact choice rewind, alternate new ending, manual-save preservation, reward uniqueness and legacy collection migration.');

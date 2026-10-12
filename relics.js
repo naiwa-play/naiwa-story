@@ -1,0 +1,30 @@
+// Collection ownership derives from unlocked endings, so old saves gain their keepsakes too.
+export const relics=[
+ {id:'lamp',name:'奶蛙的小夜灯',icon:'灯',kind:'lamp',ends:['light'],from:'序章 · 留一盏灯',text:'奶蛙把随身的小灯留给你：“以后晚一点回来，也知道这里有人等。”灯罩画歪了一角，却始终朝着门口。'},
+ {id:'letter',name:'蓝线旅伴信',icon:'信',kind:'letter',ends:['journey'],from:'序章 · 一起去远方',text:'奶蛙把那封来信正式赠给你，背面补上两个人的出发日期。十三道蓝线旁，留着下一个目的地的空白。'},
+ {id:'pact',name:'双人零食清单',icon:'约',kind:'letter',ends:['snacks'],from:'序章 · 零食同盟',text:'奶蛙签过名的补给约定：好吃的按双人份准备，迟到的晚饭也要一起记得。纸角还有茶杯留下的水印。'},
+ {id:'key',name:'守塔人的交接钥匙',icon:'钥',kind:'key',ends:['harbor_light'],from:'主线 · 灯塔航线',text:'这把纪念钥匙不替你控制谁的归途。它提醒你，点灯的人也需要休息，下一位值班人应当知道钥匙在哪里。'},
+ {id:'compass',name:'口袋归航罗盘',icon:'北',kind:'compass',ends:['home_compass','last_train'],from:'主线 · 返程路线',text:'奶蛙把归途画在一枚小圆牌上。它没有替你取消远方，只在你想家的时候，承认回去也是一种选择。'},
+ {id:'tide',name:'潮汐拓印片',icon:'潮',kind:'map',ends:['silver_school','tide_cartographer'],from:'主线 · 潮池航线',text:'一片记录光轨的薄木片。测绘员注明了日期与潮位，提醒下一次使用它的人：海水从不保证每天相同。'},
+ {id:'ticket',name:'留白的云端车票',icon:'票',kind:'ticket',ends:['cloud_station','cloud_post'],from:'主线 · 云端联系',text:'终点栏没有被封死，背面有成功送达的日期。奶蛙说，现在还不知道名字的人，也应该能找到自己的位置。'},
+ {id:'whale',name:'纸鲸修补书签',icon:'鲸',kind:'letter',ends:['wish_rain','whale_keeper'],from:'主线 · 纸鲸航线',text:'奶蛙用修补后多出的干净纸边折成小鲸。折痕留着，不遮住曾经裂开的地方，也不妨碍它重新展开。'},
+ {id:'village',name:'村口的灯牌',icon:'归',kind:'lamp',ends:['forest_home','root_archive'],from:'主线 · 雨林村落',text:'村民送来的小木牌，背面是共同绘制的海岸线。被记住的不是带回多少宝藏，而是是否愿意回来承担选择的后续。'},
+ {id:'page',name:'未写完的航海页',icon:'路',kind:'map',ends:['open_horizon','island_tomorrow'],from:'主线 · 岛屿的未来',text:'奶蛙留了一页没有填写的航海册给你。冒险结束时，仍然容许不知道下一步，这页纸因此一直有效。'},
+ {id:'copperlamp',name:'轮班铜灯',icon:'灯',kind:'lamp',ends:['shared_lantern'],from:'特殊结局 · 不熄灯的值班表',text:'灯罩上的名字一样大小。它来自第一批轮班的岛民，让一次耀眼的奇迹变成许多人能够持续完成的小事。'},
+ {id:'dial',name:'季节刻度盘',icon:'季',kind:'compass',ends:['season_map'],from:'特殊结局 · 会改变的答案',text:'刻度可以转动，旧记录不会被擦去。测绘员把它送给你们，提醒每一个确定答案，都要经得起新的天气。'},
+ {id:'door',name:'今天开放的小门牌',icon:'门',kind:'map',ends:['crab_castle'],from:'海滩 · 沙堡住客',text:'老人制作的木牌，不是从动物住处取下的东西。奶蛙坚持背面留白，等下一位住客来决定它的新名字。'},
+ {id:'photo',name:'被风吹歪的合影',icon:'影',kind:'photo',ends:['sea_photo'],from:'海滩 · 黄昏照片',text:'画面晃了一点，两个人却都真的在笑。奶蛙把副本送给你，说那天的风，比相纸能够留下的还要暖。'},
+ {id:'atlas',name:'海边寻路折页',icon:'岸',kind:'map',ends:['shore_atlas'],from:'特殊结局 · 下一位旅人的座位',text:'缺角贝壳章下，标着新步道和旧岸线。你们没有替别人占住座位，只让下一个下午更容易找到入口。'},
+ {id:'feather',name:'气象站的铜羽',icon:'风',kind:'key',ends:['mountain_letter'],from:'热气球 · 准时送达',text:'已经退役的风向标零件，由气象员赠送。奶蛙系好蓝线，提醒你们别只看自己的方向，也记得有人在等待。'},
+ {id:'sunset',name:'带着暗屋的云海画',icon:'暮',kind:'photo',ends:['sunset_post'],from:'热气球 · 迟到之后',text:'奶蛙没有从漂亮的落日下删掉那间等空了的屋子。画面同时留下快乐与责任，也留下认真补救的一天。'},
+ {id:'relay',name:'风里的接力章',icon:'环',kind:'ticket',ends:['relay_letter'],from:'特殊结局 · 接力邮路',text:'三个相扣的圆环，没有一个占据中间。清楚的交接让心意抵达，它是一张纪念卡，不是通行或工作的证件。'},
+ {id:'leaf',name:'回收纸叶脉卡',icon:'叶',kind:'leaf',ends:['rain_orchestra'],from:'雨林 · 安静倾听',text:'向导为认真提交观察记录的旅人准备的小卡。奶蛙把它放在来信旁：先听见，再回答，不替森林编造声音。'},
+ {id:'house',name:'无名小屋徽章',icon:'屋',kind:'map',ends:['small_neighbor'],from:'雨林 · 最轻的脚印',text:'用维护步道的木料边角制作，背面刻着归还工具的日期。帮助不必得到被帮助者的感谢，仍然值得完成。'},
+ {id:'receipt',name:'雨后巡护回执',icon:'雨',kind:'ticket',ends:['forest_watch'],from:'特殊结局 · 雨后的接班人',text:'登记号让短暂的来访接上长期的维护。回执不允许越过保护边界，却让你们能够继续关心后面的变化。'},
+ {id:'rope',name:'醒来的蓝绳结',icon:'结',kind:'key',ends:['ship_beacon','ship_boat'],from:'惊悚故事集 · 邮轮逃脱',text:'醒来后奶蛙重新打的活扣，与梦里的航线无关。它只是一个约定：不为了追赶熟悉的声音，松开眼前同伴的手。'},
+ {id:'trail',name:'不回头的路标',icon:'径',kind:'map',ends:['wood_exit','wood_memory'],from:'惊悚故事集 · 林间逃脱',text:'奶蛙画下真正走出来的路径，把模仿亲友的回声留在梦里。纸上没有万能捷径，只有你们一起核实过的记号。'},
+ {id:'dawn',name:'清晨窗边的纸花',icon:'晨',kind:'leaf',ends:['hospital_wake','hospital_roof'],from:'惊悚故事集 · 医院逃脱',text:'这朵纸花是醒来后折的，没有从病房带走任何东西。奶蛙说，晨风吹过的时候，不需要镜子来证明你在这里。'},
+ {id:'curtain',name:'两张零号票',icon:'零',kind:'ticket',ends:['opera_curtain','opera_blank'],from:'惊悚故事集 · 歌剧院逃脱',text:'奶蛙把梦里的票画成两张普通纸船。它们不要求你重新登台，故事也不必为了等一声掌声而永不落幕。'}
+];
+export const collectedRelics=unlocked=>relics.filter(r=>r.ends.some(id=>unlocked.includes(id)));
+export const rewardFor=id=>relics.find(r=>r.ends.includes(id));

@@ -206,5 +206,5 @@ end('backstage','opera_double','站在镜子里面的人','金蔷薇 · 困局�
 export const nightmareMilestones=['lighthouse','tide','station','whale','creek','gate'];
 export function canEnterNightmares(s,paths={},unlocked=[]){
  const progress=[...(s?.history||[]),s?.node,...Object.keys(paths)];
- return progress.some(id=>nightmareMilestones.includes(id))||unlocked.some(id=>['harbor_light','home_compass','silver_school','tide_cartographer','cloud_station','last_train','wish_rain','whale_keeper','forest_home','root_archive','open_horizon','island_tomorrow'].includes(id));
+ return progress.some(id=>nightmareMilestones.includes(id))||unlocked.some(id=>['harbor_light','home_compass','silver_school','tide_cartographer','cloud_station','last_train','wish_rain','whale_keeper','forest_home','root_archive','open_horizon','island_tomorrow','shared_lantern','cloud_post','season_map'].includes(id));
 }
