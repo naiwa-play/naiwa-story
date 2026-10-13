@@ -1,14 +1,14 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=9';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=10';
 function setup(preload,initial=[]){
- const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
+ const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
  const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(){},activeElement:null},window:{scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
  vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache};
 }
 let release;const loading=new Promise(r=>release=r);const g=setup(()=>loading),{$,saved,context,imageCache}=g;
 assert.equal(vm.runInContext('ready',context),false);vm.runInContext("enter(fresh())",context);assert.equal(vm.runInContext('playing',context),false);
-release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,7);
+release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,6);
 vm.runInContext('enter(fresh())',context);assert.equal($('portrait-wrap').children[0],imageCache.get(portraits.portraits.normal.src));
 const first=$('portrait-wrap').children[0];$('next').onclick();assert.notEqual($('portrait-wrap').children[0],first);assert.equal($('speaker').textContent,'奶蛙');assert.equal($('next').textContent,'下一句');
 for(let i=0;i<3;i++)$('next').onclick();assert.equal($('choices').children.length,3);$('save').onclick();const manual=saved.get('naiwa-letter-save-v1');
@@ -50,3 +50,6 @@ for(let i=0;i<90;i++){const hasChoice=vm.runInContext('!!story[state.node].choic
 assert.equal(vm.runInContext('story[state.node].ending',travel.context),'polar_haven');assert(!travel.$('celebration').hidden);assert(travel.$('reward').textContent.includes('海岸章'));travel.timers.find(t=>t.ms===9000).fn();assert(travel.$('celebration').hidden);vm.runInContext('render()',travel.context);travel.$('back-home').onclick();assert(travel.$('celebration').hidden);assert.equal(vm.runInContext('collectedRelics(unlocked).length',travel.context),1);
 travel.context.window.matchMedia=()=>({matches:true});vm.runInContext("enter({version:1,node:'polar_end_home_11',history:[]})",travel.context);assert(!travel.$('celebration').hidden);assert(travel.timers.some(t=>t.ms===3500));travel.$('back-home').onclick();assert(travel.$('celebration').hidden);
 console.log('PASS: polar full playthrough, reward and auto-closing celebration, leave cleanup and reduced-motion duration.');
+
+const promo=setup(async()=>[]);await vm.runInContext('bootPromise',promo.context);promo.$('polar-start').onclick();assert.equal(vm.runInContext('state.node',promo.context),'polar_ocean_0');promo.$('back-home').onclick();promo.$('polar-tree').onclick();assert(promo.$('modal-title').textContent.includes('白色回声'));for(const id of ['dream','polar']){promo.$(id+'-motion').onclick();assert.equal(promo.$(id+'-motion')['aria-pressed'],'true');promo.$(id+'-motion').onclick();assert.equal(promo.$(id+'-motion')['aria-pressed'],'false');}
+console.log('PASS: featured polar entry, route tree and independent animation pause toggles.');

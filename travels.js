@@ -1,4 +1,4 @@
-import {scenePortraits} from './portraits.js?v=9';
+import {scenePortraits} from './portraits.js?v=10';
 export const travelEndings={
  iceland_tide:{title:'把海写进收件人',note:'海没有替你回答，你却终于把那句想说的话，交到了对的人手里。',chapter:'iceland',theme:'sea-letter'},
  iceland_aurora:{title:'没有许愿的极光',note:'你们没有向夜空索取永远，只约好认真陪伴下一个普通的早晨。',chapter:'iceland',theme:'northern-silk'},
@@ -9,7 +9,7 @@ export const travelEndings={
 };
 export function addTravel(story,endings,chapters,scenes,secrets){
  chapters.iceland={title:'冰岛海信',tag:'远行篇 · 浪漫',entry:'ice_market_0',scene:'ice-market',description:'在秋末的市集、黑色海岸与漫长夜色中，和奶蛙写一封寄给彼此的海信。'};
- chapters.polar={title:'南极·白色回声',tag:'远行篇 · 共生',entry:'polar_ocean_0',scene:'polar-ocean',description:'越过南大洋，倾听冰与生命的回声，把一次看见变成能够延续的行动。'};
+ chapters.polar={title:'白色回声',tag:'远行篇 · 共生',entry:'polar_ocean_0',scene:'polar-ocean',description:'越过南大洋，倾听冰与生命的回声，把一次看见变成能够延续的行动。'};
  Object.assign(endings,travelEndings);
  Object.assign(scenes,{'ice-market':'港湾小镇 · 秋末市集','ice-cafe':'雨声里的小咖啡馆','ice-road':'沿着海湾的公路','ice-falls':'山坡尽头的瀑布','ice-shore':'黑沙岸 · 海信','ice-lagoon':'蓝色冰湖 · 傍晚','ice-lodge':'海边旅舍 · 入夜','ice-aurora':'无人的观景台 · 极光','ice-dawn':'港湾的第一个早晨','polar-ocean':'南大洋 · 越过浪脊','polar-station':'科考站 · 窗内的灯','polar-history':'冰原观察点 · 旧照与今天','polar-colony':'企鹅海岸 · 留出归途','polar-lab':'观测室 · 未完成的曲线','polar-shelter':'避风湾 · 共同的行动','polar-sunset':'浮冰之间 · 长长的黄昏','polar-dawn':'白色海湾 · 新的一天'});
  const names={旁:'旁白',蛙:'奶蛙',我:'你',摊:'摊主',屋:'旅舍主人',导:'向导',研:'研究员',员:'队员'};

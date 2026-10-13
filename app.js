@@ -1,7 +1,7 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=9';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=9';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=9';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=9';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=10';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=10';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=10';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=10';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
@@ -89,11 +89,13 @@ function routeTree(chapter){
 }
 function startChapter(id){if(id==='nightmares'){if(!dlcOpen()){notify('请先推进主线至岛城地下检修门。');return;}enter(fresh(id));return;}if(validSave(read(AUTO))&&state.node!==chapters[id].entry){modal('开始一段新的旅程？');const p=document.createElement('p');p.textContent='这会替换当前自动进度。手动存档、已读路线和已收集结局都会保留。';$('modal-body').append(p,button('开始 · '+chapters[id].title,()=>{$('modal').close();enter(fresh(id));}));}else enter(fresh(id));}
 for(const [id,ch]of Object.entries(chapters)){
- if(id==='nightmares')continue;
+ if(id==='nightmares'||id==='polar')continue;
  const card=document.createElement('article');card.className='chapter-card '+ch.scene;const art=document.createElement('div');art.className='chapter-art';art.setAttribute('aria-hidden','true');const tag=document.createElement('small');tag.textContent=ch.tag;const title=document.createElement('h2');title.textContent=ch.title;const p=document.createElement('p');p.textContent=ch.description;const actions=document.createElement('div');actions.className='card-actions';actions.append(button('开始阅读',()=>startChapter(id)),button('路线树',()=>routeTree(id)));card.append(art,tag,title,p,actions);$('chapters').append(card);
 }
 $('resume').onclick=()=>enter(state);$('back-home').onclick=home;$('next').onclick=()=>go();
 $('retry-portrait').onclick=()=>requestPortrait(portraitFor(state.node));
+$('polar-start').onclick=()=>startChapter('polar');$('polar-tree').onclick=()=>routeTree('polar');
+for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id+'-showcase').classList.toggle('motion-paused',paused);};}
 $('dlc-start').onclick=()=>startChapter('nightmares');$('dlc-tree').onclick=()=>routeTree('nightmares');
 $('dream-return').onclick=()=>{const s=read(WAKE);if(validSave(s)&&story[s.node].chapter!=='nightmares')enter(s);else enter(fresh('adventure'));};
 $('rewind').onclick=()=>{const id=[...state.history].reverse().find(id=>story[id].choices);if(!id)return;const cut=state.history.lastIndexOf(id);enter({version:1,node:id,history:state.history.slice(0,cut)});};
@@ -108,7 +110,7 @@ $('secrets').onclick=()=>{modal('旅途拾遗 · '+discovered.length+' / '+Objec
 $('auto').onclick=()=>{auto=!auto;$('auto').textContent=auto?'自动 · 开':'自动 · 关';$('auto').setAttribute('aria-pressed',String(auto));if(story[state.node].choices||story[state.node].ending){stopAuto();notify('请先选择回答，自动播放不会替你选择');}else schedule();};
 $('history').onclick=()=>{modal('已经说过的话');for(const id of [...state.history,state.node]){const n=story[id],p=document.createElement('p'),b=document.createElement('strong');b.textContent=n.speaker+'：';p.append(b,document.createTextNode(n.text));$('modal-body').append(p);}};
 $('music').onclick=async()=>{if(!bgm.paused){bgm.pause();$('music').textContent='音乐 · 关';$('music').setAttribute('aria-pressed','false');}else{try{await bgm.play();$('music').textContent='音乐 · 开';$('music').setAttribute('aria-pressed','true');}catch{notify('音乐暂时无法播放，请稍后重试');}}};
-$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。另有浪漫远行《冰岛海信》与环保远行《南极·白色回声》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；惊悚故事集四幅夜景与远行篇十七幅风景为项目原创 SVG 插画，极地庆典动物由 CSS 绘制。回声站与人物为虚构，动物感谢呈现为奶蛙画中的愿望。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
+$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。另有浪漫远行《冰岛海信》与环保远行《白色回声》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；惊悚故事集四幅夜景与远行篇十七幅风景为项目原创 SVG 插画，极地庆典动物由 CSS 绘制。回声站与人物为虚构，动物感谢呈现为奶蛙画中的愿望。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
 $('close').onclick=()=>$('modal').close();
 $('gallery').onclick=()=>{modal('奶蛙的表情与姿态');const grid=document.createElement('div');grid.className='portrait-grid';for(const p of Object.values(portraits)){const card=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.loading='lazy';img.src=p.src;img.alt=p.label;label.textContent=p.label;card.append(img,label);grid.append(card);}$('modal-body').append(grid);};
 document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});
