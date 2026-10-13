@@ -10,6 +10,7 @@ export const portraits={
 for(const [id,p] of Object.entries(portraits))p.src='./assets/portraits/'+id+'.webp';
 export const scenePortraits={arrival:'normal',hello:'arms',question:'normal',answer:'happy',umbrella:'normal',kind:'happy',letter:'normal',snack:'tongue',home:'normal',wish:'normal',stay:'happy',lamp:'normal',walk:'back',trip:'daily2',food:'tongue',laugh:'happy'};
 export function portraitFor(node){return portraits[scenePortraits[node]]||null;}
+export function completePortraits(story){for(const id of Object.keys(story))scenePortraits[id]??='normal';}
 // Deliberate dialogue cues, rather than a random emotion per page.
 Object.assign(scenePortraits,{
  departure_1:'nose',departure_4:'eager',coast_2:'thinking',lighthouse_2:'unhappy',station_2:'shocked',whale_1:'disappointed',wish_rain_1:'happy',forest_home_1:'crying',root_archive_1:'thinking',island_tomorrow_1:'laughing',
@@ -17,6 +18,8 @@ Object.assign(scenePortraits,{
  dream_entry_2:'glance',dream_entry_4:'hush',ship_start_1:'shocked',ship_dinner_2:'glance',ship_pipe_1:'thinking',ship_valve_1:'thinking',wood_pavilion_1:'thinking',wood_silence_1:'hush',wood_stream_2:'glance',wood_memory_1:'laughing',hospital_start_1:'unhappy',hospital_archive_1:'thinking',hospital_courtyard_1:'shocked',hospital_signature_1:'crying',opera_start_1:'thinking',opera_lights_1:'hush',opera_audience_1:'glance',opera_script_1:'unhappy',opera_script_2:'laughing'
 });
 export function endingMood(id,ending){
+ const mainThemes={main_lights:'stars',main_bridge:'tide',main_shift:'rays',main_morning:'aurora',main_reunion:'fireflies',main_homeward:'rays'};
+ if(mainThemes[id])return {theme:mainThemes[id],tone:id==='main_morning'?'dawn':id==='main_homeward'?'tender':'joy',portrait:portraits[id==='main_morning'?'glance':id==='main_homeward'?'eager':'laughing']};
  const theme=ending.chapter==='nightmares'?(id.startsWith('opera_')?'curtain':ending.note.includes('困局')?'dream':id.startsWith('ship_')?'tide':id.startsWith('wood_')?'fireflies':'aurora'):ending.chapter==='beach'||/harbor|compass|silver|tide_|shared_lantern/.test(id)?'tide':ending.chapter==='forest'||/forest_|root_|island_|season_map/.test(id)?'fireflies':ending.chapter==='balloon'||/train|station|wish_|whale|horizon|cloud_post/.test(id)?'stars':'rays';
  if(ending.note.includes('困局'))return {theme,tone:'dream',portrait:portraits.disappointed};
  if(['forest_home','sea_photo','sunset_post','last_train','whale_keeper'].includes(id))return {theme,tone:'tender',portrait:portraits.eager};

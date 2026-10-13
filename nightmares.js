@@ -203,8 +203,8 @@ end('backstage','opera_double','站在镜子里面的人','金蔷薇 · 困局�
  ['旁白','替身向你们挥手，关掉化妆台的灯。黑暗中，下一场演出的预备铃响了。']]);
 
 // Mid-route milestones, reached only after the second main-story choice.
-export const nightmareMilestones=['lighthouse','tide','station','whale','creek','gate'];
+export const nightmareMilestones=['main_threshold_0','lighthouse','tide','station','whale','creek','gate'];
 export function canEnterNightmares(s,paths={},unlocked=[]){
  const progress=[...(s?.history||[]),s?.node,...Object.keys(paths)];
- return progress.some(id=>nightmareMilestones.includes(id))||unlocked.some(id=>['harbor_light','home_compass','silver_school','tide_cartographer','cloud_station','last_train','wish_rain','whale_keeper','forest_home','root_archive','open_horizon','island_tomorrow','shared_lantern','cloud_post','season_map'].includes(id));
+ return progress.some(id=>nightmareMilestones.includes(id))||unlocked.some(id=>['main_lights','main_bridge','main_shift','main_morning','main_reunion','main_homeward','harbor_light','home_compass','silver_school','tide_cartographer','cloud_station','last_train','wish_rain','whale_keeper','forest_home','root_archive','open_horizon','island_tomorrow','shared_lantern','cloud_post','season_map'].includes(id));
 }

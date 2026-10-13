@@ -1,5 +1,5 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=8';
 function setup(preload,initial=[]){
  const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
@@ -13,7 +13,7 @@ vm.runInContext('enter(fresh())',context);assert.equal($('portrait-wrap').childr
 const first=$('portrait-wrap').children[0];$('next').onclick();assert.notEqual($('portrait-wrap').children[0],first);assert.equal($('speaker').textContent,'奶蛙');assert.equal($('next').textContent,'下一句');
 for(let i=0;i<3;i++)$('next').onclick();assert.equal($('choices').children.length,3);$('save').onclick();const manual=saved.get('naiwa-letter-save-v1');
 $('choices').children[0].onclick();$('next').onclick();assert(!$('clue').hidden);$('clue').onclick();assert(saved.get('naiwa-secrets-v1').includes('home'));$('close').onclick();$('next').onclick();$('choices').children[1].onclick();$('next').onclick();assert.equal($('ending-title').textContent,'下一站，一起去');assert.equal($('ending').className,'ending-reveal joy theme-rays');assert.equal($('ending-frog').src,portraits.portraits.laughing.src);
-$('next').onclick();assert.equal(vm.runInContext('state.node',context),'departure');assert($('portrait-wrap').hidden);assert.equal(saved.get('naiwa-letter-save-v1'),manual);
+$('next').onclick();assert.equal(vm.runInContext('state.node',context),'main_departure');assert(!$('portrait-wrap').hidden);assert.equal(saved.get('naiwa-letter-save-v1'),manual);
 $('load').onclick();assert.equal(vm.runInContext('state.node',context),'umbrella');$('routes').onclick();assert($('modal').open);$('close').onclick();$('back-home').onclick();assert($('reader').hidden);assert(!$('resume').hidden);
 $('gallery').onclick();assert.equal($('modal-body').children[0].children.length,31);$('close').onclick();await $('music').onclick();assert(! $('bgm').paused);await $('music').onclick();assert($('bgm').paused);
 const failure=setup(async()=>[0]);await vm.runInContext('bootPromise',failure.context);assert(failure.$('loading-screen').hidden);assert.equal(vm.runInContext('ready',failure.context),true);assert(failure.$('notice').textContent.includes('暂未加载'));
@@ -34,3 +34,14 @@ assert(explore.$('reward').hidden);explore.$('choices').children[2].onclick();fo
 assert.equal(vm.runInContext('collectedRelics(unlocked).length',explore.context),2);explore.$('routes').onclick();assert(explore.$('modal-body').children.some(e=>e.className==='checkpoint-list'));assert(!explore.$('rewind').hidden);
 const collector=setup(async()=>[],[['naiwa-letter-endings-v1',JSON.stringify(['light','journey','snacks'])]]);await vm.runInContext('bootPromise',collector.context);assert.equal(vm.runInContext('collectedRelics(unlocked).length',collector.context),3);
 console.log('PASS: exact choice rewind, alternate new ending, manual-save preservation, reward uniqueness and legacy collection migration.');
+const late=setup(async()=>[]);await vm.runInContext('bootPromise',late.context);vm.runInContext('enter(fresh())',late.context);
+const original=late.$('portrait-wrap').children[0],armsSrc=portraits.portraits.arms.src;late.imageCache.delete(armsSrc);let finish;
+late.context.loadImage=()=>new Promise(r=>finish=r);late.$('next').onclick();assert.equal(late.$('portrait-wrap').children[0],original,'Keep decoded image during slow download');
+const downloaded={animate(){}};late.imageCache.set(armsSrc,downloaded);finish(downloaded);await Promise.resolve();await Promise.resolve();assert.equal(late.$('portrait-wrap').children[0],downloaded);assert.equal(late.$('portrait-status').textContent,'');
+late.imageCache.delete(armsSrc);late.context.loadImage=()=>Promise.reject(Error('offline'));vm.runInContext('render()',late.context);await Promise.resolve();await Promise.resolve();assert(!late.$('retry-portrait').hidden);
+late.imageCache.set(armsSrc,downloaded);late.$('retry-portrait').onclick();assert(late.$('retry-portrait').hidden);
+console.log('PASS: slow expression retains visible portrait, arriving image swaps in without refresh, failed expression offers retry.');
+// Late completion cannot overwrite another scene, including revisiting the same expression later.
+late.imageCache.delete(armsSrc);let staleFinish;late.context.loadImage=()=>new Promise(r=>staleFinish=r);vm.runInContext('render()',late.context);late.$('next').onclick();const currentPortrait=late.$('portrait-wrap').children[0];late.imageCache.set(armsSrc,downloaded);staleFinish(downloaded);await Promise.resolve();await Promise.resolve();assert.equal(late.$('portrait-wrap').children[0],currentPortrait);
+const newMain=setup(async()=>[]);await vm.runInContext('bootPromise',newMain.context);vm.runInContext("enter(fresh('adventure'))",newMain.context);for(let i=0;i<5;i++)newMain.$('next').onclick();assert.equal(newMain.$('choices').children.length,2);const choiceNode=vm.runInContext('state.node',newMain.context);newMain.$('choices').children[1].onclick();assert(newMain.$('line').textContent.includes('小本子'));newMain.$('rewind').onclick();assert.equal(vm.runInContext('state.node',newMain.context),choiceNode);newMain.$('choices').children[0].onclick();assert(newMain.$('line').textContent.includes('钥匙'));newMain.$('routes').onclick();assert(newMain.$('modal').open);
+console.log('PASS: scene-six choice, branch-specific dialogue, rewind and new main route tree.');

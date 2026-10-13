@@ -1,7 +1,9 @@
-import {expandDreams} from './dream-expansion.js?v=7';
-import {expandJourneys} from './journeys.js?v=7';
-import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=7';
-import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=7';
+import {rebuildMain} from './main-story.js?v=8';
+import {completePortraits} from './portraits.js?v=8';
+import {expandDreams} from './dream-expansion.js?v=8';
+import {expandJourneys} from './journeys.js?v=8';
+import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=8';
+import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=8';
 export {canEnterNightmares};
 export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
@@ -44,6 +46,8 @@ export const secrets={
 };
 expandJourneys(story,endings,secrets);
 expandDreams(story,endings,secrets);
+rebuildMain(story,endings,chapters,secrets);
+completePortraits(story);
 export const fresh=(chapter='prologue')=>({version:1,node:chapters[chapter]?.entry||'arrival',history:[]});
 export function validSave(s){return !!s&&s.version===1&&Object.hasOwn(story,s.node)&&Array.isArray(s.history)&&s.history.length<=200&&s.history.every(id=>typeof id==='string'&&Object.hasOwn(story,id));}
 export function advance(s,choice){if(!validSave(s))throw Error('Invalid save');const n=story[s.node];const target=n.choices?n.choices[choice]?.to:n.next;if(!target)return s;return {...s,node:target,history:[...s.history,s.node].slice(-200)};}

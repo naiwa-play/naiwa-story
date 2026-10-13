@@ -1,7 +1,7 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=7';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=7';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=7';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=7';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=8';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=8';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=8';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=8';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
@@ -18,11 +18,12 @@ const WAKE='naiwa-before-dream-v1';
 // A resumable DLC save is itself evidence of an earlier unlock, including old devices' route ledgers.
 function dlcOpen(){return canEnterNightmares(state,paths,unlocked)||Object.values(paths).some(s=>story[s.node].chapter==='nightmares')||story[state.node].chapter==='nightmares';}
 let wasDlcOpen=dlcOpen();
-function updateDlc(){const open=dlcOpen();$('dlc-start').disabled=!open;$('dlc-tree').disabled=!open;$('dlc-start').textContent=open?'翻开惊悚故事集':'主线中途解锁';$('dlc-status').textContent=open?'已解锁 · 四篇噩梦，路线选择与线索逃生':'解锁条件：主线完成第二次路线选择，抵达灯塔、潮池、云端车站、纸鲸、溪边或石门之一。已通关主线也可进入。';if(open&&!wasDlcOpen)notify('惊悚故事集已解锁，可从旅行地图进入。');wasDlcOpen=open;}
+function updateDlc(){const open=dlcOpen();$('dlc-start').disabled=!open;$('dlc-tree').disabled=!open;$('dlc-start').textContent=open?'翻开惊悚故事集':'主线中途解锁';$('dlc-status').textContent=open?'已解锁 · 四篇噩梦，路线选择与线索逃生':'解锁条件：新主线推进至岛城地下检修门（约第 80 幕）。旧版主线已解锁的进度继续有效。';if(open&&!wasDlcOpen)notify('惊悚故事集已解锁，可从旅行地图进入。');wasDlcOpen=open;}
 function button(text,fn){const b=document.createElement('button');b.textContent=text;b.onclick=fn;return b;}
+const visibleEndings=()=>Object.entries(endings).filter(([id,e])=>!e.legacy||unlocked.includes(id));
 function album(){
- $('endings').replaceChildren();$('collection-count').textContent=unlocked.length+' / '+Object.keys(endings).length+' 份回忆';
- for(const [id,e]of Object.entries(endings)){const card=document.createElement('article');card.className='memory'+(unlocked.includes(id)?' unlocked':'');const no=document.createElement('small');no.textContent=chapters[e.chapter].tag;const title=document.createElement('h3');title.textContent=unlocked.includes(id)?e.title:'未发现的回忆';const note=document.createElement('p');note.textContent=unlocked.includes(id)?e.note:'沿着不同选择，发现另一种可能。';card.append(no,title,note);$('endings').append(card);}
+ $('endings').replaceChildren();$('collection-count').textContent=unlocked.length+' / '+visibleEndings().length+' 份回忆';
+ for(const [id,e]of visibleEndings()){const card=document.createElement('article');card.className='memory'+(unlocked.includes(id)?' unlocked':'');const no=document.createElement('small');no.textContent=e.legacy?'旧版主线 · 已珍藏':chapters[e.chapter].tag;const title=document.createElement('h3');title.textContent=unlocked.includes(id)?e.title:'未发现的回忆';const note=document.createElement('p');note.textContent=unlocked.includes(id)?e.note:'沿着不同选择，发现另一种可能。';card.append(no,title,note);$('endings').append(card);}
 }
 function stopAuto(){auto=false;clearTimeout(timer);$('auto').textContent='自动 · 关';$('auto').setAttribute('aria-pressed','false');}
 function schedule(){clearTimeout(timer);const n=story[state.node];if(auto&&playing&&!n.choices&&!n.ending&&!document.hidden&&!$('modal').open)timer=setTimeout(go,Math.max(3500,n.text.length*95));}
@@ -31,6 +32,15 @@ function paintPortrait(p){
  if(!image||textOnly){wrap.replaceChildren();lastPortrait=null;return;}
  if(lastPortrait===p.src)return;wrap.replaceChildren();image.alt='奶蛙 · '+p.label;image.id='portrait';wrap.className='portrait '+p.frame;wrap.append(image);lastPortrait=p.src;
  image.animate?.([{opacity:0,transform:'translateX(24px) scale(.98)'},{opacity:1,transform:'translateX(0) scale(1)'}],{duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:420,easing:'ease-out'});
+}
+function requestPortrait(p){
+ const at=state.node;if(!p||textOnly)return;
+ $('retry-portrait').hidden=true;$('portrait-status').textContent='';
+ if(imageCache.has(p.src)){paintPortrait(p);return;}
+ // Keep a decoded neutral portrait visible while the requested expression arrives.
+ if(lastPortrait===null&&imageCache.has(portraits.normal.src))paintPortrait(portraits.normal);
+ $('portrait-status').textContent='立绘正在加载…';
+ loadImage(p.src).then(()=>{if(!playing||state.node!==at||textOnly)return;paintPortrait(p);$('portrait-status').textContent='';$('retry-portrait').hidden=true;}).catch(()=>{if(!playing||state.node!==at||textOnly)return;$('portrait-status').textContent='当前立绘下载失败，可以重试';$('retry-portrait').hidden=false;});
 }
 function prepareNext(id){
  if(textOnly)return;const seen=new Set(),queue=[[id,0]],art={};
@@ -42,8 +52,7 @@ function render(){
  $('stage').className='stage '+n.scene+(n.chapter==='nightmares'?' nightmare-stage':'')+(p&&!textOnly?'':' no-portrait');
  $('dream-return').hidden=n.chapter!=='nightmares';
  $('chapter-title').textContent=chapter.title;$('chapter-tag').textContent=chapter.tag;$('scene-name').textContent=scenes[n.scene];$('scene-chapter').textContent=chapter.tag;
- paintPortrait(p);
- if(p&&!textOnly&&!imageCache.has(p.src)){const at=state.node;loadImage(p.src).then(()=>{if(playing&&state.node===at&&!textOnly)paintPortrait(p);}).catch(()=>{});}
+ if(textOnly)paintPortrait(null);else requestPortrait(p);
  prepareNext(state.node);
  $('speaker').textContent=n.speaker;$('line').textContent=n.text;$('page-count').textContent='第 '+(state.history.length+1)+' 幕';$('choices').replaceChildren();
  voice.pause();voice.onended=null;const clip=media.voices[state.node];bgm.volume=.18;
@@ -57,30 +66,31 @@ function render(){
  $('rewind').hidden=!state.history.some(id=>story[id].choices);
  paths[state.node]=state;write(PATHS,paths);write(AUTO,state);$('load').disabled=!validSave(read(KEY));updateDlc();schedule();
 }
-function enter(s){if(!ready||!validSave(s))return;if(story[s.node].chapter==='nightmares'&&story[state.node].chapter!=='nightmares'){if(!dlcOpen()){notify('请先完成主线第二次路线选择，解锁惊悚故事集。');return;}if(!write(WAKE,state))return;}stopAuto();state=s;lastPortrait=null;playing=true;$('home').hidden=true;$('reader').hidden=false;$('back-home').hidden=false;render();window.scrollTo({top:0,behavior:'instant'});}
-function home(){playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title;album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
+function enter(s){if(!ready||!validSave(s))return;if(story[s.node].chapter==='nightmares'&&story[state.node].chapter!=='nightmares'){if(!dlcOpen()){notify('请先推进新主线至岛城地下检修门，解锁惊悚故事集。');return;}if(!write(WAKE,state))return;}stopAuto();state=s;lastPortrait=null;playing=true;$('home').hidden=true;$('reader').hidden=false;$('back-home').hidden=false;render();window.scrollTo({top:0,behavior:'instant'});}
+function home(){playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title+(story[state.node].legacy?'（旧版存档）':'');album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
 function go(choice){if(!playing)return;if(story[state.node].ending){if(story[state.node].chapter==='prologue')enter(fresh('adventure'));else home();return;}state=advance(state,choice);render();}
 function modal(title){stopAuto();$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal').showModal();}
 function routeTree(chapter){
- if(chapter==='nightmares'&&!dlcOpen()){notify('请先推进主线，完成第二次路线选择。');return;}
+ if(chapter==='nightmares'&&!dlcOpen()){notify('请先推进新主线至岛城地下检修门。');return;}
  modal(chapters[chapter].title+' · 路线树');const intro=document.createElement('p');intro.textContent='亮起的节点可以回看与改选；未发现的结局隐藏名称。跳转会更新自动进度，手动存档保留。';$('modal-body').append(intro);
- function branch(id){let n=story[id];while(n.next&&!n.choices&&!n.ending){id=n.next;n=story[id];}const li=document.createElement('li');
+ const shown=new Set();function branch(id){let n=story[id];while(n.next&&!n.choices&&!n.ending){id=n.next;n=story[id];}const li=document.createElement('li');
  const label=n.ending?(unlocked.includes(n.ending)?endings[n.ending].title:'未发现的结局'):scenes[n.scene]+' · 选择';
  const b=button(n.choices?'回溯选择点 · '+label:'回看结局 · '+label,()=>{$('modal').close();enter(paths[id]);});b.disabled=!paths[id];li.append(b);
- if(n.choices){const ul=document.createElement('ul');for(const c of n.choices){const item=document.createElement('li'),name=document.createElement('span');name.textContent=c.text;item.append(name);const sub=document.createElement('ul');sub.append(branch(c.to));item.append(sub);ul.append(item);}li.append(ul);}return li;}
+ if(shown.has(id)){const hint=document.createElement('small');hint.textContent='后续与上方同名节点汇合';li.append(hint);return li;}shown.add(id);if(n.choices){const ul=document.createElement('ul');for(const c of n.choices){const item=document.createElement('li'),name=document.createElement('span');name.textContent=c.text;item.append(name);const sub=document.createElement('ul');sub.append(branch(c.to));item.append(sub);ul.append(item);}li.append(ul);}return li;}
  const checkpoints=document.createElement('div');checkpoints.className='checkpoint-list';for(const [id,saved]of Object.entries(paths)){const n=story[id];if(n.chapter!==chapter||!n.choices)continue;const card=document.createElement('article'),p=document.createElement('p');p.textContent=n.text;card.append(p,button('回到这个选择 · 第 '+(saved.history.length+1)+' 幕',()=>{$('modal').close();enter(saved);}));checkpoints.append(card);}$('modal-body').append(checkpoints);
  const tree=document.createElement('ul');tree.className='route-tree';tree.append(branch(chapters[chapter].entry));$('modal-body').append(tree);
 }
-function startChapter(id){if(id==='nightmares'){if(!dlcOpen()){notify('请先推进主线，完成第二次路线选择。');return;}enter(fresh(id));return;}if(validSave(read(AUTO))&&state.node!==chapters[id].entry){modal('开始一段新的旅程？');const p=document.createElement('p');p.textContent='这会替换当前自动进度。手动存档、已读路线和已收集结局都会保留。';$('modal-body').append(p,button('开始 · '+chapters[id].title,()=>{$('modal').close();enter(fresh(id));}));}else enter(fresh(id));}
+function startChapter(id){if(id==='nightmares'){if(!dlcOpen()){notify('请先推进新主线至岛城地下检修门。');return;}enter(fresh(id));return;}if(validSave(read(AUTO))&&state.node!==chapters[id].entry){modal('开始一段新的旅程？');const p=document.createElement('p');p.textContent='这会替换当前自动进度。手动存档、已读路线和已收集结局都会保留。';$('modal-body').append(p,button('开始 · '+chapters[id].title,()=>{$('modal').close();enter(fresh(id));}));}else enter(fresh(id));}
 for(const [id,ch]of Object.entries(chapters)){
  if(id==='nightmares')continue;
  const card=document.createElement('article');card.className='chapter-card '+ch.scene;const art=document.createElement('div');art.className='chapter-art';art.setAttribute('aria-hidden','true');const tag=document.createElement('small');tag.textContent=ch.tag;const title=document.createElement('h2');title.textContent=ch.title;const p=document.createElement('p');p.textContent=ch.description;const actions=document.createElement('div');actions.className='card-actions';actions.append(button('开始阅读',()=>startChapter(id)),button('路线树',()=>routeTree(id)));card.append(art,tag,title,p,actions);$('chapters').append(card);
 }
 $('resume').onclick=()=>enter(state);$('back-home').onclick=home;$('next').onclick=()=>go();
+$('retry-portrait').onclick=()=>requestPortrait(portraitFor(state.node));
 $('dlc-start').onclick=()=>startChapter('nightmares');$('dlc-tree').onclick=()=>routeTree('nightmares');
 $('dream-return').onclick=()=>{const s=read(WAKE);if(validSave(s)&&story[s.node].chapter!=='nightmares')enter(s);else enter(fresh('adventure'));};
 $('rewind').onclick=()=>{const id=[...state.history].reverse().find(id=>story[id].choices);if(!id)return;const cut=state.history.lastIndexOf(id);enter({version:1,node:id,history:state.history.slice(0,cut)});};
-function showRelics(){modal('回忆图鉴 · '+collectedRelics(unlocked).length+' / '+relics.length);const grid=document.createElement('div');grid.className='relic-grid';for(const r of relics){const owned=r.ends.some(id=>unlocked.includes(id)),card=document.createElement('article'),art=document.createElement('div'),h=document.createElement('h3'),p=document.createElement('p'),small=document.createElement('small');card.className='relic-card'+(owned?' owned':'');art.className='relic-art '+(owned?r.kind:'locked');art.textContent=owned?r.icon:'?';art.setAttribute('aria-hidden','true');h.textContent=owned?r.name:'尚未获得的纪念';small.textContent=owned?r.from:chapters[endings[r.ends[0]].chapter].title+' · 待探索';p.textContent=owned?r.text:'完成不同路线，收下旅途中赠送的物品。';card.append(art,h,small,p);grid.append(card);}$('modal-body').append(grid);}
+function showRelics(){const available=relics.filter(r=>r.ends.some(id=>!endings[id].legacy||unlocked.includes(id)));modal('回忆图鉴 · '+collectedRelics(unlocked).length+' / '+available.length);const grid=document.createElement('div');grid.className='relic-grid';for(const r of available){const owned=r.ends.some(id=>unlocked.includes(id)),card=document.createElement('article'),art=document.createElement('div'),h=document.createElement('h3'),p=document.createElement('p'),small=document.createElement('small');card.className='relic-card'+(owned?' owned':'');art.className='relic-art '+(owned?r.kind:'locked');art.textContent=owned?r.icon:'?';art.setAttribute('aria-hidden','true');h.textContent=owned?r.name:'尚未获得的纪念';small.textContent=owned?r.from:chapters[endings[r.ends[0]].chapter].title+' · 待探索';p.textContent=owned?r.text:'完成不同路线，收下旅途中赠送的物品。';card.append(art,h,small,p);grid.append(card);}$('modal-body').append(grid);}
 $('relics').onclick=showRelics;$('relics-home').onclick=showRelics;
 $('save').onclick=()=>{if(write(KEY,state)){notify('进度已保存');$('load').disabled=false;}};
 $('load').onclick=()=>{const s=read(KEY);if(!validSave(s)){notify('没有可读取的有效存档');return;}enter(s);notify('已回到保存的位置');};
@@ -104,7 +114,7 @@ async function boot(){
  clearTimeout(timeout);loading=false;$('retry-load').disabled=false;
  if(mediaCache.has('music'))bgm.src=mediaCache.get('music');
  if(ready)return;
- if(failed.length)notify('已进入游戏：有 '+failed.length+' 张图片暂未加载，文字与已加载图片可正常使用。网络恢复后刷新可补齐。');
+ if(failed.length)notify('已进入游戏：有 '+failed.length+' 张图片暂未加载，文字与已加载图片可正常使用。慢速图片会继续下载，无需刷新。');
  ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();prepareNext(state.node);
 }
 $('text-mode').onclick=()=>{textOnly=true;ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();notify('已进入纯文字模式，刷新页面可重新加载立绘');};

@@ -1,5 +1,11 @@
 // Collection ownership derives from unlocked endings, so old saves gain their keepsakes too.
 export const relics=[
+ {id:'main-stars',name:'十三点星光纪念牌',icon:'星',kind:'compass',ends:['main_lights'],from:'新主线 · 十三盏灯，一起亮',text:'十三个小点都留在牌上，最晚收到的那份回答也没有被删掉。奶蛙用蓝线把它系好，提醒你每盏灯后面都有一个人。'},
+ {id:'main-bridge',name:'出发与归来的木牌',icon:'桥',kind:'map',ends:['main_bridge'],from:'新主线 · 往返之间的桥',text:'旧码头木料做成的两块小牌，拼合才是一座桥。奶蛙说两个人可以轮流拿，不必总让同一个人负责等待。'},
+ {id:'main-wheel',name:'可以休息的报时轮',icon:'轮',kind:'compass',ends:['main_shift'],from:'新主线 · 下一班钟声',text:'退役的小轮转一圈，只响一下。你和奶蛙约好，谁累了就轻轻敲它，不必等到自己彻底撑不住。'},
+ {id:'main-glass',name:'晨光里的玻璃刻度',icon:'晨',kind:'photo',ends:['main_morning'],from:'新主线 · 替钟塔看一次日出',text:'玻璃上没有数字，只有一道回转箭头。它属于终于能够交班的人，也属于你们答应认真度过的每一个普通清晨。'},
+ {id:'main-box',name:'等到相逢的小铁盒',icon:'盒',kind:'map',ends:['main_reunion'],from:'新主线 · 门响的时候，你真的回来',text:'学徒新做的铁盒里放着试航回执，还有奶蛙坚持保存的饼干包装纸。门上的画没有锁，留给下一次真实的相逢。'},
+ {id:'main-home',name:'双面归航牌',icon:'家',kind:'letter',ends:['main_homeward'],from:'新主线 · 回家以后，再去远方',text:'正面是岛城，背面是家门。歪歪的蓝线把两边连起来，奶蛙没有用这份礼物替你取消任何一个远方。'},
  {id:'lamp',name:'奶蛙的小夜灯',icon:'灯',kind:'lamp',ends:['light'],from:'序章 · 留一盏灯',text:'奶蛙把随身的小灯留给你：“以后晚一点回来，也知道这里有人等。”灯罩画歪了一角，却始终朝着门口。'},
  {id:'letter',name:'蓝线旅伴信',icon:'信',kind:'letter',ends:['journey'],from:'序章 · 一起去远方',text:'奶蛙把那封来信正式赠给你，背面补上两个人的出发日期。十三道蓝线旁，留着下一个目的地的空白。'},
  {id:'pact',name:'双人零食清单',icon:'约',kind:'letter',ends:['snacks'],from:'序章 · 零食同盟',text:'奶蛙签过名的补给约定：好吃的按双人份准备，迟到的晚饭也要一起记得。纸角还有茶杯留下的水印。'},
