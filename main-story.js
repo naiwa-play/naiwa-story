@@ -1,10 +1,10 @@
-import {scenePortraits} from './portraits.js?v=8';
+import {scenePortraits} from './portraits.js?v=9';
 // Keep the old graph intact for saved games; the new entry has its own complete route.
 export function rebuildMain(story,endings,chapters,secrets){
  for(const n of Object.values(story))if(n.chapter==='adventure')n.legacy=true;
  for(const e of Object.values(endings))if(e.chapter==='adventure')e.legacy=true;
  let id='departure';while(id){const n=story[id],copy={...n,legacy:false};delete copy.choices;if(n.next)copy.next='main_'+n.next;story['main_'+id]=copy;if(scenePortraits[id])scenePortraits['main_'+id]=scenePortraits[id];if(secrets[id])secrets['main_'+id]={...secrets[id]};if(id==='departure_4')break;id=n.next;}
- chapters.adventure.entry='main_departure';chapters.adventure.description='调查第十三声钟响，深入岛城的钟塔与地下星盘，找回被锁住的归途。独立主线，约 145 幕。';
+ chapters.adventure.entry='main_departure';chapters.adventure.description='调查第十三声钟响，深入岛城的钟塔与地下星盘，找回被锁住的归途。';
  story.main_departure_4.text='钟塔在白天亮起一圈星光，光却全照向地下。奶蛙合上航海册：我们留在岛城，把这台让人无法返航的机器查清楚。先从哪里下手？';
  story.main_island_records_14.text='姐姐以前负责钟塔里的夜班。事故以后她被困在岛外，修好的信号站也收不到她的回信。我怕她以为我们不再等她了。';
  const names={旁:'旁白',蛙:'奶蛙',我:'你',员:'管理员',匠:'钟表匠',学:'学徒'};
@@ -142,7 +142,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 我|试航船即将起锚。你们可以陪学徒完成相逢，也可以作为第一批返航者回去，把恢复联系的消息带给更多人。
 `,{choices:[c('陪学徒去接姐姐，再一起返回岛城','main_reunion_0'),c('和奶蛙先回家，带着新的约定再来','main_homeward_0')]});
  function end(tag,title,note,text){const key='main_'+tag;endings[key]={chapter:'adventure',title,note};seq(tag,'night',text,{ending:key});}
- end('lights','十三盏灯，一起亮','新主线 · 共同维护：每一种归途，都能先收到回答。',`
+ end('lights','十三盏灯，一起亮','共同维护：每一种归途，都能先收到回答。',`
 旁|第一晚，只有报时与短信恢复了。没有烟花，也没有一夜之间通往所有远方的捷径，广场却迟迟没有人愿意离开。
 蛙.eager|那一盏亮了。奶蛙拉着你的袖子，看见第一个街区收到回执。过了一会儿，第二个窗口也亮起同样微小的光。
 旁|有人只是告诉家人自己很好，有人认真道歉，说让对方等得太久。钟声把这些普通的话送出去，没有要求它们变成英雄故事。
@@ -156,7 +156,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 我|那封最初的来信被贴在新航海册第一页，旁边不再只有两个人的笔迹。你终于知道，邀约也可以慢慢长成一张共同的地图。
 旁|离岛那天，海上的灯在晨雾中连成温柔的虚线。奶蛙靠着你睡着了，掌心还攥着轮班后分到的半块温热面包。
 `);
- end('bridge','往返之间的桥','新主线 · 第一条航路：出发与回来，终于成为同一件完整的事。',`
+ end('bridge','往返之间的桥','第一条航路：出发与回来，终于成为同一件完整的事。',`
 旁|第一条修好的航路并不远，只通向邻近的港口。船长坚持完成一趟往返再庆祝，你和奶蛙都在检验表上签了名字。
 蛙.thinking|去的时候认得的灯，回来时会在另一边。奶蛙挪动桌上的小杯子，一遍遍练习从相反方向认出同一个地方。
 旁|试航的白线穿过海雾，又在黄昏回到码头。等候的人没有立刻拥上来，先给靠岸的船留足了停稳的位置。
@@ -170,7 +170,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 我|你们离开前又走了一次码头。海雾中不时响起应答，岛上有人出门，也有人回家，没有哪一种脚步需要道歉。
 旁|两块木牌在旅行包上轻轻相碰，像一声不急着结束的钟。你知道，这一次走向远方，不会抹掉身后那条路。
 `);
- end('shift','下一班钟声','新主线 · 守钟人的新同伴：漫长的守候终于有人接班。',`
+ end('shift','下一班钟声','守钟人的新同伴：漫长的守候终于有人接班。',`
 旁|第一场交接从一件很小的事开始：守钟人说自己需要离开圆厅一刻钟。话音落下，星盘没有坍塌，海面也没有失去方向。
 蛙.glance|你看，大家真的接住了。奶蛙把空椅子搬到门边，没有催他坐下，只让他知道这里留着可以休息的位置。
 旁|新值班员读完当日记录，逐一确认未完成的请求。她没有模仿旧声音，而是用自己的语气向每个港口问好。
@@ -184,7 +184,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 我|返航时你打开航海册，发现那张空白求助单也夹在其中。纸面没有答案，却已经写好了能够回应的人。
 旁|远处的钟声仍然准时响起，声音没有更宏大，只比从前轻了一点。奶蛙靠在你身边，那只小轮在口袋里温柔地停着。
 `);
- end('morning','替钟塔看一次日出','新主线 · 放下之后：守护过漫长黑夜的人，也拥有离开的清晨。',`
+ end('morning','替钟塔看一次日出','放下之后：守护过漫长黑夜的人，也拥有离开的清晨。',`
 旁|最后一班记录完成时，守钟人仍下意识伸手去碰控制盘。你把已经签好的交接单放到他面前，他才慢慢收回了手。
 蛙.glance|不用再检查一次了，下一班已经检查过。奶蛙站在门外等，没有用倒数催促一个等了太久的人。
 旁|备用机械稳稳报时，岛民按新的表格轮班。星盘没有因为某个人离开就停止，海上的微光也没有因此暗下去。
@@ -198,7 +198,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 我|你把玻璃刻度夹进信封，透过它看见海面上清楚的方向。曾经被锁住的远方，如今只是远方，不再是一种惩罚。
 旁|奶蛙问你回去要不要先吃早餐。你点点头，在钟声之外听见自己肚子的轻响，忽然觉得普通生活已经足够庄重。
 `);
- end('reunion','门响的时候，你真的回来','新主线 · 相逢：一封没有地址的信，终于抵达了一个拥抱。',`
+ end('reunion','门响的时候，你真的回来','相逢：一封没有地址的信，终于抵达了一个拥抱。',`
 旁|试航船离岸时，学徒把铁盒紧紧抱在怀里。奶蛙没有告诉他不要紧张，只分给他一块饼干，陪他听每一次正常的报时。
 我|你把确认抵达的回执交给船长，再沿着岸边寻找约好的旗子。它和地图上画得不太一样，却在正确的位置迎风展开。
 旁|姐姐站在旗杆旁，比信里形容的瘦了一点。学徒跑到一半忽然停下，仿佛怕自己一眨眼，眼前又会变成一面镜子。
@@ -212,7 +212,7 @@ export function rebuildMain(story,endings,chapters,secrets){
 旁|星图最终没有变成耀眼的宝藏，它成了许多能够被确认的抵达。每一盏灯后面，都有人愿意回应敲门声。
 蛙.eager|下一次门响的时候，也记得来看看。奶蛙把铁盒递进你的掌心，像把一个仍然温热的下午，认真交给未来。
 `);
- end('homeward','回家以后，再去远方','新主线 · 归航：冒险没有占据生活，而是在生活里留下下一次出发的位置。',`
+ end('homeward','回家以后，再去远方','归航：冒险没有占据生活，而是在生活里留下下一次出发的位置。',`
 旁|你们把后续试航记录交给管理员，留下能够联系的地址。岛上的工作还没全部完成，但已经不再只能由两个旅人承担。
 蛙.thinking|回去是不是有一点像提前离场？奶蛙站在船边问。你让它看看值班表，上面已经写满真正住在这里的人的名字。
 我|我们没有把事情丢下，只是把承诺交接清楚。你说完仍舍不得，奶蛙也一样，两种心情并没有互相证明谁错了。

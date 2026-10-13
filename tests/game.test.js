@@ -1,5 +1,5 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=8';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=9';
 function setup(preload,initial=[]){
  const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
@@ -8,7 +8,7 @@ function setup(preload,initial=[]){
 }
 let release;const loading=new Promise(r=>release=r);const g=setup(()=>loading),{$,saved,context,imageCache}=g;
 assert.equal(vm.runInContext('ready',context),false);vm.runInContext("enter(fresh())",context);assert.equal(vm.runInContext('playing',context),false);
-release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,5);
+release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,7);
 vm.runInContext('enter(fresh())',context);assert.equal($('portrait-wrap').children[0],imageCache.get(portraits.portraits.normal.src));
 const first=$('portrait-wrap').children[0];$('next').onclick();assert.notEqual($('portrait-wrap').children[0],first);assert.equal($('speaker').textContent,'奶蛙');assert.equal($('next').textContent,'下一句');
 for(let i=0;i<3;i++)$('next').onclick();assert.equal($('choices').children.length,3);$('save').onclick();const manual=saved.get('naiwa-letter-save-v1');
@@ -45,3 +45,8 @@ console.log('PASS: slow expression retains visible portrait, arriving image swap
 late.imageCache.delete(armsSrc);let staleFinish;late.context.loadImage=()=>new Promise(r=>staleFinish=r);vm.runInContext('render()',late.context);late.$('next').onclick();const currentPortrait=late.$('portrait-wrap').children[0];late.imageCache.set(armsSrc,downloaded);staleFinish(downloaded);await Promise.resolve();await Promise.resolve();assert.equal(late.$('portrait-wrap').children[0],currentPortrait);
 const newMain=setup(async()=>[]);await vm.runInContext('bootPromise',newMain.context);vm.runInContext("enter(fresh('adventure'))",newMain.context);for(let i=0;i<5;i++)newMain.$('next').onclick();assert.equal(newMain.$('choices').children.length,2);const choiceNode=vm.runInContext('state.node',newMain.context);newMain.$('choices').children[1].onclick();assert(newMain.$('line').textContent.includes('小本子'));newMain.$('rewind').onclick();assert.equal(vm.runInContext('state.node',newMain.context),choiceNode);newMain.$('choices').children[0].onclick();assert(newMain.$('line').textContent.includes('钥匙'));newMain.$('routes').onclick();assert(newMain.$('modal').open);
 console.log('PASS: scene-six choice, branch-specific dialogue, rewind and new main route tree.');
+const travel=setup(async()=>[]);await vm.runInContext('bootPromise',travel.context);vm.runInContext("enter(fresh('polar'))",travel.context);
+for(let i=0;i<90;i++){const hasChoice=vm.runInContext('!!story[state.node].choices',travel.context);if(hasChoice)travel.$('choices').children[0].onclick();else travel.$('next').onclick();}
+assert.equal(vm.runInContext('story[state.node].ending',travel.context),'polar_haven');assert(!travel.$('celebration').hidden);assert(travel.$('reward').textContent.includes('海岸章'));travel.timers.find(t=>t.ms===9000).fn();assert(travel.$('celebration').hidden);vm.runInContext('render()',travel.context);travel.$('back-home').onclick();assert(travel.$('celebration').hidden);assert.equal(vm.runInContext('collectedRelics(unlocked).length',travel.context),1);
+travel.context.window.matchMedia=()=>({matches:true});vm.runInContext("enter({version:1,node:'polar_end_home_11',history:[]})",travel.context);assert(!travel.$('celebration').hidden);assert(travel.timers.some(t=>t.ms===3500));travel.$('back-home').onclick();assert(travel.$('celebration').hidden);
+console.log('PASS: polar full playthrough, reward and auto-closing celebration, leave cleanup and reduced-motion duration.');
