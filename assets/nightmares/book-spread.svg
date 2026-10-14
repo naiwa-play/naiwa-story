@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+<defs><linearGradient id="paper" x2="1" y2=".2"><stop stop-color="#b7a886"/><stop offset=".08" stop-color="#ded1aa"/><stop offset=".45" stop-color="#e5d9b8"/><stop offset=".5" stop-color="#88765f"/><stop offset=".55" stop-color="#d8c9a5"/><stop offset=".92" stop-color="#e4d6b2"/><stop offset="1" stop-color="#b9a783"/></linearGradient><radialGradient id="ink"><stop stop-color="#413e49"/><stop offset="1" stop-color="#565060" stop-opacity="0"/></radialGradient><linearGradient id="door" x2="0" y2="1"><stop stop-color="#263847"/><stop offset="1" stop-color="#60636b"/></linearGradient></defs>
+<path d="M16 28Q199-6 396 40Q590-6 784 28L785 490Q602 459 401 502Q187 463 15 489Z" fill="#332f3d" stroke="#a59470" stroke-width="2"/>
+<path d="M26 30Q202 9 394 50Q580 9 774 30V479Q577 449 399 493Q205 453 25 479Z" fill="#ac9876"/>
+<path d="M31 20Q216 0 399 42Q591 0 769 20V467Q584 443 399 484Q205 445 31 467Z" fill="url(#paper)"/>
+<g fill="none" stroke="#8f7c59" stroke-width="1.1" opacity=".8"><path d="M51 43Q215 23 377 61V455Q221 423 51 444ZM424 61Q580 23 748 43V444Q573 423 424 455Z"/><path d="M61 52Q215 33 367 70V443Q222 414 61 433M434 70Q580 34 738 52V433Q577 414 434 443"/><path d="M72 69q18-19 32-6m237 7q15 5 12 22M72 415q20 12 28-3m240 14q17-6 10-21M450 91q-3-24 17-27m247-4q16-5 17 17M450 411q-4 16 16 17m244-13q14 10 20-9"/></g>
+<!-- The left engraving: an eye eclipsed by a moon, rooted into a miniature sea. -->
+<circle cx="216" cy="219" r="110" fill="url(#ink)" opacity=".33"/>
+<g fill="none" stroke="#5e5a60" stroke-width="1.3"><circle cx="215" cy="205" r="76" stroke-dasharray="1 7"/><circle cx="215" cy="205" r="83" opacity=".5"/><path d="M132 211Q210 137 291 211Q215 256 132 211Z"/><path d="M142 211Q215 167 282 211"/><circle cx="215" cy="205" r="26"/><path d="M151 169l-9-14m28 4-5-18m23 11-2-19m26 18 2-22m23 25 7-20m14 29 13-17m4 26 18-14"/><path d="M211 251q-35 39-13 88m24-88q22 26 9 71m-25-33-24-6m44 16 33-13m-58 29-39 10m63-9 43 12"/><path d="M112 354q48-13 96 0t96 0m-179 12q47-12 94 0t71 0m-153 14q55-12 122 0"/></g>
+<circle cx="216" cy="204" r="13" fill="#464853"/><circle cx="221" cy="199" r="4" fill="#dcd3b7"/>
+<path d="M220 114a26 26 0 1 1-31-41 29 29 0 0 0 31 41" fill="#8b7857"/>
+<!-- The right engraving: a door that becomes a forest, the first four dreams hidden in its border. -->
+<path d="M505 355V210a81 81 0 0 1 162 0v145Z" fill="url(#door)"/>
+<path d="M520 355V211a66 66 0 0 1 132 0v144" fill="none" stroke="#b4ab8b" stroke-width="2"/>
+<path d="M577 355V248l42-18v125" fill="#c6c4ad" opacity=".7"/><path d="M578 355V248l-21-12v119" fill="#222f3c"/>
+<g stroke="#a2a68f" stroke-width="2" fill="none"><path d="M532 354q38-82 12-151m2 58-23-28m27 4 23-45m-22 98-32-21M642 354q-36-102-17-163m-5 56 23-30m-21 55-27-43m35 76 20-29"/></g>
+<path d="M565 359l-31 33m74-33 34 33m-113-19h102m-112 12h123" stroke="#776e61" fill="none"/>
+<g fill="#695f5b"><path d="M469 106h35l-7 10h-22Zm10-4v-8h16v8Z"/><path d="M686 109l9-20 10 20h-7v11h-6v-11Z"/><path d="M475 396h7v-8h7v8h7v7h-7v8h-7v-8h-7Z"/><path d="M690 399q-10-17 1-17 6 0 5 9 10-8 13 0 2 10-13 14l-2 9Z"/></g>
+<g fill="#83755b"><path d="M207 400l5-10 4 10 11 3-11 3-4 10-5-10-11-3Z"/><path d="M581 96l5-10 4 10 11 3-11 3-4 10-5-10-11-3Z"/></g>
+</svg>

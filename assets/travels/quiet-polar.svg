@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMax slice">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#b5cbd5"/><stop offset=".55" stop-color="#e9e6d9"/><stop offset="1" stop-color="#f5dec8"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#b9d1d4"/><stop offset="1" stop-color="#789cac"/></linearGradient><linearGradient id="ice" x2=".2" y2="1"><stop stop-color="#f5f4e8"/><stop offset="1" stop-color="#a2c4ce"/></linearGradient><radialGradient id="light"><stop stop-color="#fff6dc" stop-opacity=".85"/><stop offset="1" stop-color="#fff6dc" stop-opacity="0"/></radialGradient><linearGradient id="reflection" x2="0" y2="1"><stop stop-color="#e6eeea" stop-opacity=".4"/><stop offset="1" stop-color="#dce9e9" stop-opacity="0"/></linearGradient></defs>
+<path fill="url(#sky)" d="M0 0h1200v800H0z"/><ellipse cx="680" cy="405" rx="390" ry="280" fill="url(#light)"/><circle cx="680" cy="450" r="42" fill="#fff2d5" opacity=".8"/>
+<path d="M0 543L78 526 111 501 144 510 187 472 211 478 244 461 297 506 336 496 398 536 446 539 492 549H0M782 550l51-36 42 8 35-21 24 6 45-46 18 7 22-19 71 61 32-8 78 28v31Z" fill="#9ebbc6" opacity=".46"/>
+<path d="M0 548Q600 542 1200 550V800H0Z" fill="url(#sea)"/>
+<path d="M604 562h156m-178 12h199m-211 17h225m-243 21h261" stroke="#f8e9cc" stroke-width="3" opacity=".35" stroke-linecap="round"/>
+<g opacity=".65"><path d="M83 601l24-31 35 4 18-22 43 9 25 35Z" fill="#dce8e4"/><path d="M161 552l8 43h59l-25-34Z" fill="#a9c7cf"/></g>
+<g><path d="M881 634l24-51 34-9 37-46 29 8 26-17 37 25 40-5 65 90Z" fill="url(#ice)"/><path d="M1005 536l-19 94 63-4-18-107Z" fill="#a0c2ce" opacity=".65"/><path d="M1068 544l-19 82 124 3-65-90Z" fill="#8fb6c6" opacity=".48"/><path d="M881 641l72 59 111 5 109-70Z" fill="url(#reflection)"/></g>
+<g stroke="#e5eeea" stroke-width="1.5" opacity=".35" stroke-linecap="round"><path d="M19 655h156m73-40h98m56 80h119m200-50h79M970 729h157M54 761h148m287-10h142m121 26h146"/></g>
+<path d="M0 752Q106 723 196 744T375 754Q482 764 520 800H0" fill="#e9eeE5"/><path d="M0 767Q135 740 269 768T439 800H0" fill="#f3f2e6"/>
+</svg>

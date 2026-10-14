@@ -1,4 +1,4 @@
-import {scenePortraits} from './portraits.js?v=10';
+import {scenePortraits} from './portraits.js?v=11';
 export function expandDreams(story,endings,secrets){
  const names={旁:'旁白',蛙:'奶蛙',我:'你'};
  function after(id,tag,lines){const n=story[id],last=n.choices?{choices:n.choices}:n.ending?{ending:n.ending}:{next:n.next};delete n.choices;delete n.ending;const rows=lines.trim().split('\n');n.next=tag+'_0';rows.forEach((line,i)=>{const [who,text]=line.split('|'),[name,mood]=who.split('.');story[tag+'_'+i]={chapter:'nightmares',scene:n.scene,speaker:names[name]||name,text,...(i===rows.length-1?last:{next:tag+'_'+(i+1)})};if(mood)scenePortraits[tag+'_'+i]=mood;});}

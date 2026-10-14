@@ -1,7 +1,7 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=10';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=10';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=10';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=10';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=11';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=11';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=11';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=11';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;

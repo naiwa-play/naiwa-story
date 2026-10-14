@@ -61,3 +61,5 @@ travels.css 增加海信、极光、暖窗、极地晨光与观测星夜五种�
 
 背景知识参考：[Visit Iceland 极光季节](https://www.visiticeland.com/the-auroras/)、[British Antarctic Survey 气候情景](https://www.bas.ac.uk/news/scientists-reveal-our-best-and-worst-case-scenarios-for-a-warming-antarctica/)、[BAS 海冰与企鹅繁殖](https://www.bas.ac.uk/news/emperor-penguin-colonies-in-antarctica-suffer-as-sea-ice-diminishes/)。未复制第三方图片或故事。
 2026-10-13 首页动态封面：白色回声改为与惊悚故事集同规格的整行入口；极地封面包含分层冰山、海波与晨光。惊悚封面为 40 秒循环，按翻书、邮轮、林间小道、医院、歌剧院顺序约每 8 秒交叉淡化，内部各层独立运动。两张封面支持独立暂停，系统减少动态效果时显示静态构图。标题调整不改变 polar 存档 ID。
+
+2026-10-14 美术修订：封面海面与冰体分层；邮轮和水纹改为同一 SVG 坐标系并支持暂停。惊悚书籍重绘为眼睛、月亮与林中门扉的旧绘本。海豹重绘为完整曲线插画；极地结算使用远山、海岸与倒影留白构图。冰岛背景增加山体、瀑布水丝、市集与咖啡馆细节，极光背景和结算增加多层光幕及细光丝。已检查桌面与 390px 手机布局，测试及 SVG XML 校验通过。
