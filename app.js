@@ -1,14 +1,38 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=11';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=11';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=11';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=11';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=12';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=12';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=12';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=12';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
 let celebrationTimer;
 function stopCelebration(){clearTimeout(celebrationTimer);$('celebration').hidden=true;$('celebration').className='';}
 function celebrate(ending){stopCelebration();if(!ending?.celebration)return;$('celebration').hidden=false;void $('celebration').offsetWidth;$('celebration').className='wildlife-finale';celebrationTimer=setTimeout(stopCelebration,window.matchMedia('(prefers-reduced-motion: reduce)').matches?3500:9000);}
-const bgm=$('bgm'),voice=$('voice');bgm.volume=.18;
+const bgm=$('bgm'),voice=$('voice');bgm.volume=.18;bgm.loop=true;
+// Keep the user's choice separate from browser/OS pauses; never restart music they switched off.
+let musicWanted=false,musicPending=false,musicBuffering=false;
+function musicLabel(){
+ const active=musicWanted&&!bgm.paused&&!document.hidden;
+ $('music').textContent=!musicWanted?'音乐 · 关':document.hidden?'音乐 · 暂歇':musicBuffering?'音乐 · 缓冲中':active?'音乐 · 开':'音乐 · 点按继续';
+ $('music').setAttribute('aria-pressed',String(musicWanted));
+}
+async function resumeMusic(explicit=false){
+ if(!musicWanted||document.hidden||musicPending)return;
+ musicPending=true;
+ try{await bgm.play();if(!musicWanted||document.hidden)bgm.pause();}
+ catch{if(explicit&&musicWanted&&!document.hidden)notify('音乐暂未播放，请点按音乐按钮重试');}
+ finally{musicPending=false;musicBuffering=false;musicLabel();}
+}
+bgm.onplaying=()=>{musicBuffering=false;musicLabel();};
+bgm.onpause=()=>{musicBuffering=false;musicLabel();};
+bgm.onwaiting=()=>{musicBuffering=true;musicLabel();};
+bgm.onerror=()=>{musicBuffering=false;musicLabel();if(musicWanted)notify('音乐加载失败，请点按音乐按钮重试');};
+// Native looping is primary; recover if a browser nevertheless emits ended.
+bgm.onended=()=>{if(musicWanted&&!document.hidden){bgm.currentTime=0;void resumeMusic();}};
+function resumeAfterGesture(event){if(event.target!==$('music')&&musicWanted&&bgm.paused)void resumeMusic();}
+document.addEventListener('pointerdown',resumeAfterGesture);
+document.addEventListener('keydown',resumeAfterGesture);
+window.addEventListener('pageshow',()=>{if(musicWanted&&bgm.paused)void resumeMusic();});
 function notify(text){$('notice').textContent=text;$('notice').className='show';clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').className='',3500);}
 function read(key){try{return JSON.parse(localStorage.getItem(key));}catch{return null;}}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true;}catch{notify('浏览器无法保存，关闭页面后进度可能丢失');return false;}}
@@ -109,12 +133,12 @@ $('clue').onclick=()=>{const secret=secrets[state.node];if(!secret)return;if(!di
 $('secrets').onclick=()=>{modal('旅途拾遗 · '+discovered.length+' / '+Object.keys(secrets).length);for(const [id,s]of Object.entries(secrets)){const p=document.createElement('p');p.textContent=discovered.includes(id)?s.title+'：'+s.text:'尚未发现 · 留意故事中可以查看的小物件。';$('modal-body').append(p);}};
 $('auto').onclick=()=>{auto=!auto;$('auto').textContent=auto?'自动 · 开':'自动 · 关';$('auto').setAttribute('aria-pressed',String(auto));if(story[state.node].choices||story[state.node].ending){stopAuto();notify('请先选择回答，自动播放不会替你选择');}else schedule();};
 $('history').onclick=()=>{modal('已经说过的话');for(const id of [...state.history,state.node]){const n=story[id],p=document.createElement('p'),b=document.createElement('strong');b.textContent=n.speaker+'：';p.append(b,document.createTextNode(n.text));$('modal-body').append(p);}};
-$('music').onclick=async()=>{if(!bgm.paused){bgm.pause();$('music').textContent='音乐 · 关';$('music').setAttribute('aria-pressed','false');}else{try{await bgm.play();$('music').textContent='音乐 · 开';$('music').setAttribute('aria-pressed','true');}catch{notify('音乐暂时无法播放，请稍后重试');}}};
+$('music').onclick=async()=>{if(musicWanted&&(!bgm.paused||musicPending)){musicWanted=false;bgm.pause();musicLabel();}else{musicWanted=true;if(bgm.error)bgm.load();await resumeMusic(true);}};
 $('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。另有浪漫远行《冰岛海信》与环保远行《白色回声》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；惊悚故事集四幅夜景与远行篇十七幅风景为项目原创 SVG 插画，极地庆典动物由 CSS 绘制。回声站与人物为虚构，动物感谢呈现为奶蛙画中的愿望。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
 $('close').onclick=()=>$('modal').close();
 $('gallery').onclick=()=>{modal('奶蛙的表情与姿态');const grid=document.createElement('div');grid.className='portrait-grid';for(const p of Object.values(portraits)){const card=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.loading='lazy';img.src=p.src;img.alt=p.label;label.textContent=p.label;card.append(img,label);grid.append(card);}$('modal-body').append(grid);};
 document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){stopAuto();bgm.pause();voice.pause();$('music').textContent='音乐 · 关';$('music').setAttribute('aria-pressed','false');}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopAuto();bgm.pause();voice.pause();}else if(musicWanted){void resumeMusic();}musicLabel();});
 let loading=false;
 async function boot(){
  if(loading)return;loading=true;$('retry-load').disabled=true;$('loading-actions').hidden=true;$('loading-label').textContent='正在打包这次旅行的行李…';

@@ -1,10 +1,10 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=11';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=12';
 function setup(preload,initial=[]){
  const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
- const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(){},activeElement:null},window:{scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
- vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache};
+ const events=new Map();const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(type,fn){events.set(type,fn);},hidden:false,activeElement:null},window:{addEventListener(type,fn){events.set(type,fn);},scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
+ vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache,events};
 }
 let release;const loading=new Promise(r=>release=r);const g=setup(()=>loading),{$,saved,context,imageCache}=g;
 assert.equal(vm.runInContext('ready',context),false);vm.runInContext("enter(fresh())",context);assert.equal(vm.runInContext('playing',context),false);
@@ -53,3 +53,16 @@ console.log('PASS: polar full playthrough, reward and auto-closing celebration, 
 
 const promo=setup(async()=>[]);await vm.runInContext('bootPromise',promo.context);promo.$('polar-start').onclick();assert.equal(vm.runInContext('state.node',promo.context),'polar_ocean_0');promo.$('back-home').onclick();promo.$('polar-tree').onclick();assert(promo.$('modal-title').textContent.includes('白色回声'));for(const id of ['dream','polar']){promo.$(id+'-motion').onclick();assert.equal(promo.$(id+'-motion')['aria-pressed'],'true');promo.$(id+'-motion').onclick();assert.equal(promo.$(id+'-motion')['aria-pressed'],'false');}
 console.log('PASS: featured polar entry, route tree and independent animation pause toggles.');
+
+// A background pause is not a user opt-out. Exercise both desktop tabs and mobile interruptions.
+const audio=setup(async()=>[]);await vm.runInContext('bootPromise',audio.context);
+assert.equal(audio.$('bgm').loop,true);
+await audio.$('music').onclick();audio.$('bgm').currentTime=37;
+audio.context.document.hidden=true;audio.events.get('visibilitychange')();assert(audio.$('bgm').paused);assert.equal(audio.$('music')['aria-pressed'],'true');
+audio.context.document.hidden=false;audio.events.get('visibilitychange')();await new Promise(setImmediate);assert(!audio.$('bgm').paused);assert.equal(audio.$('bgm').currentTime,37);
+await audio.$('music').onclick();audio.context.document.hidden=true;audio.events.get('visibilitychange')();audio.context.document.hidden=false;audio.events.get('visibilitychange')();audio.events.get('pointerdown')({target:{}});assert(audio.$('bgm').paused,'Do not resurrect explicitly disabled music');
+audio.$('bgm').play=()=>Promise.reject(Error('NotAllowedError'));await audio.$('music').onclick();assert.equal(audio.$('music').textContent,'音乐 · 点按继续');
+audio.$('bgm').play=function(){this.paused=false;return Promise.resolve();};audio.events.get('pointerdown')({target:{}});await new Promise(setImmediate);assert(!audio.$('bgm').paused,'A later user gesture recovers a blocked resume');
+audio.$('bgm').paused=true;audio.$('bgm').currentTime=79;audio.$('bgm').onended();await new Promise(setImmediate);assert.equal(audio.$('bgm').currentTime,0);assert(!audio.$('bgm').paused);
+let resolvePlay;audio.$('bgm').paused=true;audio.$('bgm').play=()=>new Promise(resolve=>{resolvePlay=()=>{audio.$('bgm').paused=false;resolve();};});const pendingPlay=audio.$('music').onclick();await audio.$('music').onclick();resolvePlay();await pendingPlay;assert(audio.$('bgm').paused,'Late play resolution must respect a newer user stop');assert.equal(audio.$('music')['aria-pressed'],'false');
+console.log('PASS: music loops, resumes at the same position, respects user stop, recovers blocked playback on gesture, and ignores late play completion after stop.');

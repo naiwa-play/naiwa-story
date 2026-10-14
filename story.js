@@ -1,10 +1,10 @@
-import {addTravel} from './travels.js?v=11';
-import {rebuildMain} from './main-story.js?v=11';
-import {completePortraits} from './portraits.js?v=11';
-import {expandDreams} from './dream-expansion.js?v=11';
-import {expandJourneys} from './journeys.js?v=11';
-import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=11';
-import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=11';
+import {addTravel} from './travels.js?v=12';
+import {rebuildMain} from './main-story.js?v=12';
+import {completePortraits} from './portraits.js?v=12';
+import {expandDreams} from './dream-expansion.js?v=12';
+import {expandJourneys} from './journeys.js?v=12';
+import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=12';
+import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=12';
 export {canEnterNightmares};
 export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
