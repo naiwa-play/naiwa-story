@@ -37,6 +37,10 @@ export const relics=[
  {id:'trail',name:'不回头的路标',icon:'径',kind:'map',ends:['wood_exit','wood_memory'],from:'惊悚故事集 · 林间逃脱',text:'奶蛙画下真正走出来的路径，把模仿亲友的回声留在梦里。纸上没有万能捷径，只有你们一起核实过的记号。'},
  {id:'dawn',name:'清晨窗边的纸花',icon:'晨',kind:'leaf',ends:['hospital_wake','hospital_roof'],from:'惊悚故事集 · 医院逃脱',text:'这朵纸花是醒来后折的，没有从病房带走任何东西。奶蛙说，晨风吹过的时候，不需要镜子来证明你在这里。'},
  {id:'curtain',name:'两张零号票',icon:'零',kind:'ticket',ends:['opera_curtain','opera_blank'],from:'惊悚故事集 · 歌剧院逃脱',text:'奶蛙把梦里的票画成两张普通纸船。它们不要求你重新登台，故事也不必为了等一声掌声而永不落幕。'}
+,
+ {id:'city-night-lamp',name:'有营业时间的灯卡',icon:'灯',kind:'ticket',ends:['citynight_corner'],from:'都市夜归 · 灯下还有一个位置',text:'卡片写明灯会熄灭，也写明有空欢迎再来。有限的善意，反而让下一次相遇可以安心期待。'},
+ {id:'city-night-receipt',name:'双人晚饭收据',icon:'饭',kind:'ticket',ends:['citynight_supper','citynight_morning'],from:'都市夜归 · 日常的续篇',text:'皱纸背面留着饭团地图与晚归约定。快乐不必每次从错过开始，也可以提前给彼此空出时间。'},
+ {id:'city-roof-seat',name:'你可以坐这里',icon:'席',kind:'ticket',ends:['cityroof_shared','cityroof_small','cityroof_once'],from:'周日屋顶放映室',text:'奶蛙写给空位的小卡。它既欢迎靠近，也允许离开；一场相遇结束后，这份自由仍被认真保存。'}
 ];
 export const collectedRelics=unlocked=>relics.filter(r=>r.ends.some(id=>unlocked.includes(id)));
 export const rewardFor=id=>relics.find(r=>r.ends.includes(id));

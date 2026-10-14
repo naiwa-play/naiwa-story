@@ -1,0 +1,12 @@
+[class*="city-"].stage .scenery{background:var(--city-art) center 35%/cover no-repeat}[class*="city-"].stage .scenery>*{display:none}[class*="city-"].chapter-card .chapter-art{background:var(--city-art) center 35%/cover no-repeat}[class*="city-"].chapter-card .chapter-art:before,[class*="city-"].chapter-card .chapter-art:after{display:none}
+.city-stop{--city-art:url('assets/urban/city-stop.svg')}
+.city-store{--city-art:url('assets/urban/city-store.svg')}
+.city-laundry{--city-art:url('assets/urban/city-laundry.svg')}
+.city-arcade{--city-art:url('assets/urban/city-arcade.svg')}
+.city-river{--city-art:url('assets/urban/city-river.svg')}
+.city-bus{--city-art:url('assets/urban/city-bus.svg')}
+.city-lobby{--city-art:url('assets/urban/city-lobby.svg')}
+.city-workshop{--city-art:url('assets/urban/city-workshop.svg')}
+.city-roof{--city-art:url('assets/urban/city-roof.svg')}
+.city-roof-night{--city-art:url('assets/urban/city-roof-night.svg')}
+.city-stop .scene-meta,.city-river .scene-meta,.city-roof-night .scene-meta,.city-arcade .scene-meta{color:#fff3d6;text-shadow:0 1px 6px #263a50}

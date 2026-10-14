@@ -1,7 +1,7 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=12';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=12';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=12';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=12';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=13';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=13';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=13';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=13';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
@@ -10,7 +10,12 @@ function stopCelebration(){clearTimeout(celebrationTimer);$('celebration').hidde
 function celebrate(ending){stopCelebration();if(!ending?.celebration)return;$('celebration').hidden=false;void $('celebration').offsetWidth;$('celebration').className='wildlife-finale';celebrationTimer=setTimeout(stopCelebration,window.matchMedia('(prefers-reduced-motion: reduce)').matches?3500:9000);}
 const bgm=$('bgm'),voice=$('voice');bgm.volume=.18;bgm.loop=true;
 // Keep the user's choice separate from browser/OS pauses; never restart music they switched off.
-let musicWanted=false,musicPending=false,musicBuffering=false;
+let musicWanted=false,musicPending=false,musicBuffering=false,musicRevision=0,musicTrack='daily';
+const musicSources={daily:'assets/calm.ogg',nightmares:'assets/music/thirteenth-bell.wav',polar:'assets/music/white-echo.wav',iceland:'assets/music/sea-letter.wav'};
+function selectMusic(chapter){const track=Object.hasOwn(musicSources,chapter)?chapter:'daily';if(track===musicTrack)return;
+ musicTrack=track;musicRevision++;musicPending=false;musicBuffering=false;bgm.pause();bgm.src=musicSources[track];bgm.loop=true;bgm.load();
+ if(musicWanted&&!document.hidden)void resumeMusic();else musicLabel();
+}
 function musicLabel(){
  const active=musicWanted&&!bgm.paused&&!document.hidden;
  $('music').textContent=!musicWanted?'音乐 · 关':document.hidden?'音乐 · 暂歇':musicBuffering?'音乐 · 缓冲中':active?'音乐 · 开':'音乐 · 点按继续';
@@ -18,10 +23,10 @@ function musicLabel(){
 }
 async function resumeMusic(explicit=false){
  if(!musicWanted||document.hidden||musicPending)return;
- musicPending=true;
- try{await bgm.play();if(!musicWanted||document.hidden)bgm.pause();}
- catch{if(explicit&&musicWanted&&!document.hidden)notify('音乐暂未播放，请点按音乐按钮重试');}
- finally{musicPending=false;musicBuffering=false;musicLabel();}
+ musicPending=true;const revision=musicRevision;
+ try{await bgm.play();if(revision!==musicRevision)return;if(!musicWanted||document.hidden)bgm.pause();}
+ catch{if(revision===musicRevision&&explicit&&musicWanted&&!document.hidden)notify('音乐暂未播放，请点按音乐按钮重试');}
+ finally{if(revision===musicRevision){musicPending=false;musicBuffering=false;musicLabel();}}
 }
 bgm.onplaying=()=>{musicBuffering=false;musicLabel();};
 bgm.onpause=()=>{musicBuffering=false;musicLabel();};
@@ -73,11 +78,11 @@ function prepareNext(id){
  if(textOnly)return;const seen=new Set(),queue=[[id,0]],art={};
  while(queue.length){const [node,depth]=queue.shift();if(seen.has(node)||depth>8)continue;seen.add(node);const n=story[node],p=portraitFor(node);if(p)art[p.src]=p;if(n.ending){const m=endingMood(n.ending,endings[n.ending]);art[m.portrait.src]=m.portrait;}for(const next of n.choices?.map(c=>c.to)||[n.next])if(next)queue.push([next,depth+1]);}
  void preloadAssets(art,()=>{});
- const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar)-/.test(scene)))];
- for(const scene of backgrounds)void loadImage('./assets/travels/'+scene+'.svg').catch(()=>{});
+ const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar|city)-/.test(scene)))];
+ for(const scene of backgrounds)void loadImage('./assets/'+(scene.startsWith('city-')?'urban/':'travels/')+scene+'.svg').catch(()=>{});
 }
 function render(){
- stopCelebration();
+ selectMusic(story[state.node].chapter);stopCelebration();
  const n=story[state.node],chapter=chapters[n.chapter],p=portraitFor(state.node);
  $('stage').className='stage '+n.scene+(n.chapter==='nightmares'?' nightmare-stage':'')+(p&&!textOnly?'':' no-portrait');
  $('dream-return').hidden=n.chapter!=='nightmares';
@@ -98,9 +103,9 @@ function render(){
  paths[state.node]=state;write(PATHS,paths);write(AUTO,state);$('load').disabled=!validSave(read(KEY));updateDlc();schedule();
 }
 function enter(s){if(!ready||!validSave(s))return;if(story[s.node].chapter==='nightmares'&&story[state.node].chapter!=='nightmares'){if(!dlcOpen()){notify('请先推进主线至岛城地下检修门，解锁惊悚故事集。');return;}if(!write(WAKE,state))return;}stopAuto();state=s;lastPortrait=null;playing=true;$('home').hidden=true;$('reader').hidden=false;$('back-home').hidden=false;render();window.scrollTo({top:0,behavior:'instant'});}
-function home(){stopCelebration();playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title+(story[state.node].legacy?'（旧版存档）':'');album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
+function home(){selectMusic('daily');stopCelebration();playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title+(story[state.node].legacy?'（旧版存档）':'');album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
 function go(choice){if(!playing)return;if(story[state.node].ending){if(story[state.node].chapter==='prologue')enter(fresh('adventure'));else home();return;}state=advance(state,choice);render();}
-function modal(title){stopAuto();$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal').showModal();}
+function modal(title){stopAuto();$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal').showModal();$('modal-body').scrollTop=0;}
 function routeTree(chapter){
  if(chapter==='nightmares'&&!dlcOpen()){notify('请先推进主线至岛城地下检修门。');return;}
  modal(chapters[chapter].title+' · 路线树');const intro=document.createElement('p');intro.textContent='亮起的节点可以回看与改选；未发现的结局隐藏名称。跳转会更新自动进度，手动存档保留。';$('modal-body').append(intro);
@@ -134,8 +139,12 @@ $('secrets').onclick=()=>{modal('旅途拾遗 · '+discovered.length+' / '+Objec
 $('auto').onclick=()=>{auto=!auto;$('auto').textContent=auto?'自动 · 开':'自动 · 关';$('auto').setAttribute('aria-pressed',String(auto));if(story[state.node].choices||story[state.node].ending){stopAuto();notify('请先选择回答，自动播放不会替你选择');}else schedule();};
 $('history').onclick=()=>{modal('已经说过的话');for(const id of [...state.history,state.node]){const n=story[id],p=document.createElement('p'),b=document.createElement('strong');b.textContent=n.speaker+'：';p.append(b,document.createTextNode(n.text));$('modal-body').append(p);}};
 $('music').onclick=async()=>{if(musicWanted&&(!bgm.paused||musicPending)){musicWanted=false;bgm.pause();musicLabel();}else{musicWanted=true;if(bgm.error)bgm.load();await resumeMusic(true);}};
-$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇独立支线，以及需主线进度解锁的 DLC《惊悚故事集》。另有浪漫远行《冰岛海信》与环保远行《白色回声》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；惊悚故事集四幅夜景与远行篇十七幅风景为项目原创 SVG 插画，极地庆典动物由 CSS 绘制。回声站与人物为虚构，动物感谢呈现为奶蛙画中的愿望。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
+$('credits').onclick=()=>{modal('关于这段旅程');$('modal-body').innerHTML='<p>序章《奶蛙来信》、大冒险主线、三篇旅行支线与两篇都市支线，以及需主线进度解锁的 DLC《惊悚故事集》。另有浪漫远行《冰岛海信》与环保远行《白色回声》。新增表情立绘已按情节接入；服装造型可在角色图鉴欣赏，语音等待主人提供。</p><p>奶蛙图片由项目主人挑选提供，已去背景并生成 WebP 交付版本；原 PNG 保留。</p><p>背景元素：<a href="https://kenney.nl/assets/background-elements" target="_blank" rel="noreferrer">Kenney · Background Elements</a>，CC0；新场景以 CSS 绘制；惊悚故事集四幅夜景与远行篇十七幅风景为项目原创 SVG 插画，极地庆典动物由 CSS 绘制。回声站与人物为虚构，动物感谢呈现为奶蛙画中的愿望。</p><p>配乐：<a href="https://opengameart.org/content/calm-bgm" target="_blank" rel="noreferrer">calm bgm — syncopika</a>，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>。另有项目原创配乐：惊悚《第十三声之后》、极地《冰的呼吸》、冰岛《寄往海风》。进入对应故事自动切换，返回地图恢复日常配乐；默认关闭。</p><p>非官方同人作品。存档仅在当前浏览器，无账号、无云端同步。</p>';};
 $('close').onclick=()=>$('modal').close();
+let backdropStarted=false;
+function outsideModal(event){const r=$('modal').getBoundingClientRect();return event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom;}
+$('modal').onpointerdown=e=>{backdropStarted=e.target===$('modal')&&outsideModal(e);};
+$('modal').onclick=e=>{if(backdropStarted&&e.target===$('modal')&&outsideModal(e))$('modal').close();backdropStarted=false;};
 $('gallery').onclick=()=>{modal('奶蛙的表情与姿态');const grid=document.createElement('div');grid.className='portrait-grid';for(const p of Object.values(portraits)){const card=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.loading='lazy';img.src=p.src;img.alt=p.label;label.textContent=p.label;card.append(img,label);grid.append(card);}$('modal-body').append(grid);};
 document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopAuto();bgm.pause();voice.pause();}else if(musicWanted){void resumeMusic();}musicLabel();});

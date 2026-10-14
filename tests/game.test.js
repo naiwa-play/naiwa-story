@@ -1,14 +1,14 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=12';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=13';
 function setup(preload,initial=[]){
- const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
+ const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},load(){this.paused=true;this.currentTime=0;},getBoundingClientRect(){return {left:100,right:700,top:100,bottom:650};},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
  const events=new Map();const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(type,fn){events.set(type,fn);},hidden:false,activeElement:null},window:{addEventListener(type,fn){events.set(type,fn);},scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
  vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache,events};
 }
 let release;const loading=new Promise(r=>release=r);const g=setup(()=>loading),{$,saved,context,imageCache}=g;
 assert.equal(vm.runInContext('ready',context),false);vm.runInContext("enter(fresh())",context);assert.equal(vm.runInContext('playing',context),false);
-release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,6);
+release([]);await vm.runInContext('bootPromise',context);assert($('reader').hidden);assert.equal($('chapters').children.length,8);
 vm.runInContext('enter(fresh())',context);assert.equal($('portrait-wrap').children[0],imageCache.get(portraits.portraits.normal.src));
 const first=$('portrait-wrap').children[0];$('next').onclick();assert.notEqual($('portrait-wrap').children[0],first);assert.equal($('speaker').textContent,'奶蛙');assert.equal($('next').textContent,'下一句');
 for(let i=0;i<3;i++)$('next').onclick();assert.equal($('choices').children.length,3);$('save').onclick();const manual=saved.get('naiwa-letter-save-v1');
@@ -66,3 +66,22 @@ audio.$('bgm').play=function(){this.paused=false;return Promise.resolve();};audi
 audio.$('bgm').paused=true;audio.$('bgm').currentTime=79;audio.$('bgm').onended();await new Promise(setImmediate);assert.equal(audio.$('bgm').currentTime,0);assert(!audio.$('bgm').paused);
 let resolvePlay;audio.$('bgm').paused=true;audio.$('bgm').play=()=>new Promise(resolve=>{resolvePlay=()=>{audio.$('bgm').paused=false;resolve();};});const pendingPlay=audio.$('music').onclick();await audio.$('music').onclick();resolvePlay();await pendingPlay;assert(audio.$('bgm').paused,'Late play resolution must respect a newer user stop');assert.equal(audio.$('music')['aria-pressed'],'false');
 console.log('PASS: music loops, resumes at the same position, respects user stop, recovers blocked playback on gesture, and ignores late play completion after stop.');
+
+const switching=setup(async()=>[]);await vm.runInContext('bootPromise',switching.context);
+await switching.$('music').onclick();
+for(const [chapter,file]of [['polar','white-echo'],['iceland','sea-letter']]){
+ vm.runInContext("enter(fresh('"+chapter+"'))",switching.context);await new Promise(setImmediate);
+ assert.equal(switching.$('bgm').src,'assets/music/'+file+'.wav');assert(!switching.$('bgm').paused);
+ switching.$('back-home').onclick();await new Promise(setImmediate);assert.equal(switching.$('bgm').src,'assets/calm.ogg');assert(!switching.$('bgm').paused);
+}
+vm.runInContext("selectMusic('nightmares')",switching.context);await new Promise(setImmediate);assert.equal(switching.$('bgm').src,'assets/music/thirteenth-bell.wav');
+await switching.$('music').onclick();vm.runInContext("selectMusic('polar');home()",switching.context);assert(switching.$('bgm').paused);assert.equal(switching.$('music')['aria-pressed'],'false');
+let settle;switching.$('bgm').play=function(){this.paused=false;return new Promise(r=>settle=r);};const pending=switching.$('music').onclick();const oldResolve=settle;
+vm.runInContext("selectMusic('polar')",switching.context);oldResolve();await pending;assert.equal(vm.runInContext('musicPending',switching.context),true);settle();await new Promise(setImmediate);assert.equal(vm.runInContext('musicPending',switching.context),false);
+for(const id of ['routes','gallery','relics']){
+ switching.$(id).onclick();assert(switching.$('modal').open);assert.equal(switching.$('modal-body').scrollTop,0);
+ const inner={target:switching.$('modal'),clientX:110,clientY:120},outer={target:switching.$('modal'),clientX:20,clientY:20};
+ switching.$('modal').onpointerdown(inner);switching.$('modal').onclick(outer);assert(switching.$('modal').open,'Dragging outside must not dismiss');
+ switching.$('modal').onpointerdown(outer);switching.$('modal').onclick(outer);assert(!switching.$('modal').open);
+}
+console.log('PASS: three chapter tracks, home restoration, muted transitions, stale play promise and shared modal outside-dismiss semantics.');

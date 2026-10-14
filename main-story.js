@@ -1,4 +1,4 @@
-import {scenePortraits} from './portraits.js?v=12';
+import {scenePortraits} from './portraits.js?v=13';
 // Keep the old graph intact for saved games; the new entry has its own complete route.
 export function rebuildMain(story,endings,chapters,secrets){
  for(const n of Object.values(story))if(n.chapter==='adventure')n.legacy=true;

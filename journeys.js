@@ -1,4 +1,4 @@
-import {scenePortraits} from './portraits.js?v=12';
+import {scenePortraits} from './portraits.js?v=13';
 // Handwritten scenes inserted without deleting legacy node IDs or saved endings.
 export function expandJourneys(story,endings,secrets){
  const names={旁:'旁白',蛙:'奶蛙',我:'你',员:'管理员',邮:'邮递员',向:'向导'};

@@ -1,10 +1,11 @@
-import {addTravel} from './travels.js?v=12';
-import {rebuildMain} from './main-story.js?v=12';
-import {completePortraits} from './portraits.js?v=12';
-import {expandDreams} from './dream-expansion.js?v=12';
-import {expandJourneys} from './journeys.js?v=12';
-import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=12';
-import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=12';
+import {addUrban} from './urban.js?v=13';
+import {addTravel} from './travels.js?v=13';
+import {rebuildMain} from './main-story.js?v=13';
+import {completePortraits} from './portraits.js?v=13';
+import {expandDreams} from './dream-expansion.js?v=13';
+import {expandJourneys} from './journeys.js?v=13';
+import {chapters,newScenes,newStory,newEndings} from './adventure.js?v=13';
+import {nightmareChapter,nightmareScenes,nightmareStory,nightmareEndings,canEnterNightmares} from './nightmares.js?v=13';
 export {canEnterNightmares};
 export {chapters};
 // Character portraits are defined in portraits.js; owner-selected voice clips are pending.
@@ -49,6 +50,7 @@ expandJourneys(story,endings,secrets);
 expandDreams(story,endings,secrets);
 rebuildMain(story,endings,chapters,secrets);
 addTravel(story,endings,chapters,scenes,secrets);
+addUrban(story,endings,chapters,scenes,secrets);
 completePortraits(story);
 export const fresh=(chapter='prologue')=>({version:1,node:chapters[chapter]?.entry||'arrival',history:[]});
 export function validSave(s){return !!s&&s.version===1&&Object.hasOwn(story,s.node)&&Array.isArray(s.history)&&s.history.length<=200&&s.history.every(id=>typeof id==='string'&&Object.hasOwn(story,id));}

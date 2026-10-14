@@ -1,4 +1,4 @@
-import {scenePortraits} from './portraits.js?v=12';
+import {scenePortraits} from './portraits.js?v=13';
 export const travelEndings={
  iceland_tide:{title:'把海写进收件人',note:'海没有替你回答，你却终于把那句想说的话，交到了对的人手里。',chapter:'iceland',theme:'sea-letter'},
  iceland_aurora:{title:'没有许愿的极光',note:'你们没有向夜空索取永远，只约好认真陪伴下一个普通的早晨。',chapter:'iceland',theme:'northern-silk'},
