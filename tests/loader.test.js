@@ -13,3 +13,13 @@ const waiting=loadImage('stalled.webp');release();await waiting;assert(imageCach
 await assert.rejects(loadImage('retry.webp'));await loadImage('retry.webp');assert(imageCache.has('retry.webp'),'Failed downloads can retry');
 await assert.rejects(loadImage('stalled-timeout.webp',25));
 console.log('PASS: nonblocking preload, late image retained, retry after failure, permanent download timeout.');
+
+// Cached assets should report progress without allocating any timeout or decoding again.
+const originalTimeout=globalThis.setTimeout;
+globalThis.setTimeout=()=>{throw Error('Cached images must not create timeout work');};
+try{
+ const cachedProgress=[];
+ assert.deepEqual(await preloadAssets({one:{src:'good.webp'},duplicate:{src:'good.webp'},two:{src:'retry.webp'}},(done,total)=>cachedProgress.push([done,total])),[]);
+ assert.deepEqual(cachedProgress,[[1,2],[2,2]]);
+}finally{globalThis.setTimeout=originalTimeout;}
+console.log('PASS: cached preload skips timers and preserves deduplicated progress.');
