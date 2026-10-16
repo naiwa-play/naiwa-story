@@ -1,5 +1,5 @@
 import * as relics from '../relics.js';
-import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=13';
+import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=14';
 function setup(preload,initial=[]){
  const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},load(){this.paused=true;this.currentTime=0;},getBoundingClientRect(){return {left:100,right:700,top:100,bottom:650};},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
@@ -71,10 +71,10 @@ const switching=setup(async()=>[]);await vm.runInContext('bootPromise',switching
 await switching.$('music').onclick();
 for(const [chapter,file]of [['polar','white-echo'],['iceland','sea-letter']]){
  vm.runInContext("enter(fresh('"+chapter+"'))",switching.context);await new Promise(setImmediate);
- assert.equal(switching.$('bgm').src,'assets/music/'+file+'.wav');assert(!switching.$('bgm').paused);
+ assert.equal(switching.$('bgm').src,'assets/music/'+file+'.wav?v=14');assert(!switching.$('bgm').paused);
  switching.$('back-home').onclick();await new Promise(setImmediate);assert.equal(switching.$('bgm').src,'assets/calm.ogg');assert(!switching.$('bgm').paused);
 }
-vm.runInContext("selectMusic('nightmares')",switching.context);await new Promise(setImmediate);assert.equal(switching.$('bgm').src,'assets/music/thirteenth-bell.wav');
+vm.runInContext("selectMusic('nightmares')",switching.context);await new Promise(setImmediate);assert.equal(switching.$('bgm').src,'assets/music/thirteenth-bell.wav?v=14');
 await switching.$('music').onclick();vm.runInContext("selectMusic('polar');home()",switching.context);assert(switching.$('bgm').paused);assert.equal(switching.$('music')['aria-pressed'],'false');
 let settle;switching.$('bgm').play=function(){this.paused=false;return new Promise(r=>settle=r);};const pending=switching.$('music').onclick();const oldResolve=settle;
 vm.runInContext("selectMusic('polar')",switching.context);oldResolve();await pending;assert.equal(vm.runInContext('musicPending',switching.context),true);settle();await new Promise(setImmediate);assert.equal(vm.runInContext('musicPending',switching.context),false);
@@ -85,3 +85,17 @@ for(const id of ['routes','gallery','relics']){
  switching.$('modal').onpointerdown(outer);switching.$('modal').onclick(outer);assert(!switching.$('modal').open);
 }
 console.log('PASS: three chapter tracks, home restoration, muted transitions, stale play promise and shared modal outside-dismiss semantics.');
+
+// Use the real entry/return paths, not just the track selector, to catch chapter routing regressions.
+const chapterAudio=setup(async()=>[],[['naiwa-letter-endings-v1',JSON.stringify(['harbor_light'])]]);
+await vm.runInContext('bootPromise',chapterAudio.context);await chapterAudio.$('music').onclick();
+for(const chapter of ['iceland','polar']){
+ vm.runInContext("enter(fresh('"+chapter+"'))",chapterAudio.context);await new Promise(setImmediate);
+ const prior=chapterAudio.$('bgm').src;
+ chapterAudio.$('dlc-start').onclick();await new Promise(setImmediate);
+ assert.notEqual(chapterAudio.$('bgm').src,prior);assert(chapterAudio.$('bgm').src.includes('thirteenth-bell.wav?v=14'));
+ assert(chapterAudio.$('music').title.includes('惊悚故事集'));
+ chapterAudio.$('dream-return').onclick();await new Promise(setImmediate);assert.equal(chapterAudio.$('bgm').src,prior);
+ assert(!chapterAudio.$('bgm').paused);chapterAudio.$('back-home').onclick();assert.equal(chapterAudio.$('bgm').src,'assets/calm.ogg');
+}
+console.log('PASS: actual Iceland/polar → nightmare → wake → home flow selects and restores distinct tracks.');

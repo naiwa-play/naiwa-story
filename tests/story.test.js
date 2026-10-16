@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {story,endings,chapters,secrets,fresh,advance,validSave} from '../story.js';
-import {portraitFor,portraits,scenePortraits,endingMood} from '../portraits.js?v=13';
+import {portraitFor,portraits,scenePortraits,endingMood} from '../portraits.js?v=14';
 import fs from 'node:fs';
 import {canEnterNightmares,nightmareMilestones} from '../nightmares.js';
 const reached=new Set();function walk(s,depth=0){assert(depth<150,'No cyclic story');assert(validSave(s));const n=story[s.node];if(n.ending){assert(endings[n.ending]);reached.add(n.ending);return;}if(n.choices)n.choices.forEach((_,i)=>walk(advance(s,i),depth+1));else{assert(n.next&&story[n.next]);walk(advance(s),depth+1);}}

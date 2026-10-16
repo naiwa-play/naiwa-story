@@ -1,6 +1,6 @@
-import {night} from './urban-night.js?v=13';
-import {roof} from './urban-roof.js?v=13';
-import {scenePortraits} from './portraits.js?v=13';
+import {night} from './urban-night.js?v=14';
+import {roof} from './urban-roof.js?v=14';
+import {scenePortraits} from './portraits.js?v=14';
 export function addUrban(story,endings,chapters,scenes,secrets){
  Object.assign(scenes,{'city-stop':'夜间站台 · 错过之后','city-store':'街角便利店 · 热饭与灯','city-laundry':'自助洗衣店 · 最后一桶衣物','city-arcade':'骑楼下 · 放慢脚步','city-river':'河边站台 · 回家的地图','city-bus':'夜间公交 · 有人同行','city-lobby':'公寓门厅 · 一张邀请','city-workshop':'社区活动室 · 准备的午后','city-roof':'公共屋顶 · 预留空位','city-roof-night':'屋顶银幕 · 灯光亮起'});
  const names={旁:'旁白',蛙:'奶蛙',你:'你',周:'小周',程:'阿程',林:'林姨',陈:'陈师傅',岚:'阿岚',许:'老许'};

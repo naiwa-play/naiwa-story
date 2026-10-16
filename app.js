@@ -1,7 +1,7 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=13';
-import {portraits,portraitFor,endingMood} from './portraits.js?v=13';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=13';
-import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=13';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=14';
+import {portraits,portraitFor,endingMood} from './portraits.js?v=14';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=14';
+import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=14';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
 let lastPortrait=null;
@@ -11,12 +11,14 @@ function celebrate(ending){stopCelebration();if(!ending?.celebration)return;$('c
 const bgm=$('bgm'),voice=$('voice');bgm.volume=.18;bgm.loop=true;
 // Keep the user's choice separate from browser/OS pauses; never restart music they switched off.
 let musicWanted=false,musicPending=false,musicBuffering=false,musicRevision=0,musicTrack='daily';
-const musicSources={daily:'assets/calm.ogg',nightmares:'assets/music/thirteenth-bell.wav',polar:'assets/music/white-echo.wav',iceland:'assets/music/sea-letter.wav'};
+const musicSources={daily:'assets/calm.ogg',nightmares:'assets/music/thirteenth-bell.wav?v=14',polar:'assets/music/white-echo.wav?v=14',iceland:'assets/music/sea-letter.wav?v=14'};
+const musicTitles={daily:'日常 · calm bgm',nightmares:'惊悚故事集 · 第十三声之后',polar:'白色回声 · 冰的呼吸',iceland:'冰岛海信 · 寄往海风'};
 function selectMusic(chapter){const track=Object.hasOwn(musicSources,chapter)?chapter:'daily';if(track===musicTrack)return;
  musicTrack=track;musicRevision++;musicPending=false;musicBuffering=false;bgm.pause();bgm.src=musicSources[track];bgm.loop=true;bgm.load();
  if(musicWanted&&!document.hidden)void resumeMusic();else musicLabel();
 }
 function musicLabel(){
+ $('music').setAttribute('title',musicTitles[musicTrack]);
  const active=musicWanted&&!bgm.paused&&!document.hidden;
  $('music').textContent=!musicWanted?'音乐 · 关':document.hidden?'音乐 · 暂歇':musicBuffering?'音乐 · 缓冲中':active?'音乐 · 开':'音乐 · 点按继续';
  $('music').setAttribute('aria-pressed',String(musicWanted));
