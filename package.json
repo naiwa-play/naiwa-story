@@ -1,1 +1,1 @@
-{"name":"naiwa-story","private":true,"type":"module","scripts":{"test":"node tests/story.test.js && node tests/game.test.js && node tests/loader.test.js","start":"node server.js"}}
+{"name":"naiwa-story","private":true,"type":"module","scripts":{"test":"node tests/story.test.js && node tests/game.test.js && node tests/loader.test.js && node tests/damiao.test.js","start":"node server.js"}}
