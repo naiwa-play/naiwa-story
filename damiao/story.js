@@ -1,4 +1,4 @@
-import {continueSecond} from './second.js?v=2';
+import {continueSecond} from './second.js?v=3';
 export const nodes={};
 const page=(id,title,scene,term,text,next,extra={})=>nodes[id]={title,scene,term,text:text.split('\n'),next,...extra};
 const option=(label,to,effect={},reply='')=>({label,to,effect,reply});

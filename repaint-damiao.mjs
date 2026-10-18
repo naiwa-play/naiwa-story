@@ -100,32 +100,6 @@ a+=P('M0 797L1026 648 1440 783V1000H0Z','url(#wood)')+P('M0 821L1440 1000M286 75
 for(let i=0;i<6;i++){let x=617+i%3*84,y=615+Math.floor(i/3)*63;a+=R(x,y,67,50,['#789d86','#b7c5a6','#d4cda7'][i%3],3)+C(x+33,y+17,7,'#e6dcc1')+P(`M${x+17} ${y+44}q0-22 16-21q17 0 17 21Z`,'#758d78');}
 a+=P('M140 823L379 790 502 846 264 889Z','#efdfbc')+P('M160 825L281 853M208 814L323 842M258 808L372 831','none','#b6ad88',2)+P('M366 851L455 882','none','#557b6b',5)+P('M1094 769h105l-12 100h-82Z','#d8d4b1')+P('M1198 787q60-12 43 40q-11 22-49 15','none','#d8d4b1',11)+tree(1173,713,.43)+P('M1146 704h56l-10 57h-36Z','#af8e69')+E(330,460,710,610,'url(#light)');frame('home',a);
 
-// Three-quarter, faceless student. Anatomy is drawn; blur is only a thin edge treatment.
-const student=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 900"><defs><linearGradient id="shirt" x2="1" y2=".5"><stop stop-color="#e8e5cf"/><stop offset=".6" stop-color="#c9d3c2"/><stop offset="1" stop-color="#90a99e"/></linearGradient><linearGradient id="trousers" x2="1" y2="1"><stop stop-color="#526f6b"/><stop offset="1" stop-color="#294b50"/></linearGradient><linearGradient id="fade" x2="0" y2="1"><stop offset=".8" stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="edges"><rect width="420" height="900" fill="url(#fade)"/></mask><filter id="soft"><feGaussianBlur stdDeviation=".65"/></filter></defs><g mask="url(#edges)" filter="url(#soft)">
-${E(206,856,121,17,'#34545022')}
-${P('M149 494Q178 478 246 493L277 626 266 807 230 813 213 645 191 596 170 709 160 816 121 811 127 652Z','url(#trousers)')}
-${P('M150 503L157 635 137 796M238 512L251 633 249 797','none','#83a197',3)}
-${P('M120 802L157 806 165 834Q156 847 111 845L87 837Q87 824 120 816Z','#d1d7c7','#6f8b83',2)}
-${P('M230 800L265 802 278 824 304 837Q312 852 274 850L228 838Z','#cad1c2','#6f8b83',2)}
-${P('M129 832L158 835M237 832L287 844','none','#729286',3)}
-${P('M155 197L190 177 229 182 272 212 294 302 273 370 261 511Q198 535 139 505L125 360 107 292 119 226Z','url(#shirt)','#8da79b',2)}
-${P('M123 227Q93 249 86 329L75 409 100 420 121 341 146 274Z','url(#shirt)','#92aa9c',2)}
-${P('M76 401L100 409 94 435 97 449Q94 458 88 448L85 432 79 450Q71 456 68 444L71 420Z','#c1c6b1')}
-${P('M264 217Q290 221 302 261L321 330Q326 343 311 354L273 382 256 361 286 333 262 286Z','url(#shirt)','#92aa9c',2)}
-${P('M259 356L277 374 261 384Q251 390 244 379L234 360 242 348Q248 345 254 354Z','#c5c9b4')}
-${P('M125 320L108 386M280 254L303 328','none','#4b786c',9)}
-${P('M140 487Q201 508 264 489L263 511Q202 532 140 507Z','#557b6e')}
-${P('M167 213L180 276 198 486M244 229L250 309M155 401L163 466M212 426L226 488','none','#a3b8aa',2)}
-${P('M169 170L173 199 198 219 218 198 214 167Z','#bdc7b7')}
-${P('M170 194L198 217 182 238 155 207ZM218 194L198 217 216 235 233 211Z','#477166')}
-${P('M158 89Q184 64 220 86L239 113 236 153 217 181 185 180 163 155 152 121Z','#a3b5a9')}
-${P('M155 128L144 111 150 89 142 84 162 62 178 61 190 49 217 62 236 67 249 97 242 119 231 139 221 121 215 99 186 106 171 122 165 151 156 143Z','#355754')}
-${P('M160 89Q179 67 208 72M163 103Q182 80 220 86','none','#4f7068',3)}
-${P('M145 240Q170 221 194 242L222 402Q217 431 158 424L119 396 118 295Z','#57776c','#41675e',3)}
-${P('M151 257L177 252 199 399 156 404 133 384 133 296Z','#6d8b79')}
-${P('M137 339L192 342 200 393 144 395Z','#4a6e63','#91a690',2)}
-${P('M184 219Q210 204 233 217L254 357','none','#355e58',12)}
-${P('M187 217Q211 210 230 219L248 338','none','#92ab95',3)}
-</g></svg>`;
-fs.writeFileSync('damiao/art/student.svg',student);
-console.log('Repainted nine scenes; added reverse observatory and student portrait; retained the three approved scenes.');
+// The hand-painted student is an independently generated transparent WebP.
+// Rebuilding campus SVGs must never replace that portrait.
+console.log('Rebuilt nine revised campus scenes and reverse observatory.');

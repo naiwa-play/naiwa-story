@@ -1,6 +1,6 @@
-import {showLetter} from './letter.js?v=2';
-import {nodes,places,studyOptions,questions} from './story.js?v=2';
-import {fresh,valid,apply,report,assignClass,destination,STREAMS,enterSecond} from './model.js?v=2';
+import {showLetter} from './letter.js?v=3';
+import {nodes,places,studyOptions,questions} from './story.js?v=3';
+import {fresh,valid,apply,report,assignClass,destination,STREAMS,enterSecond} from './model.js?v=3';
 const $=id=>document.getElementById(id),termNames=['雾中序幕','高一 · 上','高一 · 下','高二 · 上','高二 · 下','高三 · 上','高三 · 下'];
 export function start({preview=false}={}){
  if(preview){const b=document.createElement('button');b.textContent='校样工具';b.onclick=proofTools;document.querySelector('.tools').prepend(b);}
@@ -19,7 +19,14 @@ export function start({preview=false}={}){
  function save(){try{localStorage.setItem(key,JSON.stringify(state));$('save-status').textContent=preview?'本机测试存档 · 与正式游玩分开':'这一页已收好';}catch{$('save-status').textContent='暂时无法保存，请保持此页面打开。';}}
  function text(tag,content,parent,cls){const e=document.createElement(tag);e.textContent=content;if(cls)e.className=cls;parent.append(e);return e;}
  function button(label,fn,parent=$('interaction'),detail){const b=text('button',label,parent);if(detail)text('small',detail,b);b.onclick=fn;return b;}
- function proofTools(){const body=$('notebook-body');body.replaceChildren();$('notebook-title').textContent='本机校样';text('p','这里可以检查新场景、试读第二轮和预览空白来信。正式网站不显示这些工具。',body);button('从第二轮开头试读',()=>{body.replaceChildren();text('p','这会重置本机测试卷的阅读位置，正式存档不变。',body);button('确认试读第二轮',()=>{state=fresh();state.node='second-gate';$('notebook').close();render();},body);button('返回校样工具',proofTools,body);},body);button('预览故事之后的来信',()=>{$('notebook').close();showLetter('second-normal',{preview:true});},body);text('h3','场景画册',body);const gallery=text('div','',body,'proof-gallery');for(const [id,label]of [...Object.entries(places),['desk',['故事之后 · 课桌']],['student',['第二轮 · 校服身影']]]){const figure=text('figure','',gallery);const img=document.createElement('img');img.src='./art/'+id+'.svg?v=2';img.alt=label[0];img.loading='lazy';figure.append(img);text('figcaption',label[0],figure);}if(!$('notebook').open)$('notebook').showModal();body.scrollTop=0;}
+ function proofTools(){
+  const body=$('notebook-body');body.replaceChildren();$('notebook-title').textContent='本机校样';text('p','试读会更换本机测试进度，正式存档不变。也可以只展开画册或预览留白来信。',body);
+  function trial(label,node,group){button(label,()=>{body.replaceChildren();text('p','这会重置本机测试卷的阅读位置，正式存档不变。',body);button('确认试读',()=>{state=fresh();state.node=node;enterSecond(state);if(group){state.second.group=group;state.second.study=group==='励志一班'?10:6;}$('notebook').close();render();},body);button('返回校样工具',proofTools,body);},body);}
+  trial('从第二轮开头试读','second-gate');trial('试读普通四班后半程','second-pause','普通四班');trial('试读励志一班后半程','second-one-pause','励志一班');
+  button('预览故事之后的来信',()=>{$('notebook').close();showLetter('second-normal',{preview:true});},body);text('h3','场景画册',body);const gallery=text('div','',body,'proof-gallery');
+  for(const [id,label]of [...Object.entries(places),['desk',['故事之后 · 课桌']],['student',['第二轮 · 水彩少年背影']]]){const figure=text('figure','',gallery);const img=document.createElement('img');img.src=id==='student'?'./art/student-watercolor.webp?v=3':'./art/'+id+'.svg?v=3';img.alt=label[0];img.loading='lazy';figure.append(img);text('figcaption',label[0],figure);}
+  if(!$('notebook').open)$('notebook').showModal();body.scrollTop=0;
+ }
  $('scene-expand').onclick=()=>{const body=$('notebook-body');body.replaceChildren();$('notebook-title').textContent=places[nodes[state.node].scene][0];const img=document.createElement('img');img.className='full-landscape';img.alt=$('landscape').alt;img.src=$('landscape').src;body.append(img);$('notebook').showModal();};
  function effect(e){state=apply(state,e);}
  function move(id,entry){if(busy||!nodes[id])return;busy=true;if(entry)state.log.push(entry);delete state.pendingChoice;state.node=id;save();render();busy=false;$('title').focus({preventScroll:true});}
@@ -42,7 +49,7 @@ export function start({preview=false}={}){
  function render(){const n=nodes[state.node];if(n.round===2)enterSecond(state);const nextId=n.route?n.route(state):n.next;$('gate').hidden=true;$('reader').hidden=false;$('journal').hidden=false;$('sound').hidden=false;
   if(!state.visited.includes(state.node))state.visited.push(state.node);if(n.memory&&!state.memories.includes(n.memory))state.memories.push(n.memory);if(n.round===2)state.round=2;
   $('era').textContent=(n.round===0?'雾中':(n.round===2?'第二回 · 我':'第一回 · 奶蛙'))+' / '+termNames[n.term];$('title').textContent=n.title;$('folio').textContent=n.round===0?'山中有回声':n.round===2?'同一座山 · 另一种心境':termNames[n.term];$('prose').replaceChildren();for(const p of n.text)text('p',p,$('prose'));if(n.variant)text('p',n.variant(state),$('prose'),'aside');
-  $('place').textContent=n.scene==='classroom'&&n.term>=5?'怀真楼 · 教室':places[n.scene][0];$('season').textContent=places[n.scene][1];const art='./art/'+n.scene+'.svg?v=2';if($('landscape').getAttribute('src')!==art)$('landscape').src=art;$('landscape').alt=places[n.scene].join('，');$('scene').dataset.round=n.round??1;$('scene-verse').textContent=n.scene==='corridor'?'再长的石阶\n也有一天会走完':n.scene==='terrace'?'山河不语\n回声有期':n.scene==='field'?'在倒数之前\n记住这一片天':'风经过这里\n也经过你';void portrait(n);
+  $('place').textContent=n.scene==='classroom'&&n.term>=5?'怀真楼 · 教室':places[n.scene][0];$('season').textContent=places[n.scene][1];const art='./art/'+n.scene+'.svg?v=3';if($('landscape').getAttribute('src')!==art)$('landscape').src=art;$('landscape').alt=places[n.scene].join('，');$('scene').dataset.round=n.round??1;$('scene-verse').textContent=n.scene==='corridor'?'再长的石阶\n也有一天会走完':n.scene==='terrace'?'山河不语\n回声有期':n.scene==='field'?'在倒数之前\n记住这一片天':'风经过这里\n也经过你';void portrait(n);
   $('paper').classList.remove('arrive');void $('paper').offsetWidth;$('paper').classList.add('arrive');$('interaction').replaceChildren();$('feedback').textContent='';$('next').hidden=!nextId;$('next').textContent=n.type==='ending'?'听见另一份回声':'翻过这一页';$('next').onclick=()=>move(nextId);
   if(n.inspect){const wrap=document.createElement('div');wrap.className='inspect';$('interaction').append(wrap);for(const [label,detail]of n.inspect){const d=document.createElement('details');text('summary',label,d);text('p',detail,d);wrap.append(d);}}
   if(n.choices){$('next').hidden=true;for(const [index,o] of n.choices.entries()){const b=button(o.label,()=>{if(state.pendingChoice)return;effect(o.effect);if(n.type==='song'){state.song=o.reply;state.adopted=state.bond+state.voice>=9||o.reply==='dance';if(state.adopted)effect({bond:1,voice:1});}if(o.reply&&n.type!=='song'){state.pendingChoice={node:state.node,index};save();for(const b of $('interaction').querySelectorAll('button'))b.disabled=true;$('feedback').textContent=o.reply;$('next').hidden=false;$('next').onclick=()=>move(o.to,n.title+' · '+o.label);}else move(o.to,n.title+' · '+o.label);});if(o.locked){b.disabled=true;text('small',o.locked,b);}}}
@@ -54,9 +61,16 @@ export function start({preview=false}={}){
   if(n.type==='placement'){text('div',state.group,$('interaction'),'class-result');text('p',state.group.startsWith('励志')?'期末表现达到这一方向的励志班分配标准，名单已确定。':'你被分入这一方向的班级。平行班的分配随本次旅程确定，刷新不会重新抽签。',$('interaction'),'note');}
   if(n.type==='song-result'){const songs={campus:'校园歌',ballad:'小众情歌',dance:'扭秧歌'};text('p',state.adopted?'大家采纳了你的'+songs[state.song]+'，排练从一句认真商量开始。':'你的建议没能说服多数同学，大家最终排起了扭秧歌。没有被采纳确实遗憾，但你没有因此退出这次共同的排练。',$('interaction'),'aside');}
   if(n.type==='ending'){const result=destination(state);const message=state.bond>=9?'灯下有故人':state.study>=30?'山外有长路':'岁月有余温';text('div',message,$('interaction'),'ending-name');text('p',result.tier,$('interaction'));text('p',state.bond>=9?'总有人记得你的歌声、你的笨拙，还有你说过会来的那一次。':'你把认真生活的证据，留在了那些没有被排名的日子里。',$('interaction'));text('small','升学去向为剧情模拟，不对应现实招生分数线。',$('interaction'));}
-  if(n.type==='volume-end'){text('p','这一卷暂读到高二上。后来的合唱、毕业与更深的山中回声，仍在续写。',$('interaction'),'volume-note');button('收好这一卷，回到山门',()=>$('leave').click());button('翻看这次拾到的回忆',journal);}
+  $('paper').classList.toggle('closing-page',['second-ending','rest-ending'].includes(n.type));
+  if(n.type==='second-ending'){
+   const c=text('div','',$('interaction'),'closing-verses');text('span','风把那年的名字，',c);text('span','留在一张不必重写的纸上。',c);
+   button('合上故事，看看桌上的来信',()=>showLetter(n.ending,{onClose:()=>{$('save-status').textContent='故事已读完，信已收好；可以随时重新打开。';}}));
+   button('收好回忆，回到山门',()=>$('leave').click());
+  }
+  if(n.type==='rest-ending'){text('p','这一夜，先回到有人等你的地方。',$('interaction'),'closing-verses');button('收好回忆，回到山门',()=>$('leave').click());button('翻看拾年簿',journal);}
+  if(n.type==='volume-end'){text('p',n.note||'这一卷暂告一段落，后面的山中旧事仍在续写。',$('interaction'),'volume-note');button('收好这一卷，回到山门',()=>$('leave').click());button('翻看这次拾到的回忆',journal);}
   $('terms').replaceChildren();for(let i=1;i<=6;i++){const e=text('span',termNames[i],$('terms'));if(n.term===i)e.setAttribute('aria-current','step');}
-  save();const next=nodes[nextId];if(next){const img=new Image();img.src='./art/'+next.scene+'.svg?v=2';}window.scrollTo({top:0,behavior:'instant'});
+  save();const next=nodes[nextId];if(next){const img=new Image();img.src='./art/'+next.scene+'.svg?v=3';}window.scrollTo({top:0,behavior:'instant'});
  }
  render();
 }
