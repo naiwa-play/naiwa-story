@@ -1,10 +1,10 @@
-import {RELEASE} from './model.js?v=1';
+import {RELEASE} from './model.js?v=2';
 const $=id=>document.getElementById(id);
 const localPreview=document.documentElement.dataset.preview==='local'&&['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 let serverTime=0,checkedAt=0,checking=false,unlocked=false,started=false;
-async function unlock(){if(unlocked)return;unlocked=true;$('countdown').textContent='第一卷：奶蛙的三年，与第二轮的第一道回声';$('release-status').textContent=localPreview?'本机测试卷 · 正式网站仍按时解锁':'山门已开，故人可归';$('open').hidden=false;$('retry-time').hidden=true;}
+async function unlock(){if(unlocked)return;unlocked=true;$('countdown').textContent='第一卷：奶蛙的三年，与我的山中旧事';$('release-status').textContent=localPreview?'本机测试卷 · 正式网站仍按时解锁':'山门已开，故人可归';$('open').hidden=false;$('retry-time').hidden=true;}
 async function check(){if(checking||unlocked)return;checking=true;try{if(localPreview){await unlock();return;}const response=await fetch('../?damiao-clock='+Math.floor(Date.now()/60000),{method:'HEAD',cache:'no-store'});const date=response.headers.get('date');if(!response.ok||!date||!Number.isFinite(Date.parse(date)))throw Error('clock');serverTime=Date.parse(date);checkedAt=performance.now();if(serverTime>=RELEASE)await unlock();else{$('release-status').textContent='封卷中 · 2026.10.20 00:00（北京时间）';$('retry-time').hidden=true;tick();}}catch{$('release-status').textContent='暂时无法核对开卷时间，请联网后重试。';$('retry-time').hidden=false;}finally{checking=false;}}
 function tick(){if(unlocked||!serverTime)return;const remaining=RELEASE-(serverTime+performance.now()-checkedAt);if(remaining<=0){void check();return;}const total=Math.ceil(remaining/1000),days=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60);$('countdown').textContent=`距开卷 ${days} 天 ${h} 时 ${m} 分`;}
 $('retry-time').onclick=check;
-$('open').onclick=async()=>{if(!unlocked)return;$('open').disabled=true;try{const {start}=await import('./reader.js?v=1');if(!started){start({preview:localPreview});started=true;}else{$('gate').hidden=true;$('reader').hidden=false;}$('open').textContent='续读山中旧事';}catch{$('release-status').textContent='书页暂未加载成功，请重试。';}finally{$('open').disabled=false;}};
+$('open').onclick=async()=>{if(!unlocked)return;$('open').disabled=true;try{const {start}=await import('./reader.js?v=2');if(!started){start({preview:localPreview});started=true;}else{$('gate').hidden=true;$('reader').hidden=false;}$('open').textContent='续读山中旧事';}catch{$('release-status').textContent='书页暂未加载成功，请重试。';}finally{$('open').disabled=false;}};
 void check();setInterval(tick,1000);setInterval(check,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)void check();});

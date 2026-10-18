@@ -49,3 +49,6 @@ for(const id of ids){const dusk=['field','sealed','night','terrace','observatory
  fs.writeFileSync('damiao/art/'+id+'.svg',svg);
 }
 console.log('Created twelve original mountain-campus scenes.');
+
+// Apply the revised edition after generating the retained originals.
+await import('./repaint-damiao.mjs');
