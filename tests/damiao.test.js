@@ -4,21 +4,22 @@ import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {nodes,places,studyOptions,questions} from '../damiao/story.js';
 import {fresh,valid,apply,report,assignClass,destination,STREAMS,RELEASE,enterSecond} from '../damiao/model.js';
+import {placement,createScore,tracks} from '../damiao/presentation.js';
 import {graduationLetter,letterEndings} from '../damiao/letter.js';
 const seen=new Set();function visit(id,parents=[]){assert(!parents.includes(id),'cycle '+id);if(seen.has(id))return;seen.add(id);const n=nodes[id];assert(n);assert(places[n.scene]);assert(fs.existsSync(new URL('../damiao/art/'+n.scene+'.svg',import.meta.url)));assert(n.text.join('').length>=(n.type==='study'?80:100),id+' needs prose');if(n.frog)assert(fs.existsSync(new URL('../assets/portraits/'+n.frog+'.webp',import.meta.url)));for(const next of [n.next,...(n.routes||[]),...(n.choices||[]).filter(c=>!c.locked).map(c=>c.to)].filter(Boolean))visit(next,[...parents,id]);}
 visit('mist');assert.equal(seen.size,Object.keys(nodes).length);assert.equal(Object.values(nodes).filter(n=>n.type==='study').length,12);assert.equal(Object.values(nodes).filter(n=>n.type==='exam').length,4);assert.equal(RELEASE,Date.parse('2026-10-19T16:00:00Z'));
 for(let i=1;i<=6;i++)assert.equal(Object.values(nodes).filter(n=>n.term===i&&n.type==='study').length,2);
 let low=fresh(12),high=fresh(12);for(let i=0;i<4;i++){low=apply(low,studyOptions[2].effect);high=apply(high,studyOptions[0].effect);}high.study+=4;high.focus="science";low.answers[2]=3;high.answers[2]=9;for(const s of [low,high])s.marks=[{phase:2,scores:report(s,2)}];assert(assignClass(low).startsWith('普通'));assert(assignClass(high).startsWith('励志'));assert.equal(assignClass(low),assignClass(JSON.parse(JSON.stringify(low))));
 for(const stream of Object.keys(STREAMS)){high.stream=stream;assert(assignClass(high));}
-for(const s of [low,high])for(const r of report(s,6))assert(r.score>=0&&r.score<=r.max);assert.equal(report(low,1).length,9);assert(valid(fresh(),nodes));assert(!valid({...fresh(),study:Infinity},nodes));assert(!valid({...fresh(),exam:{node:'mist',index:99}},nodes));assert.equal(graduationLetter,'');assert.deepEqual(letterEndings,['second-normal','fifth-dawn']);
+for(const s of [low,high])for(const r of report(s,6))assert(r.score>=0&&r.score<=r.max);assert.equal(report(low,1).length,9);assert(valid(fresh(),nodes));assert(!valid({...fresh(),study:Infinity},nodes));assert(!valid({...fresh(),exam:{node:'mist',index:99}},nodes));assert(graduationLetter.startsWith('各位好呀，非常感谢能够游玩到这里'));assert(graduationLetter.includes('第500天'));assert(graduationLetter.endsWith('能够铭刻下我们一路走来的所有奇迹吧。'));assert(graduationLetter.split('\n\n').length===7);assert.deepEqual(letterEndings,['second-normal','fifth-dawn']);
 // Run the actual reader with a tiny DOM to exercise all twelve study points,
 // all four complete exams, refreshes, first-person transition and preview isolation.
 function setup(saved=new Map()){
- const letters=[];
- class Element{constructor(){this.children=[];this.hidden=false;this.textContent='';this.dataset={};this.style={};this.disabled=false;this.classList={add(){},remove(){},toggle(){}};}append(...v){this.children.push(...v);}replaceChildren(){this.children=[];}setAttribute(k,v){this[k]=v;}getAttribute(k){return this[k]??null;}querySelectorAll(selector){return this.children.flatMap(c=>[...(c.tag==='button'?[c]:[]),...c.querySelectorAll?.(selector)||[]]);}focus(){}click(){if(!this.disabled)this.onclick?.();}showModal(){this.open=true;}close(){this.open=false;}remove(){}getBoundingClientRect(){return {left:10,right:500,top:10,bottom:500};}}
+ const letters=[],audios=[],events={};
+ class Element{constructor(){this.children=[];this.hidden=false;this.textContent='';this.dataset={};this.style={setProperty(k,v){this[k]=v;}};this.disabled=false;this.classList={add(){},remove(){},toggle(){}};}append(...v){this.children.push(...v);}replaceChildren(){this.children=[];}setAttribute(k,v){this[k]=v;}getAttribute(k){return this[k]??null;}querySelectorAll(selector){return this.children.flatMap(c=>[...(c.tag==='button'?[c]:[]),...c.querySelectorAll?.(selector)||[]]);}focus(){}click(){if(!this.disabled)this.onclick?.();}showModal(){this.open=true;}close(){this.open=false;}remove(){}getBoundingClientRect(){return {left:10,right:500,top:10,bottom:500};}}
  const els=new Map(),$=id=>{if(!els.has(id))els.set(id,new Element());return els.get(id);};
- const context=vm.createContext({nodes,places,studyOptions,questions,fresh,valid,apply,report,assignClass,destination,STREAMS,enterSecond,structuredClone,showLetter(id,options){letters.push(id);options?.onClose?.();},Image:class{decode(){return Promise.resolve();}},Audio:class{paused=true;pause(){this.paused=true;}play(){this.paused=false;return Promise.resolve();}},document:{getElementById:$,createElement(tag){const e=new Element();e.tag=tag;return e;},querySelector(){return {prepend(){}};},addEventListener(){},hidden:false},window:{scrollTo(){}},localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},console});
- vm.runInContext(fs.readFileSync(new URL('../damiao/reader.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,'').replace('export function start','function start'),context);vm.runInContext('start({preview:true})',context);return {$,saved,letters};
+ const context=vm.createContext({nodes,places,studyOptions,questions,fresh,valid,apply,report,assignClass,destination,STREAMS,enterSecond,placement,createScore,structuredClone,showLetter(id,options){letters.push(id);options?.onClose?.();},Image:class{decode(){return Promise.resolve();}},Audio:class{constructor(){audios.push(this);}paused=true;load(){}addEventListener(){}pause(){this.paused=true;}play(){this.paused=false;return Promise.resolve();}},document:{getElementById:$,createElement(tag){const e=new Element();e.tag=tag;return e;},querySelector(){return {prepend(){}};},addEventListener(k,fn){events[k]=fn;},hidden:false},window:{scrollTo(){},addEventListener(){}},localStorage:{getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},console});
+ vm.runInContext(fs.readFileSync(new URL('../damiao/reader.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,'').replace('export function start','function start'),context);vm.runInContext('start({preview:true})',context);return {$,saved,letters,audios,events};
 }
 let game=setup();const getState=()=>JSON.parse(game.saved.get('naiwa-damiao-preview-v1'));
 for(let turn=0;turn<350;turn++){
@@ -38,7 +39,7 @@ for(const intense of [false,true])for(const deduction of [0,1]){
  const start=fresh(18);start.node='second-gate';start.study=intense?0:99;
  const store=new Map([['naiwa-damiao-preview-v1',JSON.stringify(start)]]);let run=setup(store);
  for(let turn=0;turn<180;turn++){
-  const s=JSON.parse(store.get('naiwa-damiao-preview-v1')),n=nodes[s.node];if(n.type==='volume-end')break;
+  const s=JSON.parse(store.get('naiwa-damiao-preview-v1')),n=nodes[s.node];if(s.node==='second-next-volume'||['second-ending','rest-ending'].includes(n.type))break;
   const buttons=run.$('interaction').querySelectorAll('button').filter(b=>!b.disabled);
   if(buttons.length){const index=['second-first-plan','second-online-day','second-spring-plan'].includes(s.node)&&intense?1:s.node==='second-flower-missing'?deduction:0;buttons[index].click();}
   else{assert(!run.$('next').hidden,s.node);run.$('next').click();}
@@ -64,6 +65,50 @@ for(const sunset of ['open','closed'])for(const sports of [0,1])for(const outsid
  if(sunset==='closed')assert(!run.$('interaction').querySelectorAll('button').some(b=>b.textContent.includes('来信')));
 }
 const old=fresh();old.node='volume-end';old.round=2;old.visited=['second-meeting'];old.study=40;const migrated=setup(new Map([['naiwa-damiao-preview-v1',JSON.stringify(old)]]));migrated.$('next').click();assert.equal(JSON.parse(migrated.saved.get('naiwa-damiao-preview-v1')).node,'second-sunset');assert.equal(JSON.parse(migrated.saved.get('naiwa-damiao-preview-v1')).second.study,1);
+// Continue both community outcomes through the actual reader, including weaker
+// memories, optional grounding scenes, refreshes and the final blank letter.
+for(const closeTies of [false,true]){
+ const start=fresh(7);start.node='second-next-volume';
+ const store=new Map([['naiwa-damiao-preview-v1',JSON.stringify(start)]]);let run=setup(store);
+ for(let step=0;step<130;step++){
+  const s=JSON.parse(store.get('naiwa-damiao-preview-v1')),n=nodes[s.node];if(s.node==='fifth-dawn')break;
+  assert.equal(run.audios.length,1);assert.equal(run.audios[0].src,n.round===5?tracks.fifth.src:tracks.campus.src);
+  assert.equal(run.$('scene').dataset.noise,n.noise||(n.round===5?'heavy':n.round===4?'light':'clear'));
+  const buttons=run.$('interaction').querySelectorAll('button').filter(b=>!b.disabled);
+  if(buttons.length){
+   const optional=['third-margin','third-request','fourth-route','fourth-photo','fourth-rehearsal','fourth-boundary','fifth-name','fifth-flower','fifth-night'];
+   buttons[!closeTies&&optional.includes(s.node)?buttons.length-1:0].click();
+  }else{assert(!run.$('next').hidden,s.node+' must continue');run.$('next').click();}
+  if(step%7===0)run=setup(store);
+ }
+ const end=JSON.parse(store.get('naiwa-damiao-preview-v1'));assert.equal(end.node,'fifth-dawn');assert(valid(end,nodes));
+ assert(end.visited.includes(closeTies?'fourth-festival':'fourth-smallnight'));assert(end.visited.includes('third-ring'));assert.equal(end.round,5);
+ if(!closeTies)for(const id of ['fifth-paper-help','fifth-card-help','fifth-night-help'])assert(end.visited.includes(id));
+ assert.deepEqual(run.letters,[]);assert.equal(run.$('scene').dataset.noise,'clear');
+ run.$('sound').click();await new Promise(setImmediate);assert(!run.audios[0].paused);
+ run.$('interaction').querySelectorAll('button').find(b=>b.textContent.includes('桌上的来信')).click();assert.deepEqual(run.letters,['fifth-dawn']);assert(run.audios[0].paused,'afterword stops the collapse music');
+ run.$('leave').click();assert(run.$('reader').hidden);assert(run.$('effects').hidden);
+}
+assert(placement({scene:'field',round:2})[2]<35,'the athlete must not fill a wide shot');
+assert.notDeepEqual(placement({scene:'gate',round:2}),placement({scene:'corridor',round:2}));
+assert.equal(placement({scene:'classroom',round:2}),null,'no giant standing person between classroom desks');
+assert.equal(placement({scene:'jinyin',round:3}),null,'the male portrait must not represent the senior girl');
+assert.equal(placement({scene:'field',round:1}),null);assert.equal(placement({scene:'field',round:5,portrait:false}),null);
+assert.equal(Object.values(nodes).filter(n=>n.text.join('').includes('真是一场，大庙千秋。')).length,1);
+// Audio source lifetime: no restart for a page turn, no resurrection after an
+// asynchronous play(), background pause/resume, retry after rejection, and reset
+// from fifth-life music to the original campus score.
+const listeners={},doc={hidden:false,addEventListener(k,fn){listeners[k]=fn;}};
+let resolvePlay,label,plays=0,loads=0,rejectPlay=false;
+const audio={paused:true,src:'',pause(){this.paused=true;},load(){loads++;},addEventListener(){},play(){plays++;this.paused=false;return rejectPlay?Promise.reject(Error('gesture required')):new Promise(resolve=>resolvePlay=resolve);}};
+const score=createScore(audio,doc,x=>label=x);score.select(4);assert(audio.loop);assert.equal(audio.preload,'none');assert(audio.paused);
+score.toggle();score.stop();resolvePlay();await new Promise(setImmediate);assert(audio.paused);assert(!label.wanted);
+score.toggle();resolvePlay();await new Promise(setImmediate);const before=plays;score.select(4);assert.equal(plays,before);assert.equal(loads,1);
+score.select(5);assert.equal(audio.src,tracks.fifth.src);assert.equal(loads,2);resolvePlay();await new Promise(setImmediate);
+doc.hidden=true;listeners.visibilitychange();assert(audio.paused);doc.hidden=false;listeners.visibilitychange();resolvePlay();await new Promise(setImmediate);assert(!audio.paused);
+score.stop();score.select(2);assert(audio.paused);assert.equal(audio.src,tracks.campus.src);rejectPlay=true;score.toggle();await new Promise(setImmediate);assert(label.failed);assert(!label.wanted);
+rejectPlay=false;score.toggle();resolvePlay();await new Promise(setImmediate);assert(label.wanted);assert(!label.failed);
+for(const track of Object.values(tracks)){const file=new URL('../damiao/'+track.src.replace('./','').split('?')[0],import.meta.url);assert(fs.statSync(file).size>100000);assert(fs.statSync(file).size<4000000);}
 assert(!valid({...fresh(),second:{study:Infinity,support:0,sunset:'open'}},nodes));
 for(const [id,hash]of [['corridor','b2a101ce460504cc65630cc506c39b7734d52f23aa9d70237146ad733f754ab9'],['dawn','b2a101ce460504cc65630cc506c39b7734d52f23aa9d70237146ad733f754ab9'],['observatory','b9d2e6fbb6785c3506349307e5d89cbd2613e9b3edf1cd91ff1f99bd12154506']])assert.equal(createHash('sha256').update(fs.readFileSync(new URL('../damiao/art/'+id+'.svg',import.meta.url))).digest('hex'),hash,id+' approved artwork preserved');
 assert.equal(places.field[0],'王月恒铭操场');assert.equal(places.sealed[0],'王月恒铭操场外');assert(nodes['second-room'].text.join('').includes('蒋琳'));assert(nodes['second-four'].text.join('').includes('周芸'));assert(places['observatory-reverse']);
@@ -80,4 +125,4 @@ assert(!(await gate({date:'Mon, 19 Oct 2026 16:00:00 GMT'}))('open').hidden);
 assert((await gate({fail:true}))('open').hidden);
 assert((await gate({date:'Sun, 18 Oct 2026 00:00:00 GMT',preview:true}))('open').hidden);
 assert(!(await gate({preview:true,host:'127.0.0.1'}))('open').hidden);
-console.log(`PASS: Damiao ${seen.size} pages, both second-life classes and flower deductions, independent study values, old checkpoint migration, approved art preservation, full reader playthrough and reload safety, private preview saves, server-time release boundary and blank afterword.`);
+console.log(`PASS: Damiao ${seen.size} pages, both second-life classes and flower deductions, independent study values, old checkpoint migration, approved art preservation, full reader playthrough and reload safety, private preview saves, server-time release boundary and author afterword, later-life branches, noise stages and audio lifecycle.`);

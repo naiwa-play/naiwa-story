@@ -33,6 +33,38 @@ function paving(y=700){let a=P(`M0 ${y}H1440V1000H0Z`,'url(#floor)');for(let i=0
 function grass(x,y,s=1){return G(x,y,s,P('M0 0Q-14-20-19-39M0 0Q6-32 18-44M1 0Q22-20 36-19M-1 0Q-31-14-40-9','none','#6a8766',3));}
 function desk(x,y,s=1){let a=P('M0 0L150-7 192 30 18 43Z','url(#wood)','#b29670',1.5)+P('M18 43L192 30v11L18 55Z','#99845f')+P('M22 54L17 146M174 43L181 134','none','#506961',7)+P('M32 80L159 69M45 71L161 61V85L45 96Z','#76877a','#536f65',2)+P('M39 113L125 107 153 121 53 132Z','#bfaa80')+P('M49 131L49 169M142 123L149 159','none','#5d7365',5)+P('M45 90L126 83 133 112 51 119Z','#a9a888');a+=P('M27 8L79 6 94 22 40 25Z','#e9e3c9')+P('M84 7L130 4 146 19 98 23Z','#d4d6bb')+P('M50 11l25-1M55 17l24-1','none','#8c9d88',1);return G(x,y,s,a);}
 
+// 金银台: the blue ring and silver rising fins are taken from the supplied
+// photograph. The photograph itself and its metadata are never published.
+function jinyin(night=false){
+ let b=hills()+block(-250,335,.8);
+ for(let i=0;i<14;i++)b+=tree(260+i*102,570+(i%3)*24,1.2+(i%4)*.22,i<5);
+ b+=P('M0 1000V798L1440 612V1000Z','#7e8871')+P('M0 928L1440 721V1000H0Z','url(#floor)');
+ b+=P('M470 738L1124 665 1240 791 543 899Z','#b9bca2')+P('M543 899L1240 791V813L543 923Z','#6d8475');
+ // Stone red plinth, silver sphere, and thin radial supports.
+ b+=P('M753 651L876 629 976 670 955 785 795 807 717 757Z','#ae806b')+P('M795 692L976 670 955 785 795 807Z','#936b59')+P('M753 651L876 629 976 670 795 692 717 675Z','#c39b7a');
+ for(const [x,y]of [[730,661],[786,667],[847,674],[904,670]])b+=P(`M790 455L${x} ${y}`,'none','#d7d9ca',5);
+ b+=C(790,450,39,'#b8c7bf')+P('M771 421Q796 409 818 436','none','#eef0dc',7);
+ // Back half of the ring is occluded by the rising metal, front half covers it.
+ b+=P('M554 423C577 310 1030 308 1086 410L1084 442C1008 353 615 353 555 452Z','#375e72')+P('M554 423C596 331 1023 330 1086 410','none','#608b98',8);
+ b+=P('M874 683C952 546 903 362 804 208C981 320 1045 536 949 689Z','#dce0ce')+P('M874 683C934 500 885 343 804 208C948 369 978 550 920 681Z','#a6bbb5');
+ b+=P('M837 686C914 506 820 342 771 227C912 351 938 547 889 690Z','#e6e7d7')+P('M837 686C896 509 824 354 771 227C874 382 907 549 866 688Z','#bccbc1');
+ b+=P('M555 426C582 525 1002 531 1084 419L1084 450C1011 568 592 563 555 461Z','#315a6b')+P('M555 426C596 515 1008 526 1084 419','none','#4b7c8a',13)+P('M571 461C658 536 982 534 1072 455','none','#294958',5);
+ // A branch and lantern frame the low viewpoint without obscuring the sculpture.
+ b+=tree(55,750,2.3)+tree(1419,714,1.9);
+ b+=P('M189 818L239 373M239 385L307 392','none','#344b43',9)+P('M270 392L307 370 348 394 307 404Z','#35483f')+P('M280 398L330 400 326 467 282 458Z','#e1d4a6','#344b43',6)+P('M301 402V461','none','#425248',4);
+ for(let i=0;i<19;i++)b+=G(65+i*13,819-i*4,.65,grass(0,0,2));
+ // Foreground balustrade follows the uphill vanishing line.
+ for(let i=0;i<26;i++){let x=i*58,y=816-x*.105;b+=P(`M${x} ${y}l12-1v136l-12 2Z`,'#bfc5b3');}
+ b+=P('M0 801L1440 649V678L0 835Z','#cbd1be')+P('M0 810L1440 658','none','#e0e1cb',5)+P('M0 931L1440 777V802L0 958Z','#adbba9');
+ for(let i=0;i<6;i++){let x=8+i*285,y=787-x*.105;b+=P(`M${x} ${y}l31-4v174l-31 4Z`,'url(#stone)')+P(`M${x-4} ${y}v-22l39-4v22Z`,'#d4d7bf');}
+ b+=P('M0 962L1440 806V842L0 998Z','#577669')+R(0,0,1440,1000,'url(#paper)');
+ if(night){b+=R(0,0,1440,1000,'#14334a80')+E(1030,175,450,380,'url(#light)')+C(1068,156,29,'#e9e5c5');for(let i=0;i<22;i++)b+=C(390+(i*193)%900,50+(i*47)%240,1.2,'#ecedd9aa');}
+ return b;
+}
+frame('jinyin',jinyin());frame('jinyin-night',jinyin(true));
+let grain='';let seed=431;for(let i=0;i<2400;i++){seed=(seed*1664525+1013904223)>>>0;const x=seed%320;seed=(seed*1664525+1013904223)>>>0;const y=seed%200;grain+=R(x,y,i%6===0?2:1,1,i%5===0?'#809089':'#fffdf4');}
+fs.writeFileSync('damiao/art/static.svg',`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200">${grain}</svg>`);
+
 // Gate: stone pylons, an open accordion gate, a receding lane and arched windows.
 let a=hills()+block(535,340,.95)+tree(1190,675,1.45)+tree(315,560,1.45)+tree(1410,680,1.6);
 a+=P('M0 1000L645 638H870L1440 1000Z','#b9c5b0')+P('M487 1000L705 637M1000 1000L817 637','none','#dbe0c8',3);
