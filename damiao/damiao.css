@@ -21,20 +21,34 @@
 @keyframes student-arrive{from{opacity:0;transform:translateX(12px)}to{opacity:.9;transform:translateX(0)}}
 .closing-page{background:radial-gradient(ellipse at 90% 10%,#fff8d8aa,transparent 65%),#f6f1e4}.closing-verses{font:20px/2.3 "Songti SC",SimSun,serif;letter-spacing:.12em;color:#778565;padding:18px 0 22px;border-top:1px solid #b5bb9944}.closing-verses span{display:block;animation:closing-line 2.4s ease both}.closing-verses span+span{animation-delay:.55s}@keyframes closing-line{from{opacity:0;filter:blur(4px);transform:translateY(9px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}@media(max-width:760px){.closing-verses{font-size:17px}}@media(prefers-reduced-motion:reduce){.closing-verses span,#silhouette{animation:none!important}}
 
-/* Disturbance stays inside the painting. Prose, buttons and captions remain
-   clear. No full-screen strobe: a textured veil and a slow displaced memory. */
-.memory-static,.memory-echo{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2.4s ease;z-index:2}
+/* All signal damage is contained by the painting. Chapter four inherits the
+   former chapter-five treatment; chapter five adds displaced RGB image slices,
+   broken colour bars and a rolling tracking band. Text has a separate layer. */
+.signal-filters{position:absolute;pointer-events:none}
+.memory-static,.memory-echo,.memory-signal{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2.4s ease;z-index:2}
 .memory-static:before{content:'';position:absolute;inset:-12%;background:url('./art/static.svg?v=4') 0 0/320px 200px;animation:memory-grain .9s steps(1,end) infinite;animation-play-state:paused}
 .memory-static:after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,#eef3e4aa,transparent 48%,#f8f3e770),repeating-linear-gradient(transparent 0 5px,#eef5e733 5px 6px);mask-image:linear-gradient(#000,transparent 38%,transparent 65%,#000)}
 .memory-echo{background:var(--scene-art) center/100% 100%;clip-path:polygon(0 31%,100% 31%,100% 35%,0 35%,0 68%,100% 68%,100% 71%,0 71%);filter:saturate(.4);animation:memory-slip 9s ease-in-out infinite;animation-play-state:paused}
-.scene[data-noise="light"] .memory-static{opacity:.10}.scene[data-noise="light"] .memory-echo{opacity:.10}
 .scene[data-noise="heavy"] .memory-static{opacity:.39}.scene[data-noise="heavy"] .memory-static:before{animation-duration:.38s}
 .scene[data-noise="heavy"] .memory-echo{opacity:.45}.scene[data-noise="heavy"] #landscape{filter:saturate(.55) contrast(.93)}
+.scene[data-noise="broken"] .memory-static{opacity:.64}.scene[data-noise="broken"] .memory-static:before{animation-duration:.26s;background-image:url('./art/signal-snow.svg?v=5');background-size:256px 160px}
+.scene[data-noise="broken"] #landscape{filter:saturate(.62) contrast(1.08)}
+.scene[data-noise="broken"] .memory-echo{opacity:.94;filter:url(#damiao-rgb-split) saturate(1.8);animation:signal-tear 7.6s steps(1,end) infinite;clip-path:polygon(0 24%,100% 24%,100% 36%,0 36%,0 65%,100% 65%,100% 74%,0 74%)}
+.memory-signal{display:none;overflow:hidden;transition:none}
+.scene[data-noise="broken"] .memory-signal{display:block;opacity:1}
+/* The coloured fault occupies small torn sections, rather than replacing the
+   whole picture with a test card. Its horizontal edges carry fine scan lines. */
+.memory-signal:before{content:'';position:absolute;left:-8%;width:116%;top:48%;height:17%;opacity:.82;background:repeating-linear-gradient(0deg,#10172388 0 1px,transparent 1px 4px),linear-gradient(90deg,#d8e6b9 0 8%,#d4de47 8%22%,#31ced9 22%41%,#48a47c 41%56%,#e164b1 56%73%,#425baf 73%88%,#d76563 88%100%);clip-path:polygon(0 18%,14% 18%,14% 58%,32% 58%,32% 0,59% 0,59% 35%,76% 35%,76% 12%,100% 12%,100% 70%,89% 70%,89% 100%,49% 100%,49% 80%,21% 80%,21% 94%,0 94%);animation:signal-fragments 8.8s steps(1,end) infinite}
+.memory-signal:after{content:'';position:absolute;left:0;width:100%;top:-16%;height:14%;background:linear-gradient(transparent,#11202f66 35%,#14252fbb 67%,#b7d9ddaa 69%,#91e1df55 71%,transparent 76%),repeating-linear-gradient(0deg,transparent 0 3px,#243d5b44 3px 4px);animation:signal-tracking 6.8s linear infinite}
 .scene[data-noise="settling"] .memory-static{opacity:.06}
-.scene[data-noise="light"] .memory-static:before,.scene[data-noise="heavy"] .memory-static:before,.scene[data-noise="light"] .memory-echo,.scene[data-noise="heavy"] .memory-echo{animation-play-state:running}
+.scene[data-noise="heavy"] .memory-static:before,.scene[data-noise="broken"] .memory-static:before,.scene[data-noise="heavy"] .memory-echo{animation-play-state:running}
 .scene-caption,.scene-bottom,.scene-verse,#scene-expand{position:relative;z-index:3}.scene-bottom,.scene-verse,#scene-expand{position:absolute}
-.scene[data-effects="soft"] .memory-static{opacity:.055}.scene[data-effects="soft"] .memory-echo{opacity:0}.scene[data-effects="soft"] .memory-static:before{animation:none}
+.scene[data-effects="soft"] .memory-static{opacity:.055}.scene[data-effects="soft"] .memory-echo{opacity:0;animation:none}.scene[data-effects="soft"] .memory-static:before{animation:none}.scene[data-effects="soft"] .memory-signal{display:none}
 .scene[data-noise="clear"] .memory-static,.scene[data-noise="clear"] .memory-echo{opacity:0}
 @keyframes memory-grain{0%,100%{transform:translate(0,0)}25%{transform:translate(-19px,11px)}50%{transform:translate(23px,-16px)}75%{transform:translate(-9px,-25px)}}
 @keyframes memory-slip{0%,55%,100%{transform:translateX(0)}63%,72%{transform:translateX(5px)}82%{transform:translateX(-3px)}}
-@media(prefers-reduced-motion:reduce){.memory-echo{display:none}.scene .memory-static{opacity:.06}.memory-static:before{animation:none}.scene[data-noise="clear"] .memory-static{opacity:0}}
+@keyframes signal-tear{0%,100%{transform:translateX(-1.1%)}18%{transform:translate(2.8%,.4%)}25%{transform:translate(-3.2%,-.3%)}32%,57%{transform:translateX(.7%);clip-path:polygon(0 24%,100% 24%,100% 36%,0 36%,0 65%,100% 65%,100% 74%,0 74%)}64%{transform:translateX(-2.1%);clip-path:polygon(0 16%,100% 16%,100% 23%,0 23%,0 52%,100% 52%,100% 67%,0 67%)}73%{transform:translate(3.4%,.5%)}82%{transform:translateX(-.6%)}}
+@keyframes signal-fragments{0%,100%{top:48%;transform:translateX(-3%);height:17%}24%{top:69%;transform:translateX(4%);height:8%}41%{top:21%;transform:translateX(-5%);height:10%}57%{top:52%;transform:translateX(2%);height:15%}76%{top:37%;transform:translateX(-1%);height:6%}}
+@keyframes signal-tracking{to{transform:translateY(915%)}}
+body:has(dialog[open]) .memory-echo,body:has(dialog[open]) .memory-static:before,body:has(dialog[open]) .memory-signal:before,body:has(dialog[open]) .memory-signal:after{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.memory-echo,.scene .memory-signal{display:none}.scene .memory-static{opacity:.06}.memory-static:before{animation:none}.scene[data-noise="clear"] .memory-static{opacity:0}}

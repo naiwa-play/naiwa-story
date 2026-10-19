@@ -11,7 +11,7 @@ export function start({preview=false}={}){
  $('sound').onclick=()=>score.toggle();
  window.addEventListener('pagehide',()=>score.stop());
  let softEffects=false;try{softEffects=localStorage.getItem('naiwa-damiao-soft-effects')==='yes';}catch{}
- function effects(n){$('scene').dataset.noise=n.noise||(n.round===5?'heavy':n.round===4?'light':'clear');$('scene').dataset.effects=softEffects?'soft':'full';$('effects').hidden=(n.round??1)<4;$('effects').textContent=softEffects?'画面动效 · 轻':'画面动效 · 完整';$('effects').setAttribute('aria-pressed',String(!softEffects));}
+ function effects(n){$('scene').dataset.noise=n.noise||(n.round===5?'broken':n.round===4?'heavy':'clear');$('scene').dataset.effects=softEffects?'soft':'full';$('effects').hidden=(n.round??1)<4;$('effects').textContent=softEffects?'画面动效 · 轻':'画面动效 · 完整';$('effects').setAttribute('aria-pressed',String(!softEffects));}
  $('effects').onclick=()=>{softEffects=!softEffects;try{localStorage.setItem('naiwa-damiao-soft-effects',softEffects?'yes':'no');}catch{}effects(nodes[state.node]);};
  $('leave').onclick=()=>{$('reader').hidden=true;$('gate').hidden=false;for(const id of ['effects','sound','journal'])$(id).hidden=true;score.stop();window.scrollTo({top:0,behavior:'instant'});};
  document.addEventListener('damiao-resume',()=>{for(const id of ['sound','journal'])$(id).hidden=false;effects(nodes[state.node]);});

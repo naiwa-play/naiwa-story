@@ -73,7 +73,7 @@ for(const closeTies of [false,true]){
  for(let step=0;step<130;step++){
   const s=JSON.parse(store.get('naiwa-damiao-preview-v1')),n=nodes[s.node];if(s.node==='fifth-dawn')break;
   assert.equal(run.audios.length,1);assert.equal(run.audios[0].src,n.round===5?tracks.fifth.src:tracks.campus.src);
-  assert.equal(run.$('scene').dataset.noise,n.noise||(n.round===5?'heavy':n.round===4?'light':'clear'));
+  assert.equal(run.$('scene').dataset.noise,n.noise||(n.round===5?'broken':n.round===4?'heavy':'clear'));
   const buttons=run.$('interaction').querySelectorAll('button').filter(b=>!b.disabled);
   if(buttons.length){
    const optional=['third-margin','third-request','fourth-route','fourth-photo','fourth-rehearsal','fourth-boundary','fifth-name','fifth-flower','fifth-night'];
@@ -95,6 +95,17 @@ assert.equal(placement({scene:'classroom',round:2}),null,'no giant standing pers
 assert.equal(placement({scene:'jinyin',round:3}),null,'the male portrait must not represent the senior girl');
 assert.equal(placement({scene:'field',round:1}),null);assert.equal(placement({scene:'field',round:5,portrait:false}),null);
 assert.equal(Object.values(nodes).filter(n=>n.text.join('').includes('真是一场，大庙千秋。')).length,1);
+// The stronger fifth-life treatment remains optional, survives a reload and
+// comes back with its controls after leaving and reopening the book.
+const damaged=fresh(23);damaged.node='fifth-gate';
+let damageRun=setup(new Map([['naiwa-damiao-preview-v1',JSON.stringify(damaged)]]));
+assert.equal(damageRun.$('scene').dataset.noise,'broken');assert.equal(damageRun.$('scene').dataset.effects,'full');
+damageRun.$('effects').click();assert.equal(damageRun.$('scene').dataset.effects,'soft');
+damageRun=setup(damageRun.saved);assert.equal(damageRun.$('scene').dataset.effects,'soft');
+damageRun.$('leave').click();damageRun.events['damiao-resume']();assert(!damageRun.$('effects').hidden);
+damageRun.$('effects').click();assert.equal(damageRun.$('scene').dataset.effects,'full');
+const fourth=fresh(24);fourth.node='fourth-gate';
+assert.equal(setup(new Map([['naiwa-damiao-preview-v1',JSON.stringify(fourth)]])).$('scene').dataset.noise,'heavy');
 // Audio source lifetime: no restart for a page turn, no resurrection after an
 // asynchronous play(), background pause/resume, retry after rejection, and reset
 // from fifth-life music to the original campus score.
