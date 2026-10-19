@@ -136,4 +136,24 @@ assert(!(await gate({date:'Mon, 19 Oct 2026 16:00:00 GMT'}))('open').hidden);
 assert((await gate({fail:true}))('open').hidden);
 assert((await gate({date:'Sun, 18 Oct 2026 00:00:00 GMT',preview:true}))('open').hidden);
 assert(!(await gate({preview:true,host:'127.0.0.1'}))('open').hidden);
+// The user-requested phone link is a separate, unlisted public preview. It
+// imports the current shared layout, omits the release script and keeps preview
+// saves. Failed requests can retry; reopening does not create another reader.
+const phoneHTML=fs.readFileSync(new URL('../damiao/mobile-test.html',import.meta.url),'utf8');
+assert(phoneHTML.includes('noindex,nofollow,noarchive'));
+assert(!fs.readFileSync(new URL('../index.html',import.meta.url),'utf8').includes('mobile-test.html'));
+assert(!fs.readFileSync(new URL('../damiao/index.html',import.meta.url),'utf8').includes('mobile-test.html'));
+const phoneScript=phoneHTML.match(/<script type="module">([\s\S]*?)<\/script>/)[1];
+const phoneEls=new Map(),phoneEl=id=>{if(!phoneEls.has(id))phoneEls.set(id,{hidden:true,textContent:''});return phoneEls.get(id);};
+let failPhone=true,failReader=true,starts=0,resumes=0,importURL='',previewOption=false;
+const phoneHead=[],phoneBody=[];
+const phoneDoc={getElementById:phoneEl,querySelector:phoneEl,head:{append:x=>phoneHead.push(x)},body:{replaceChildren:(...x)=>phoneBody.splice(0,phoneBody.length,...x)},importNode:x=>x,dispatchEvent:e=>{if(e.type==='damiao-resume')resumes++;}};
+const parsedPhone={getElementById:phoneEl,querySelector:s=>s.startsWith('link')?{href:'./damiao.css?v=5'}:{getAttribute:()=> './entry.js?v=5'},body:{children:['HEADER','MAIN','DIALOG','SCRIPT','NOSCRIPT'].map(tagName=>({tagName}))}};
+const phoneContext=vm.createContext({document:phoneDoc,DOMParser:class{parseFromString(){return parsedPhone;}},URL,encodeURIComponent,location:{href:'https://naiwa-play.github.io/naiwa-story/damiao/mobile-test.html'},Event:class{constructor(type){this.type=type;}},fetch:async()=>{if(failPhone)throw Error('offline');return {ok:true,text:async()=>'<shared layout>'};},loadReader:async src=>{importURL=src;if(failReader)throw Error('offline');return {start:opts=>{starts++;previewOption=opts.preview;}};}});
+vm.runInContext(phoneScript.replace('await import(', 'await loadReader('),phoneContext);
+await new Promise(setImmediate);assert(!phoneEl('retry').hidden);
+failPhone=false;await phoneEl('retry').onclick();assert(!phoneEl('open').hidden);assert.equal(phoneHead.length,1);assert.deepEqual(phoneBody.map(x=>x.tagName),['HEADER','MAIN','DIALOG']);
+await phoneEl('open').onclick();assert.equal(starts,0);assert(!phoneEl('open').disabled);
+failReader=false;await phoneEl('open').onclick();assert.equal(starts,1);assert(previewOption);assert.equal(importURL,'./reader.js?v=5');
+await phoneEl('open').onclick();assert.equal(starts,1);assert.equal(resumes,1);
 console.log(`PASS: Damiao ${seen.size} pages, both second-life classes and flower deductions, independent study values, old checkpoint migration, approved art preservation, full reader playthrough and reload safety, private preview saves, server-time release boundary and author afterword, later-life branches, noise stages and audio lifecycle.`);
