@@ -126,14 +126,23 @@ assert.equal(places.field[0],'王月恒铭操场');assert.equal(places.sealed[0]
 assert(!fs.existsSync(new URL('../damiao/__preview.html',import.meta.url)),'unlocked preview must not become a public file');
 assert(fs.existsSync(new URL('../damiao/art/student-watercolor.webp',import.meta.url)));assert(fs.statSync(new URL('../damiao/art/student-watercolor.webp',import.meta.url)).size<150000,'portrait stays lightweight on mobile');assert(!fs.existsSync(new URL('../damiao/art/student.svg',import.meta.url)),'discarded geometric portrait is not shipped');
 // Gate must fail closed before release and on network errors, even if local clock is wrong.
-async function gate({date,fail=false,preview=false,host='example.github.io'}={}){
+async function gate({date,fail=false,preview=false,host='example.github.io',fetchImpl}={}){
  const els=new Map(),$=id=>{if(!els.has(id))els.set(id,{hidden:true,dataset:{},textContent:''});return els.get(id);};
- const context=vm.createContext({RELEASE,Date,performance:{now:()=>100},location:{hostname:host},document:{getElementById:$,documentElement:{dataset:preview?{preview:'local'}:{}},addEventListener(){}},fetch:async()=>{if(fail)throw Error('offline');return {ok:true,headers:{get:()=>date}};},setInterval(){}});
+ const context=vm.createContext({RELEASE,Date,performance:{now:()=>100},location:{hostname:host},document:{getElementById:$,documentElement:{dataset:preview?{preview:'local'}:{}},addEventListener(){}},fetch:fetchImpl|| (async()=>{if(fail)throw Error('offline');return {ok:true,headers:{get:()=>date}};}),setInterval(){}});
  vm.runInContext(fs.readFileSync(new URL('../damiao/entry.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);await new Promise(setImmediate);return $;
 }
 assert((await gate({date:'Mon, 19 Oct 2026 15:59:59 GMT'}))('open').hidden);
 assert(!(await gate({date:'Mon, 19 Oct 2026 16:00:00 GMT'}))('open').hidden);
 assert((await gate({fail:true}))('open').hidden);
+let finishGateRequest;
+const pendingGate=await gate({fetchImpl:()=>new Promise(resolve=>{finishGateRequest=resolve;})});
+assert.equal(pendingGate('retry-time').disabled,true);
+assert.equal(pendingGate('retry-time').textContent,'正在核对…');
+finishGateRequest({ok:false,headers:{get:()=>null}});await new Promise(setImmediate);
+assert.equal(pendingGate('retry-time').disabled,false);
+assert.equal(pendingGate('retry-time').hidden,false);
+assert.equal(pendingGate('retry-time').textContent,'重新核对开卷时间');
+assert(pendingGate('open').hidden);
 assert((await gate({date:'Sun, 18 Oct 2026 00:00:00 GMT',preview:true}))('open').hidden);
 assert(!(await gate({preview:true,host:'127.0.0.1'}))('open').hidden);
 // The user-requested phone link is a separate, unlisted public preview. It
