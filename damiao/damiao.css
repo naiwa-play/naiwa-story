@@ -60,3 +60,7 @@ body:has(dialog[open]) .memory-echo,body:has(dialog[open]) .memory-static:before
  .letter-sheet{margin-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
  .letter-preview-note{bottom:calc(72px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);max-width:84vw;width:max-content;text-align:center;pointer-events:none}
 }
+
+/* Automatic focus opens the letter quietly; keyboard navigation stays visible. */
+.letter-sheet:focus{outline:none}
+.letter-sheet:focus-visible{outline:2px solid #b6a16a;outline-offset:4px}
