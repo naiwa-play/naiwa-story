@@ -1,0 +1,11 @@
+# Earlier prototypes and working references; the approved exports live in rodin-*.
+/assets/models/naiwa*.glb
+/assets/models/naiwa-*.png
+/assets/models/naigou.glb
+/assets/models/naishu.glb
+/assets/models/rodin-source.json
+/assets/models/rodin-v4/naiwa-rodin.glb
+/art/turnarounds/naishu-front.png
+/art/turnarounds/naishu-left.png
+/art/turnarounds/naishu-back.png
+/art/turnarounds/prompts.json

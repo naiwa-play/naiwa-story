@@ -1,0 +1,9 @@
+{
+  "id": "769db8ea-c7c0-4bae-8a4e-606af7b45a80",
+  "source": "User-supplied Rodin OBJ and textures",
+  "originalTriangles": 500000,
+  "paint": "Original diffuse texture preserved byte for byte; OBJ V converted to glTF image coordinates",
+  "material": "Nonmetallic soft rubber, original tangent normal and bounded roughness",
+  "animation": "Whole-model squash/stretch and hit rotation in jelly-motion.js. No cuts, caps, skinning or vertex deformation.",
+  "sourceFacing": 1
+}
