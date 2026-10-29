@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.min.js';
 import {ExpeditionScene} from './scene.js?v=14';
 import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=14';
-import {Soundtrack} from './audio.js?v=14';
+import {Soundtrack} from './audio.js?v=15';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
@@ -24,7 +24,15 @@ $('modal').addEventListener('close',()=>{paused=false;pressed.clear();pointer=nu
 $('help').onclick=()=>showModal('一只奶蛙，也能出发。','<ol><li><b>自动前进与攻击。</b> 手机按住画面左右拖动，电脑使用 A / D、方向键或拖动鼠标。敌人会持续向你靠近，侧移可以躲开，碰撞只扣生命，不扣队伍数量。红色血瓶可恢复 2 点生命，补给较少。Boss 攻击命中主角或奶蛙伙伴都会扣除共享生命。</li><li><b>看准射程。</b> 脚下前方的光圈标记最远攻击位置，超出射程不能造成伤害。瞄准后会自动射击。</li><li><b>三选一，决定成长。</b> 经过卡牌路标时暂停选卡：增加追踪伙伴、攻速、威力、移速和射程。武器与攻击形式独立搭配：投掷奶蛋配散射会分散投掷；激光配散射会展开扇形光束。召唤宠物后才会出现对应成长卡。</li><li><b>两种伙伴，两种打法。</b> 奶狗会扑向敌人咬击，奶鼠搓出奶球进行追踪攻击。没有召唤时不会出场。</li><li><b>第一段是热身，之后没有终点。</b> 完成 260 米初行路后直接进入无尽，推进速度逐渐提高，最高 3 倍。遇到 Boss 会停步交战，左右闪避它的墨团。击败小怪增加攻击力，击败 Boss 还会增加伙伴数量和攻速。</li><li><b>能量模式。</b> 能量未满时隐藏效果，蓄满揭晓愤怒、忧郁、恶魔、天使或神格模式。点击右下按钮或按空格进入限时增益；开启声音可听就绪提示。连续击杀的充能有上限，两次模式切换至少间隔 45 秒。</li><li><b>金币带回口袋。</b> 靠近金币即可拾取。结束或返回主界面会保存金币，可在口袋商店购买永久开局强化；记录保存在当前浏览器。</li></ol>');
 $('collection').onclick=()=>showModal('伙伴会在路上相遇。','<div class="pet-entry"><span class="pet-number">01</span><div><b>奶蛙 · 最初的勇气</b><p>主角负责普通射击或散射。增加的奶蛙伙伴各自定时发出红色追踪奶蛋，攻速和攻击力升级也对它们生效。</p></div></div><div class="pet-entry"><span class="pet-number">02</span><div><b>奶狗 · 扑咬搭档</b><p>召唤后冲向敌人、扑咬再返回。可通过专属卡增加数量和咬击伤害。</p></div></div><div class="pet-entry"><span class="pet-number">03</span><div><b>奶鼠 · 奶球法师</b><p>在身前搓出奶球，追踪射程内的敌人。可通过专属卡增加数量和奶球伤害。</p></div></div><a class="credit-link" href="./CREDITS.md" target="_blank" rel="noopener">模型来源与制作说明 ↗</a>','MEET YOUR LITTLE SQUAD');
 $('pause').onclick=()=>{if(scene.home||state.phase==='lost'||pendingCards)return;showModal('歇一口气，等你回来。','<p>画面、敌人和音乐都已暂停。返回主界面也会保存本次拾取的金币。</p><button class="start-button" id="resume">继续冒险 <span>↗</span></button><button class="text-button" id="exit-run">收好金币，返回主界面</button>','TAKE A LITTLE BREAK');$('resume').onclick=()=>$('modal').close();$('exit-run').onclick=()=>{$('modal').close();home();};};
-$('sound').onclick=async()=>{if(sound.enabled)sound.disable();else{try{await sound.enable();sound.theme=theme;if(paused||document.hidden)sound.pause();}catch{toast('当前浏览器暂时无法播放声音');return;}}$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'关闭声音':'开启声音');};
+$('sound').onclick=async()=>{
+ const button=$('sound');button.disabled=true;
+ try{
+  if(sound.enabled)sound.disable();else{sound.theme=theme;await sound.enable();if(paused||document.hidden)sound.pause();else sound.effect('gate');}
+  const label=sound.enabled?'关闭声音':'开启声音';button.setAttribute('aria-pressed',String(sound.enabled));button.setAttribute('aria-label',label);button.title=label;
+  button.querySelector('svg').innerHTML='<path d="M11 5 6 9H3v6h3l5 4z"/><path d="'+(sound.enabled?'M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14':'M16 8l5 8M21 8l-5 8')+'"/>';
+  toast(sound.enabled?'音乐已开启':'音乐已关闭');
+ }catch{toast('声音尚未启动，请再点一次试试');}finally{button.disabled=false;}
+};
 document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{theme=b.dataset.theme;sound.theme=theme;state=freshRun(theme,1,saved.upgrades,saved.startingPet);scene.rebuildScenery(theme);document.body.classList.toggle('theme-halloween',theme==='halloween');document.querySelectorAll('[data-theme]').forEach(v=>{v.classList.toggle('selected',v===b);v.setAttribute('aria-pressed',String(v===b));});});
 function openShop(){
  const items=SHOP.map(item=>{const level=saved.upgrades[item.id]||0,max=level>=item.max,cost=shopPrice(item,level);return '<article class="shop-item"><span class="shop-icon">'+item.icon+'</span><div><h3>'+item.title+'</h3><p>'+item.description+' · '+level+'/'+item.max+'</p></div><button data-buy="'+item.id+'" '+(max||saved.coins<cost?'disabled':'')+'>'+(max?'已收好':cost+' 金币')+'</button></article>';}).join('');

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/game.test.mjs && node tests/combat.test.mjs && node tests/model-motion.test.mjs",
+    "test": "node tests/game.test.mjs && node tests/combat.test.mjs && node tests/model-motion.test.mjs && node tests/audio.test.mjs",
     "models": "node scripts/build-models.mjs naidan"
   }
 }
