@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.min.js';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/utils/BufferGeometryUtils.js';
-import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText } from './core.js?v=14';
+import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText } from './core.js?v=16';
 import {jellyPose,applyJellyPose} from './jelly-motion.js';
 
 const sphere=new T.SphereGeometry(1,20,14), lowSphere=new T.SphereGeometry(1,12,9), box=new T.BoxGeometry(1,1,1),coinGeometry=new T.CylinderGeometry(.21,.21,.07,14);

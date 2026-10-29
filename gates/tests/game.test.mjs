@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import {freshRun,applyGate,damageSquad,killReward,crossed,formation,makeCourse,runMultiplier,rollCards,CARDS,chooseCard,SHOP,buyUpgrade,shopPrice,sweepHit,BOSSES,bossFor,MODES,chargeMode,activateMode,tickMode,effectiveRate,squadContact,attackProfile,MINIONS} from '../core.js';
-const s=freshRun();assert.equal(s.count,1);assert.equal(s.damage,1);assert.equal(s.rate,1.5);assert.deepEqual(s.pets,{naigou:0,naishu:0});
+const s=freshRun();assert.equal(s.count,1);assert.equal(s.damage,1.1);assert.equal(s.rate,1.5);assert.deepEqual(s.pets,{naigou:0,naishu:0});assert.deepEqual(s.petDamage,{naigou:1.05,naishu:1.05});
 applyGate(s,{stat:'count',op:'add',value:1});applyGate(s,{stat:'count',op:'multiply',value:2});assert.equal(s.count,4);
 applyGate(s,{stat:'count',op:'multiply',value:100});assert.equal(s.count,128);
 assert.ok(damageSquad(s,1));assert.equal(s.health,3);assert.equal(s.count,128,'Collision only costs health');assert.equal(damageSquad(s,1),false);s.invincible=0;damageSquad(s,3);assert.equal(s.phase,'lost');
-const rewarded=freshRun();killReward(rewarded);assert.equal(rewarded.damage,1.02);killReward(rewarded,true);assert.equal(rewarded.count,2);assert.ok(rewarded.damage>1.2&&rewarded.rate>1.5);
+const rewarded=freshRun();killReward(rewarded);assert.equal(rewarded.damage,1.12);killReward(rewarded,true);assert.equal(rewarded.count,2);assert.ok(rewarded.damage>1.3&&rewarded.rate>1.5);
 assert.equal(crossed(27.9,28.6,28),true);assert.equal(crossed(28.6,29.2,28),false);assert.equal(formation(128).length,64);
 for(let stage=0;stage<15;stage++){const course=makeCourse(stage);assert.ok(course.every((r,i)=>i===0||r.at>course[i-1].at));assert.ok(course.at(-1).at<260*(stage+1));assert.equal(course.filter(r=>r.type==='boss').length,1);}
 assert.ok(makeCourse(5).at(-1).enemies[0].hp>makeCourse(4).at(-1).enemies[0].hp);

@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.min.js';
-import {ExpeditionScene} from './scene.js?v=14';
-import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=14';
-import {Soundtrack} from './audio.js?v=15';
+import {ExpeditionScene} from './scene.js?v=16';
+import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=16';
+import {Soundtrack} from './audio.js?v=16';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
@@ -15,7 +15,7 @@ function updateBest(){$('best').textContent='金币 '+saved.coins+' · 最远 '+
 function clearThreats(){for(const t of activeThreats){scene.scene.remove(t.group);t.group.geometry.dispose();t.group.material.dispose();}activeThreats=[];dogBites=[];}
 function showModal(title,content,kicker='FIELD NOTES',kind='normal'){
  if(!scene||pendingCards&&kind!=='cards')return;
- paused=true;pressed.clear();pointer=null;accumulator=0;sound.pause();$('modal').className=kind;$('modal-close').hidden=kind==='cards';$('modal-kicker').textContent=kicker;$('modal-content').innerHTML='<h2>'+title+'</h2>'+content;if(!$('modal').open)$('modal').showModal();$('modal-content').scrollTop=0;
+ paused=true;pressed.clear();pointer=null;accumulator=0;sound.pause(kind!=='cards');$('modal').className=kind;$('modal-close').hidden=kind==='cards';$('modal-kicker').textContent=kicker;$('modal-content').innerHTML='<h2>'+title+'</h2>'+content;if(!$('modal').open)$('modal').showModal();$('modal-content').scrollTop=0;
 }
 $('modal-close').onclick=()=>$('modal').close();
 $('modal').addEventListener('cancel',e=>{if(pendingCards)e.preventDefault();});
@@ -45,7 +45,7 @@ $('shop').onclick=openShop;
 function chooseCards(major=false){
  pendingCards=rollCards(state,Math.random,major);
  showModal(major?'征服者，这是你的馈赠。':'下一份快乐，由你决定。','<p class="choice-intro">'+(major?'主题首领已击败 · 选择一项强力成长':'选一张带走 · 选择期间时间暂停')+'</p><div class="choice-grid">'+pendingCards.map((c,i)=>'<button class="upgrade-card '+(['武器','攻击形式'].includes(c.tag)||c.rare||c.majorReward||c.id==='pumpkin'?'rare':'')+'" data-card="'+c.id+'"><small>'+c.tag+'</small><span class="card-art" aria-hidden="true">'+c.icon+'</span><h3>'+c.title+'</h3><p>'+c.description+'</p><span class="card-select">选择这张 <b>'+(i+1)+'</b></span></button>').join('')+'</div>',major?'A GIFT FROM THE CONQUERED WORLD.':'A LITTLE CHOICE. A NEW POSSIBILITY.','cards');
- document.querySelectorAll('[data-card]').forEach(b=>b.onclick=()=>{if(!pendingCards?.some(c=>c.id===b.dataset.card))return;if(chooseCard(state,b.dataset.card)){const title=pendingCards.find(c=>c.id===b.dataset.card).title;pendingCards=null;scene.setWeapon(state.weapon);$('modal').close();sound.effect('gate');toast(title);}});
+ document.querySelectorAll('[data-card]').forEach(b=>b.onclick=()=>{if(!pendingCards?.some(c=>c.id===b.dataset.card))return;if(chooseCard(state,b.dataset.card)){const title=pendingCards.find(c=>c.id===b.dataset.card).title;pendingCards=null;scene.setWeapon(state.weapon);$('modal').close();sound.effect('card');toast(title);}});
 }
 function start(){
  if($('modal').open)$('modal').close();pendingCards=null;state=freshRun(theme,1,saved.upgrades,saved.startingPet);course=makeCourse(0,Math.random,theme);nextStage=1;pendingMajorReward=false;active=null;clearThreats();fireTimer=petTimer=dogTimer=bossTimer=0;companionReady=[];paused=false;displayedResult=settled=false;targetX=0;pressed.clear();accumulator=0;scene.shots=[];scene.clearCoins();scene.setMode(false);scene.setWeapon('egg');scene.createCourse(course);
@@ -55,7 +55,7 @@ function start(){
 function settle(){if(settled)return;settled=true;saved.coins+=reward(state);saved.best=Math.max(saved.best,state.count);saved.bestDistance=Math.max(saved.bestDistance,state.distance);save();}
 function home(){if(!scene.home)settle();pendingCards=null;$('result').hidden=true;$('hud').hidden=true;$('home').hidden=false;$('pause').hidden=true;document.body.classList.remove('playing');scene.setMode(true);scene.setWeapon('egg');scene.clearCoins();clearThreats();active=null;pressed.clear();state=freshRun(theme,1,saved.upgrades,saved.startingPet);sound.resume();}
 $('start').onclick=start;$('again').onclick=start;$('back-home').onclick=home;
-function hit(enemy,damage){if(enemy.dead||enemy.escaped)return;if(scene.hit(enemy,damage)){state.kills++;const boss=enemy.type==='boss',multiplier=modeActive(state,'demon')?2:1,text=killReward(state,boss,multiplier),p=enemy.group.getWorldPosition(new T.Vector3());scene.dropCoins(p.x,p.z,Math.round(enemy.reward*multiplier));chargeMode(state,boss?15:2,Math.random,!boss);scene.rewardText(p.x,p.z,text);if(boss){state.bosses++;if(enemy.row.major)pendingMajorReward=true;if(state.phase==='boss'){state.phase=state.endless?'endless':'run';active=null;clearThreats();}toast('击败 Boss · '+text);sound.effect('win');}}sound.effect('hit');}
+function hit(enemy,damage){if(enemy.dead||enemy.escaped)return;if(scene.hit(enemy,damage)){state.kills++;const boss=enemy.type==='boss',multiplier=modeActive(state,'demon')?2:1,text=killReward(state,boss,multiplier),p=enemy.group.getWorldPosition(new T.Vector3());scene.dropCoins(p.x,p.z,Math.round(enemy.reward*multiplier));chargeMode(state,boss?15:2,Math.random,!boss);scene.rewardText(p.x,p.z,text);if(boss){state.bosses++;if(enemy.row.major)pendingMajorReward=true;if(state.phase==='boss'){state.phase=state.endless?'endless':'run';active=null;clearThreats();}toast('击败 Boss · '+text);sound.effect('boss');}else sound.effect('kill');}sound.effect('hit');}
 function targetEnemies(){return scene.entities.filter(e=>!e.dead&&!e.escaped&&e.group.visible&&(()=>{const p=e.group.getWorldPosition(new T.Vector3());return p.z<playerZ+1&&p.z>=playerZ-state.range-3;})());}
 function volley(){
  const profile=attackProfile(state);
