@@ -3,6 +3,7 @@ import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/utils/BufferGeometryUtils.js';
 import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText } from './core.js?v=16';
 import {jellyPose,applyJellyPose} from './jelly-motion.js';
+import {loadGameModel,MODEL_FILES} from './model-loader.js?v=19';
 
 const sphere=new T.SphereGeometry(1,20,14), lowSphere=new T.SphereGeometry(1,12,9), box=new T.BoxGeometry(1,1,1),coinGeometry=new T.CylinderGeometry(.21,.21,.07,14);
 const materials=new Map(),leafGeometries=new Map(),shadowGeometry=new T.PlaneGeometry(2,1.6);
@@ -139,17 +140,29 @@ export class ExpeditionScene {
     this.ready=this.load(onProgress);
   }
   async load(progress){
-    const loader=new GLTFLoader();let n=0;const names=['naiwa','naigou','naishu','naidan','naiwa-crowd'];
-    const assets=await Promise.all(names.map(async name=>{const file=name==='naiwa'?'rodin-v4/naiwa-jelly':name==='naiwa-crowd'?'rodin-v4/naiwa-crowd':['naigou','naishu'].includes(name)?`rodin-${name}/${name}-jelly`:name;const g=await loader.loadAsync(`./assets/models/${file}.glb?v=8`);progress(++n,names.length);return g;}));
+    const names=['naiwa','naidan','naiwa-crowd'],loaded=new Map(names.map(name=>[name,0])),total=names.reduce((sum,name)=>sum+MODEL_FILES[name].bytes,0);
+    const assets=await Promise.all(names.map(async name=>loadGameModel(new GLTFLoader(),name,event=>{
+      loaded.set(name,Math.min(MODEL_FILES[name].bytes,event.phase==='decode'?MODEL_FILES[name].bytes:event.loaded));
+      const percent=Math.min(99,Math.round([...loaded.values()].reduce((sum,value)=>sum+value,0)/total*100)),size=(event.loaded/1024**2).toFixed(1),expected=((event.total||event.expected)/1024**2).toFixed(1);
+      progress(percent,100,event.phase==='decode'?'正在唤醒'+event.label+' · 准备画面':event.phase==='fallback'?'正在为当前浏览器加载兼容模型':'正在唤醒'+event.label+' · '+size+' / '+expected+' MB'+(event.attempt?' · 正在重试':''));
+    })));
     this.models=Object.fromEntries(names.map((n,i)=>[n,assets[i]]));
+    const paint=this.models.naiwa.scene.getObjectByProperty('isMesh',true).material;this.models['naiwa-crowd'].scene.traverse(object=>{if(object.isMesh)object.material=paint;});
     this.buildCrowdAsset(this.models['naiwa-crowd'].scene);
     this.buildProjectileAsset(this.models.naidan.scene);
     this.buildProjectileAsset(pumpkin(),'pumpkinParts');
     this.main=this.models.naiwa.scene;this.heroBody.add(this.main);
-    ['naigou','naishu'].forEach(name=>{for(let i=0;i<3;i++){const root=new T.Group(),motion=new T.Group();this.hero.add(root);shadow(root,0,0,.48);root.add(motion);motion.add(this.models[name].scene.clone(true));root.userData={motion,name,index:i};root.scale.setScalar(.60);root.visible=false;if(name==='naishu'){const orb=ell(motion,'#dff4aa',[0,.6,.58],[.12,.12,.12]);orb.material=mat('#dff4aa',.3,{emissive:'#9cd998',emissiveIntensity:.6});root.userData.orb=orb;}this.petRoots.push(root);}});
     this.staff=new T.Group();this.heroBody.add(this.staff);this.staff.position.set(-.6,.25,.05);mesh(new T.CylinderGeometry(.045,.065,1.3,8),mat('#715461'),this.staff,[0,.65,0]);const jack=pumpkin();jack.scale.setScalar(.28);jack.position.y=1.45;this.staff.add(jack);this.staff.visible=false;
     const egg=this.models.naidan.scene;egg.scale.setScalar(.38);this.eggHome=new T.Group();this.eggHome.add(egg);this.hero.add(this.eggHome);
-    this.setMode(true);return this;
+    this.setMode(true);progress(100,100,'伙伴准备好了');this.petLoads={};this.petProgress={};for(const name of ['naigou','naishu'])this.preparePet(name).catch(()=>{});return this;
+  }
+  preparePet(name,onProgress){
+    if(this.models[name])return Promise.resolve();if(onProgress)this.petProgress[name]=onProgress;if(this.petLoads[name])return this.petLoads[name];
+    this.petLoads[name]=(async()=>{
+      const asset=await loadGameModel(new GLTFLoader(),name,event=>this.petProgress[name]?.(event));
+      for(let i=0;i<3;i++){const root=new T.Group(),motion=new T.Group();this.hero.add(root);shadow(root,0,0,.48);root.add(motion);motion.add(asset.scene.clone(true));root.userData={motion,name,index:i};root.scale.setScalar(.60);root.visible=false;if(name==='naishu'){const orb=ell(motion,'#dff4aa',[0,.6,.58],[.12,.12,.12]);orb.material=mat('#dff4aa',.3,{emissive:'#9cd998',emissiveIntensity:.6});root.userData.orb=orb;}this.petRoots.push(root);}
+      this.models[name]=asset;
+    })().finally(()=>{delete this.petLoads[name];delete this.petProgress[name];});return this.petLoads[name];
   }
   hurt(){this.hurtAge=0;}
   buildCrowd(){

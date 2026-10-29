@@ -30,3 +30,7 @@
 奶蛋单独更新：`node scripts/build-models.mjs naidan`。奶蛙、奶狗和奶鼠可在 `model-review.html` 中切换，并对比原始精度与游戏精度。
 
 用户已确认的建模三视图：`art/turnarounds/naigou-approved-v2.png` 与 `art/turnarounds/naishu-approved-v3.png`。由内置图像生成工具依照用户给定角色参考制作；奶鼠尾根按反馈移到后臀中线。二者已获用户授权提交 Rodin 生成并完成贴图。
+
+网页使用 `assets/models/compact/` 中的压缩包，保留原始顶点、UV、三角形与贴图像素。Meshopt 压缩与无损 WebP 仅改变传输格式；奶蛙伙伴共享主角贴图。首屏只等待奶蛙、奶蛋和伙伴队列模型，奶狗、奶鼠后台准备，召唤前确认就绪。
+
+打包命令：`node scripts/compact-models.mjs <制作工具 node_modules>`，需 `@gltf-transform/core@4.5.1`、`@gltf-transform/extensions@4.5.1`、`meshoptimizer@1.3.0` 和 `sharp`。脚本校验解码后的几何属性与原图像素；原始文件保留。运行时解码器来自 [meshoptimizer](https://github.com/zeux/meshoptimizer)，使用 [MIT 许可证](vendor/MESHOPT-LICENSE.md)，全部随网站托管，不请求外部 CDN。

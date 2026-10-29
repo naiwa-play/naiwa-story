@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.min.js';
-import {ExpeditionScene} from './scene.js?v=18';
+import {ExpeditionScene} from './scene.js?v=19';
 import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=16';
 import {Soundtrack} from './audio.js?v=17';
 
@@ -51,9 +51,22 @@ $('shop').onclick=openShop;
 function chooseCards(major=false){
  pendingCards=rollCards(state,Math.random,major);
  showModal(major?'征服者，这是你的馈赠。':'下一份快乐，由你决定。','<p class="choice-intro">'+(major?'主题首领已击败 · 选择一项强力成长':'选一张带走 · 选择期间时间暂停')+'</p><div class="choice-grid">'+pendingCards.map((c,i)=>'<button class="upgrade-card '+(['武器','攻击形式'].includes(c.tag)||c.rare||c.majorReward||c.id==='pumpkin'?'rare':'')+'" data-card="'+c.id+'"><small>'+c.tag+'</small><span class="card-art" aria-hidden="true">'+c.icon+'</span><h3>'+c.title+'</h3><p>'+c.description+'</p><span class="card-select">选择这张 <b>'+(i+1)+'</b></span></button>').join('')+'</div>',major?'A GIFT FROM THE CONQUERED WORLD.':'A LITTLE CHOICE. A NEW POSSIBILITY.','cards');
- document.querySelectorAll('[data-card]').forEach(b=>b.onclick=()=>{if(!pendingCards?.some(c=>c.id===b.dataset.card))return;if(chooseCard(state,b.dataset.card)){const title=pendingCards.find(c=>c.id===b.dataset.card).title;pendingCards=null;scene.setWeapon(state.weapon);$('modal').close();sound.effect('card');toast(title);}});
+ let preparing=false;
+ document.querySelectorAll('[data-card]').forEach(b=>b.onclick=async()=>{
+  if(preparing||!pendingCards?.some(c=>c.id===b.dataset.card))return;const pet={dog:'naigou',mouse:'naishu'}[b.dataset.card];
+  if(pet){preparing=true;const copy=b.querySelector('p'),description=copy.textContent;document.querySelectorAll('[data-card]').forEach(button=>button.disabled=true);copy.textContent='正在唤醒伙伴…';
+   try{await scene.preparePet(pet,event=>{copy.textContent=event.phase==='decode'?'伙伴马上就来…':'正在唤醒'+event.label+' · '+Math.round(event.loaded/(event.total||event.expected)*100)+'%';});}
+   catch(error){copy.textContent=description;toast(error.message+'；可重试或选择其他卡牌');return;}
+   finally{preparing=false;document.querySelectorAll('[data-card]').forEach(button=>button.disabled=false);}
+  }
+  if(chooseCard(state,b.dataset.card)){const title=pendingCards.find(c=>c.id===b.dataset.card).title;pendingCards=null;scene.setWeapon(state.weapon);$('modal').close();sound.effect('card');toast(title);}
+ });
 }
-function start(){
+async function start(){
+ if(!scene?.main||$('start').disabled)return;
+ const button=$('start'),label=button.innerHTML,pet=saved.startingPet;button.disabled=true;
+ try{if(pet){button.textContent='正在唤醒开局伙伴…';await scene.preparePet(pet,event=>{button.textContent='正在唤醒'+event.label+' · '+Math.round(event.loaded/(event.total||event.expected)*100)+'%';});}}
+ catch(error){toast(error.message+'；请重试');return;}finally{button.disabled=false;button.innerHTML=label;}
  if($('modal').open)$('modal').close();pendingCards=null;state=freshRun(theme,1,saved.upgrades,saved.startingPet);course=makeCourse(0,Math.random,theme);nextStage=1;pendingMajorReward=false;active=null;clearThreats();fireTimer=petTimer=dogTimer=bossTimer=0;companionReady=[];paused=false;displayedResult=settled=false;targetX=0;pressed.clear();accumulator=0;scene.shots=[];scene.clearCoins();scene.setMode(false);scene.setWeapon('egg');scene.createCourse(course);
  $('home').hidden=true;$('hud').hidden=false;$('result').hidden=true;$('pause').hidden=false;$('boss-hud').hidden=true;$('hint').style.opacity='1';document.body.classList.add('playing');sound.resume();lastTime=0;updateHUD();
  if(!saved.tutorialSeen){showModal('第一段路，从这里开始。','<p>主角自动向前跑、发射奶蛋；增加的奶蛙伙伴会定时发出红色追踪奶蛋。<b>按住画面左右拖动</b>，电脑也可使用 <b>A / D 或方向键</b>。</p><p>选数字门提升数值，遇到卡牌再挑选伙伴。先试着移动到一侧，敌人会一直向你靠近。</p><button class="start-button" id="tutorial-go">准备好啦，出发 ↗</button>','YOUR FIRST LITTLE ADVENTURE');$('tutorial-go').onclick=()=>{saved.tutorialSeen=true;save();$('modal').close();};}else toast('初行路 · 260 米后无缝进入无尽');
@@ -226,5 +239,5 @@ window.addEventListener('blur',()=>{pressed.clear();pointer=null;if(scene&&!scen
 document.addEventListener('visibilitychange',()=>{if(document.hidden){sound.pause();pressed.clear();pointer=null;if(scene&&!scene.home&&!paused&&!displayedResult)$('pause').click();}else if(!paused)sound.resume();lastTime=0;});
 window.addEventListener('resize',()=>scene?.resize());
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();paused=true;sound.pause();toast('画面暂时中断，请刷新页面继续');});
-async function boot(){try{scene=new ExpeditionScene(canvas,(n,total)=>{$('load-bar').style.width=Math.round(n/total*100)+'%';$('load-note').textContent='正在唤醒伙伴 · '+n+' / '+total;});await scene.ready;state=freshRun(theme,1,saved.upgrades,saved.startingPet);$('loading').classList.add('leaving');setTimeout(()=>$('loading').hidden=true,600);updateBest();requestAnimationFrame(frame);}catch(error){console.error(error);$('load-note').textContent='加载遇到了一点问题，请检查网络后重试。';const retry=document.createElement('button');retry.className='text-button';retry.textContent='重新加载';retry.onclick=()=>location.reload();$('loading').append(retry);}}
+async function boot(){try{scene=new ExpeditionScene(canvas,(n,total,label)=>{$('load-bar').style.width=Math.round(n/total*100)+'%';$('load-note').textContent=label||'正在唤醒伙伴…';});await scene.ready;state=freshRun(theme,1,saved.upgrades,saved.startingPet);$('loading').classList.add('leaving');setTimeout(()=>$('loading').hidden=true,600);updateBest();requestAnimationFrame(frame);}catch(error){console.error(error);$('load-note').textContent=error.message||'加载遇到了一点问题，请检查网络后重试。';const retry=document.createElement('button');retry.className='text-button';retry.textContent='重新加载';retry.onclick=()=>location.reload();$('loading').append(retry);}}
 boot();
