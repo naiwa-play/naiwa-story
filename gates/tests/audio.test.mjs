@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {Soundtrack} from '../audio.js';
 
-const timers=new Map();let nextTimer=1;
-globalThis.setInterval=callback=>{const id=nextTimer++;timers.set(id,callback);return id;};
-globalThis.clearInterval=id=>timers.delete(id);
+const timers=new Map(),intervals=new Map();let nextTimer=1;
+globalThis.setInterval=(callback,interval)=>{const id=nextTimer++;timers.set(id,callback);intervals.set(id,interval);return id;};
+globalThis.clearInterval=id=>{timers.delete(id);intervals.delete(id);};
 class AudioContext {
   state='suspended';currentTime=0;destination={};notes=[];gains=[];sources=[];resumes=0;
   async resume(){this.resumes++;this.state='running';}
@@ -23,7 +23,8 @@ await test('click immediately starts background music',()=>check(sound=>{
 await test('music is audible and keeps looping',()=>check(sound=>{
   const before=sound.ctx.notes.length;timers.values().next().value();
   assert.ok(sound.ctx.notes.length>before);
-  assert.ok(Math.max(...sound.ctx.gains.flat())>=.05,'Background music must have an audible peak level');
+  assert.ok(Math.max(...sound.ctx.gains.flat())>=.12,'Background music must remain clearly audible');
+  const interval=intervals.values().next().value;assert.ok(interval>=250&&interval<300,'The score should have a slightly faster, lively pulse');
 }));
 await test('interrupted phone audio wakes up without creating duplicate loops',()=>check(async sound=>{
   sound.ctx.state='interrupted';await sound.resume();
@@ -61,8 +62,8 @@ await test('boss laughter finishes over reward cards, then the selected card voi
   sound.pause();assert.equal(sound.voiceActive,null);assert.equal(sound.pendingVoice,null);
 }));
 await test('voice ducks the music and muting stops all voice playback',()=>check(sound=>{
-  sound.effect('card');timers.values().next().value();assert.ok(Math.max(...sound.ctx.gains.at(-1))<.03);
-  const voice=sound.voiceActive.source;voice.onended();timers.values().next().value();assert.ok(Math.max(...sound.ctx.gains.at(-1))>=.05);
+  sound.effect('card');const before=sound.ctx.gains.length;timers.values().next().value();assert.ok(Math.max(...sound.ctx.gains.slice(before).flat())<.03);
+  const voice=sound.voiceActive.source;voice.onended();const after=sound.ctx.gains.length;timers.values().next().value();assert.ok(Math.max(...sound.ctx.gains.slice(after).flat())>=.12);
   sound.ctx.currentTime=2;sound.effect('hurt');const hurt=sound.voiceActive.source;sound.disable();assert.equal(hurt.stopped,true);
   const count=sound.ctx.sources.length;sound.effect('boss');assert.equal(sound.ctx.sources.length,count);assert.equal(sound.pendingVoice,null);
 }));

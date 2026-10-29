@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.min.js';
 import {ExpeditionScene} from './scene.js?v=16';
 import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=16';
-import {Soundtrack} from './audio.js?v=16';
+import {Soundtrack} from './audio.js?v=17';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};

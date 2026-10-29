@@ -35,7 +35,14 @@ export class Soundtrack {
     if(!this.enabled)return;this.playing=true;
     if(this.ctx.state!=='running'){try{await this.ctx.resume();}catch{return;}}
     if(!this.enabled||!this.playing||this.ctx.state!=='running'||this.timer!==null)return;
-    const beat=()=>{const coast=[60,64,67,71,67,64,62,67,59,62,67,69,67,62,64,67],forest=[57,60,64,69,64,60,55,64,53,57,60,65,60,57,55,60];const halloween=[57,60,63,69,63,60,56,63,53,56,60,65,60,56,55,60],notes=this.theme==='halloween'?halloween:this.theme==='forest'?forest:coast,n=notes[this.step%notes.length],duck=this.voiceActive?.25:1;this.tone(440*2**((n-69)/12),.55,.065*duck,'sine');if(this.step%4===0)this.tone(440*2**((n-81)/12),1.3,.045*duck,'triangle');this.step++;};
-    beat();this.timer=setInterval(beat,310);
+    const beat=()=>{
+      const coast=[60,64,67,72,71,67,64,67,62,65,69,74,72,69,67,64],forest=[60,65,69,72,69,67,65,64,62,65,69,74,72,69,67,65];
+      const halloween=[57,60,63,69,67,63,60,63,56,59,62,68,67,62,59,56],notes=this.theme==='halloween'?halloween:this.theme==='forest'?forest:coast,n=notes[this.step%notes.length],frequency=440*2**((n-69)/12),duck=this.voiceActive ? .16 : 1;
+      this.tone(frequency,.35,.16*duck,'triangle');
+      if(this.step%4===0)this.tone(frequency/2,.65,.08*duck,'triangle');
+      if(this.step%2===1)this.tone(frequency*2,.13,.025*duck,'sine',.135);
+      this.step++;
+    };
+    beat();this.timer=setInterval(beat,270);
   }
 }
