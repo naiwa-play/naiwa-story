@@ -1,6 +1,6 @@
-import {relics,collectedRelics,rewardFor} from './relics.js?v=14';
+import {relics,collectedRelics,rewardFor} from './relics.js?v=15';
 import {portraits,portraitFor,endingMood} from './portraits.js?v=14';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=14';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=15';
 import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=14';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
@@ -11,8 +11,8 @@ function celebrate(ending){stopCelebration();if(!ending?.celebration)return;$('c
 const bgm=$('bgm'),voice=$('voice');bgm.volume=.18;bgm.loop=true;
 // Keep the user's choice separate from browser/OS pauses; never restart music they switched off.
 let musicWanted=false,musicPending=false,musicBuffering=false,musicRevision=0,musicTrack='daily';
-const musicSources={daily:'assets/calm.ogg',nightmares:'assets/music/thirteenth-bell.wav?v=14',polar:'assets/music/white-echo.wav?v=14',iceland:'assets/music/sea-letter.wav?v=14'};
-const musicTitles={daily:'日常 · calm bgm',nightmares:'惊悚故事集 · 第十三声之后',polar:'白色回声 · 冰的呼吸',iceland:'冰岛海信 · 寄往海风'};
+const musicSources={halloween:'assets/music/crownless-lantern.wav',daily:'assets/calm.ogg',nightmares:'assets/music/thirteenth-bell.wav?v=14',polar:'assets/music/white-echo.wav?v=14',iceland:'assets/music/sea-letter.wav?v=14'};
+const musicTitles={halloween:'万圣长夜 · 无冕星灯',daily:'日常 · calm bgm',nightmares:'惊悚故事集 · 第十三声之后',polar:'白色回声 · 冰的呼吸',iceland:'冰岛海信 · 寄往海风'};
 function selectMusic(chapter){const track=Object.hasOwn(musicSources,chapter)?chapter:'daily';if(track===musicTrack)return;
  musicTrack=track;musicRevision++;musicPending=false;musicBuffering=false;bgm.pause();bgm.src=musicSources[track];bgm.loop=true;bgm.load();
  if(musicWanted&&!document.hidden)void resumeMusic();else musicLabel();
@@ -80,8 +80,8 @@ function prepareNext(id){
  if(textOnly)return;const seen=new Set(),queue=[[id,0]],art={};
  while(queue.length){const [node,depth]=queue.shift();if(seen.has(node)||depth>8)continue;seen.add(node);const n=story[node],p=portraitFor(node);if(p)art[p.src]=p;if(n.ending){const m=endingMood(n.ending,endings[n.ending]);art[m.portrait.src]=m.portrait;}for(const next of n.choices?.map(c=>c.to)||[n.next])if(next)queue.push([next,depth+1]);}
  void preloadAssets(art,()=>{});
- const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar|city)-/.test(scene)))];
- for(const scene of backgrounds)void loadImage('./assets/'+(scene.startsWith('city-')?'urban/':'travels/')+scene+'.svg').catch(()=>{});
+ const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar|city|hall)-/.test(scene)))];
+ for(const scene of backgrounds)void loadImage('./assets/'+(scene.startsWith('hall-')?'halloween/':scene.startsWith('city-')?'urban/':'travels/')+scene+'.svg').catch(()=>{});
 }
 function render(){
  selectMusic(story[state.node].chapter);stopCelebration();
@@ -120,13 +120,14 @@ function routeTree(chapter){
 }
 function startChapter(id){if(id==='nightmares'){if(!dlcOpen()){notify('请先推进主线至岛城地下检修门。');return;}enter(fresh(id));return;}if(validSave(read(AUTO))&&state.node!==chapters[id].entry){modal('开始一段新的旅程？');const p=document.createElement('p');p.textContent='这会替换当前自动进度。手动存档、已读路线和已收集结局都会保留。';$('modal-body').append(p,button('开始 · '+chapters[id].title,()=>{$('modal').close();enter(fresh(id));}));}else enter(fresh(id));}
 for(const [id,ch]of Object.entries(chapters)){
- if(id==='nightmares'||id==='polar')continue;
+ if(id==='nightmares'||id==='polar'||id==='halloween')continue;
  const card=document.createElement('article');card.className='chapter-card '+ch.scene;const art=document.createElement('div');art.className='chapter-art';art.setAttribute('aria-hidden','true');const tag=document.createElement('small');tag.textContent=ch.tag;const title=document.createElement('h2');title.textContent=ch.title;const p=document.createElement('p');p.textContent=ch.description;const actions=document.createElement('div');actions.className='card-actions';actions.append(button('开始阅读',()=>startChapter(id)),button('路线树',()=>routeTree(id)));card.append(art,tag,title,p,actions);$('chapters').append(card);
 }
 $('resume').onclick=()=>enter(state);$('back-home').onclick=home;$('next').onclick=()=>go();
 $('retry-portrait').onclick=()=>requestPortrait(portraitFor(state.node));
+$('halloween-start').onclick=()=>startChapter('halloween');$('halloween-tree').onclick=()=>routeTree('halloween');
 $('polar-start').onclick=()=>startChapter('polar');$('polar-tree').onclick=()=>routeTree('polar');
-for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id+'-showcase').classList.toggle('motion-paused',paused);};}
+for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声'],['halloween','万圣长夜']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id+'-showcase').classList.toggle('motion-paused',paused);};}
 $('dlc-start').onclick=()=>startChapter('nightmares');$('dlc-tree').onclick=()=>routeTree('nightmares');
 $('dream-return').onclick=()=>{const s=read(WAKE);if(validSave(s)&&story[s.node].chapter!=='nightmares')enter(s);else enter(fresh('adventure'));};
 $('rewind').onclick=()=>{const id=[...state.history].reverse().find(id=>story[id].choices);if(!id)return;const cut=state.history.lastIndexOf(id);enter({version:1,node:id,history:state.history.slice(0,cut)});};
@@ -156,7 +157,7 @@ async function boot(){
  const timeout=setTimeout(()=>{$('loading-label').textContent='当前网络加载较慢，你可以继续等待，或先以纯文字模式进入。';$('loading-actions').hidden=false;},5000);
  const initial=portraitFor(state.node)||portraits.normal;const failed=await preloadAssets({initial},(done,total)=>{$('loading-progress').value=done/total;$('loading-count').textContent=done+' / '+total;});
  clearTimeout(timeout);loading=false;$('retry-load').disabled=false;
- if(mediaCache.has('music'))bgm.src=mediaCache.get('music');
+ if(musicTrack==='daily'&&mediaCache.has('music'))bgm.src=mediaCache.get('music');
  if(ready)return;
  if(failed.length)notify('已进入游戏：有 '+failed.length+' 张图片暂未加载，文字与已加载图片可正常使用。慢速图片会继续下载，无需刷新。');
  ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();prepareNext(state.node);

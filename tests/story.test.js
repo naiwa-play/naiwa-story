@@ -4,7 +4,7 @@ import {portraitFor,portraits,scenePortraits,endingMood} from '../portraits.js?v
 import fs from 'node:fs';
 import {canEnterNightmares,nightmareMilestones} from '../nightmares.js';
 const reached=new Set();function walk(s,depth=0){assert(depth<150,'No cyclic story');assert(validSave(s));const n=story[s.node];if(n.ending){assert(endings[n.ending]);reached.add(n.ending);return;}if(n.choices)n.choices.forEach((_,i)=>walk(advance(s,i),depth+1));else{assert(n.next&&story[n.next]);walk(advance(s),depth+1);}}
-for(const id of Object.keys(chapters))walk(fresh(id));assert.equal(reached.size,50);assert.equal(Object.values(endings).filter(e=>e.chapter==='adventure'&&!e.legacy).length,6);
+for(const id of Object.keys(chapters))walk(fresh(id));assert.equal(reached.size,53);assert.equal(Object.values(endings).filter(e=>e.chapter==='adventure'&&!e.legacy).length,6);
 assert(!validSave({version:1,node:'toString',history:[]}));assert(!validSave({version:1,node:'arrival',history:['bad']}));const s=advance(fresh());assert.deepEqual(JSON.parse(JSON.stringify(s)),s);assert.equal(advance({...s,node:'umbrella'},99).node,'umbrella');
 for(const [id,n]of Object.entries(story)){assert(chapters[n.chapter]);}
 for(const id of Object.keys(secrets))assert(story[id]);for(const p of Object.values(portraits))assert(fs.existsSync(new URL('../'+p.src,import.meta.url)));
@@ -14,11 +14,11 @@ for(const node of nightmareMilestones){assert(canEnterNightmares({node,history:[
 assert(canEnterNightmares(fresh(),{},['open_horizon']));assert(!canEnterNightmares(fresh(),{},['journey','snacks']));
 assert.equal(Object.values(endings).filter(e=>e.chapter==='nightmares').length,20);
 for(const [id,n]of Object.entries(story)){if(n.chapter!=='nightmares'||!n.choices)continue;for(const c of n.choices){const next=story[c.to];assert(!next.ending,`${id}: choices must continue narration before ending`);assert(next.next||next.choices);}}
-console.log('PASS: all 10 chapters, 50 active endings, 6 new main endings; no broken branches; legacy saves, secret nodes and all portrait files valid.');
+console.log('PASS: all 11 chapters, 53 active endings, 6 new main endings; no broken branches; legacy saves, secret nodes and all portrait files valid.');
 
 for(const [id,p]of Object.entries(scenePortraits)){assert(story[id],id);assert(portraits[p],p);}for(const [id,e]of Object.entries(endings)){const m=endingMood(id,e);assert(m.portrait);if(e.note.includes('困局'))assert.equal(m.tone,'dream');}assert.equal(portraitFor('opera_script_2'),portraits.laughing);assert(!fs.readFileSync(new URL('../index.html',import.meta.url),'utf8').includes('skip-ending'));
 
-const themes=new Set(Object.entries(endings).map(([id,e])=>endingMood(id,e).theme));assert.equal(themes.size,12);assert.equal(endingMood('crab_castle',endings.crab_castle).theme,'tide');assert.equal(endingMood('opera_blank',endings.opera_blank).theme,'curtain');
+const themes=new Set(Object.entries(endings).map(([id,e])=>endingMood(id,e).theme));assert.equal(themes.size,15);assert.equal(endingMood('crab_castle',endings.crab_castle).theme,'tide');assert.equal(endingMood('opera_blank',endings.opera_blank).theme,'curtain');
 
 for(const chapter of ['adventure','beach','balloon','forest']){const lengths=[];function count(id,n=1){const node=story[id];if(node.ending)lengths.push(n);else for(const next of node.choices?.map(c=>c.to)||[node.next])count(next,n+1);}count(chapters[chapter].entry);assert(Math.min(...lengths)>=85,chapter+' too short');assert(Math.max(...lengths)<=150,chapter+' too long');}
 const {relics,collectedRelics}=await import('../relics.js');for(const item of relics)for(const id of item.ends)assert(endings[id],id);assert.equal(collectedRelics(['light','light']).length,1);assert.equal(collectedRelics(['light','journey','snacks']).length,3);
@@ -40,3 +40,16 @@ for(const chapter of ['citynight','cityroof']){
  urbanWalk(chapters[chapter].entry);assert.equal(outcomes.size,3);assert.equal(paths,96);
 }
 console.log('PASS: each urban story has 96 valid paths, 120 scenes per route, six spaced choices, three endings, substantial prose and complete art.');
+// An independent walk validates every festival branch, art reference and keepsake.
+const hallPaths=[];
+function hallWalk(id,depth=1,choices=[]){
+ const n=story[id];assert.equal(n.chapter,'halloween');assert(n.text.length>=30,id);assert(portraitFor(id));
+ assert(fs.existsSync(new URL('../assets/halloween/'+n.scene+'.svg',import.meta.url)));
+ if(n.choices)choices=[...choices,depth];
+ if(n.ending){assert(endings[n.ending]);assert.equal(depth,80);assert.equal(choices.length,6);assert.equal(choices[0],6);hallPaths.push(n.ending);return;}
+ for(const next of n.choices?.map(c=>c.to)||[n.next]){assert(story[next],id);hallWalk(next,depth+1,choices);}
+}
+hallWalk(chapters.halloween.entry);assert.equal(hallPaths.length,96);assert.equal(new Set(hallPaths).size,3);
+for(const id of new Set(hallPaths))assert(relics.some(r=>r.ends.includes(id)));
+for(const id of ['pumpkin','skull','spider','bat','ghost'])assert(fs.existsSync(new URL('../assets/halloween/'+id+'.svg',import.meta.url)));
+console.log('PASS: Halloween 96 paths, 80 scenes per reading, six choices, three endings, complete portraits, backgrounds and rewards.');

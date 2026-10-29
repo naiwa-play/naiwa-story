@@ -99,3 +99,16 @@ for(const chapter of ['iceland','polar']){
  assert(!chapterAudio.$('bgm').paused);chapterAudio.$('back-home').onclick();assert.equal(chapterAudio.$('bgm').src,'assets/calm.ogg');
 }
 console.log('PASS: actual Iceland/polar → nightmare → wake → home flow selects and restores distinct tracks.');
+const halloweenGame=setup(async()=>[]);await vm.runInContext('bootPromise',halloweenGame.context);
+halloweenGame.$('halloween-start').onclick();assert.equal(vm.runInContext('state.node',halloweenGame.context),'hall_invitation_0');
+assert(halloweenGame.$('stage').className.includes('hall-gate'));assert(halloweenGame.$('bgm').src.includes('crownless-lantern'));
+await halloweenGame.$('music').onclick();assert(!halloweenGame.$('bgm').paused);
+for(let i=0;i<5;i++)halloweenGame.$('next').onclick();assert.equal(halloweenGame.$('choices').children.length,2);
+halloweenGame.$('choices').children[0].onclick();halloweenGame.$('save').onclick();
+const hallSave=JSON.parse(halloweenGame.saved.get('naiwa-letter-save-v1'));assert.equal(hallSave.node,'hall_invitationbranch0_0');assert(story.validSave(hallSave));
+halloweenGame.$('routes').onclick();assert(halloweenGame.$('modal').open);halloweenGame.$('close').onclick();
+vm.runInContext("enter({...fresh('halloween'),node:'hall_lantern_7'})",halloweenGame.context);
+assert(halloweenGame.$('ending').className.includes('theme-hall-lantern'));assert(halloweenGame.$('reward').textContent.includes('南瓜灯芯'));
+halloweenGame.$('next').onclick();assert(halloweenGame.$('reader').hidden);assert.equal(halloweenGame.$('bgm').src,'assets/calm.ogg');
+halloweenGame.$('halloween-motion').onclick();assert.equal(halloweenGame.$('halloween-motion')['aria-pressed'],'true');
+console.log('PASS: Halloween featured entry, early branch, manual save, route tree, ending/reward, animation pause and music restoration.');

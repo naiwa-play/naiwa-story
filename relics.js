@@ -41,6 +41,9 @@ export const relics=[
  {id:'city-night-lamp',name:'有营业时间的灯卡',icon:'灯',kind:'ticket',ends:['citynight_corner'],from:'都市夜归 · 灯下还有一个位置',text:'卡片写明灯会熄灭，也写明有空欢迎再来。有限的善意，反而让下一次相遇可以安心期待。'},
  {id:'city-night-receipt',name:'双人晚饭收据',icon:'饭',kind:'ticket',ends:['citynight_supper','citynight_morning'],from:'都市夜归 · 日常的续篇',text:'皱纸背面留着饭团地图与晚归约定。快乐不必每次从错过开始，也可以提前给彼此空出时间。'},
  {id:'city-roof-seat',name:'你可以坐这里',icon:'席',kind:'ticket',ends:['cityroof_shared','cityroof_small','cityroof_once'],from:'周日屋顶放映室',text:'奶蛙写给空位的小卡。它既欢迎靠近，也允许离开；一场相遇结束后，这份自由仍被认真保存。'}
+,{id:'hall-ember',name:'不熄的南瓜灯芯',icon:'焰',kind:'lamp',ends:['hall_many_lights'],from:'万圣长夜 · 万家灯火',text:'守灯人分给你的余烬，不听命令，只在自愿分享时发亮。它不需要一顶王冠。'},
+{id:'hall-key',name:'晨昏门钥',icon:'钥',kind:'ticket',ends:['hall_twilight'],from:'万圣长夜 · 晨昏之间',text:'钥匙旁系着换班者的便条：放心睡吧，今晚轮到我。'},
+{id:'hall-calendar',name:'暮鸦国的第一页',icon:'历',kind:'map',ends:['hall_first_day'],from:'万圣长夜 · 明日历书',text:'奶蛙画的新历夹着一张修桥收据。传奇结束之后，仍有人按时赴约。'}
 ];
 export const collectedRelics=unlocked=>relics.filter(r=>r.ends.some(id=>unlocked.includes(id)));
 export const rewardFor=id=>relics.find(r=>r.ends.includes(id));

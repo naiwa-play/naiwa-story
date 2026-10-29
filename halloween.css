@@ -1,0 +1,39 @@
+/* Original illustrated festival chapter. Decorative motion never covers the controls. */
+.halloween-showcase{position:relative;isolation:isolate;overflow:hidden;min-height:580px;padding:70px 6%;border:1px solid #9d789c88;border-radius:22px;background:#20152e;color:#f5e7d5;box-shadow:0 20px 65px #24132b25;margin:32px 0}
+.halloween-showcase .showcase-art{position:absolute;inset:0;z-index:-2;background:linear-gradient(90deg,#1c112bea 0%,#21142caf 43%,#21142c22 78%),url('assets/halloween/hall-gate.svg') center/cover}
+.halloween-showcase h2{font:clamp(32px,5vw,62px)/1.4 serif;letter-spacing:.12em;margin:20px 0;color:#f9e3be;text-shadow:0 3px 30px #140b24}
+.halloween-showcase h2 span{display:block;font-size:.68em;color:#dfc5e6;letter-spacing:.18em;margin-top:6px}
+.halloween-showcase p{max-width:29em;line-height:2;color:#e3cfe3}.halloween-showcase .eyebrow{color:#e8b87f;letter-spacing:.23em;font-size:11px}
+.halloween-showcase .card-actions{display:flex;gap:12px;flex-wrap:wrap;margin:28px 0}.halloween-showcase .card-actions button{min-height:48px;background:#e6c49b;color:#30203c;border:1px solid #efd8b7;border-radius:5px;padding:13px 24px}.halloween-showcase .card-actions button+button{background:#2d203b;color:#ead2e6;border-color:#96729d}
+.halloween-showcase small{color:#bea7c7}.halloween-showcase .showcase-motion{position:absolute;top:20px;right:20px;background:#25182bba;color:#ecdac7;border:1px solid #ac879e;min-height:40px;border-radius:20px;padding:7px 15px}
+.hall-mist{position:absolute;inset:30% -15% -20%;background:radial-gradient(ellipse at 65% 60%,#bfa0d424,transparent 60%);animation:hall-mist 15s ease-in-out infinite alternate}
+.hall-sprite{position:absolute;object-fit:contain;filter:drop-shadow(0 5px 20px #db986333);animation:hall-float 6s ease-in-out infinite;pointer-events:none}
+.hall-pumpkin{width:130px;right:9%;bottom:6%;animation:hall-glow 4s ease-in-out infinite alternate}.hall-skull{width:65px;right:25%;bottom:10%;animation-delay:-2s}.hall-spider{width:90px;right:8%;top:0;transform-origin:top center;animation:hall-swing 7s ease-in-out infinite}.hall-bat{width:100px;right:28%;top:22%;animation:hall-fly 14s ease-in-out infinite}.hall-ghost{width:105px;right:13%;top:40%;animation-duration:8s}
+.halloween-showcase.motion-paused *{animation-play-state:paused!important}
+[class*="hall-"].stage{background:#21162e;border-color:#715578;color:#eadbea}
+[class*="hall-"].stage .scenery{background:var(--hall-art) center top/cover no-repeat;overflow:hidden}
+[class*="hall-"].stage .scenery>*{display:none}
+.hall-gate{--hall-art:url('assets/halloween/hall-gate.svg')}.hall-market{--hall-art:url('assets/halloween/hall-market.svg')}.hall-crypt{--hall-art:url('assets/halloween/hall-crypt.svg')}.hall-wood{--hall-art:url('assets/halloween/hall-wood.svg')}.hall-lake{--hall-art:url('assets/halloween/hall-lake.svg')}.hall-tower{--hall-art:url('assets/halloween/hall-tower.svg')}.hall-dawn{--hall-art:url('assets/halloween/hall-dawn.svg')}
+[class*="hall-"].stage .scenery:after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 20%,#c0a0e218,transparent 65%);animation:hall-glow 7s ease-in-out infinite alternate}
+[class*="hall-"].stage .scene-meta{color:#ecdbd5;text-shadow:0 2px 5px #160e25}
+[class*="hall-"].stage .dialogue{background:linear-gradient(135deg,#2c1d3af5,#21172ff5);border-color:#9b769666;color:#f0e2e5}
+[class*="hall-"].stage .dialogue-top{color:#eac59e}[class*="hall-"].stage .choices button,[class*="hall-"].stage .next,[class*="hall-"].stage .clue{background:#4a3359;color:#f3dfc9;border-color:#9d7f9c}
+[class*="hall-"].stage .choices button:hover{background:#62466f}
+[class*="hall-"].stage .portrait{filter:drop-shadow(0 5px 17px #0d071b66)}
+#ending.theme-hall-lantern,#ending.theme-hall-twilight,#ending.theme-hall-dawn{background:#24172f;color:#f7e5ce;border-color:#ac86a3;--a:#e7a364;--b:#a77ac9;--c:#f0cda0;min-height:440px}
+.theme-hall-lantern .ending-art{background:linear-gradient(#20132d30,#20132d88),url('assets/halloween/hall-dawn.svg') center/cover}.theme-hall-twilight .ending-art{background:linear-gradient(#20132d30,#20132d88),url('assets/halloween/hall-lake.svg') center/cover}.theme-hall-dawn .ending-art{background:linear-gradient(#20132d30,#20132d88),url('assets/halloween/hall-dawn.svg') center/cover}
+.theme-hall-lantern .ending-art i{width:50px;height:60px;background:url('assets/halloween/pumpkin.svg') center/contain no-repeat;border:0;box-shadow:none;animation:hall-lantern-rise 9s ease-in-out infinite;left:calc(8% + var(--n,1)*12%);top:65%}
+.theme-hall-lantern .ending-art i:nth-child(2){--n:2;animation-delay:-3s}.theme-hall-lantern .ending-art i:nth-child(3){--n:3;animation-delay:-6s}.theme-hall-lantern .ending-art i:nth-child(4){--n:4;animation-delay:-2s}.theme-hall-lantern .ending-art i:nth-child(5){--n:5;animation-delay:-5s}.theme-hall-lantern .ending-art i:nth-child(6){--n:6;animation-delay:-8s}
+.theme-hall-twilight .ending-art i{width:65px;height:75px;background:url('assets/halloween/ghost.svg') center/contain no-repeat;border:0;box-shadow:none;animation:hall-float 7s ease-in-out infinite;left:20%;top:20%}.theme-hall-twilight .ending-art i:nth-child(n+2){display:none}
+.theme-hall-dawn .ending-art i{display:none}.theme-hall-dawn .ending-fluid{opacity:.35;mix-blend-mode:screen}
+.theme-hall-lantern #ending-note,.theme-hall-twilight #ending-note,.theme-hall-dawn #ending-note{color:#efdce6;text-shadow:0 2px 8px #170f24}
+@keyframes hall-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}
+@keyframes hall-swing{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg) translateY(14px)}}
+@keyframes hall-fly{0%,100%{transform:translate(0,0) rotate(-8deg)}50%{transform:translate(-100px,-35px) rotate(8deg)}}
+@keyframes hall-glow{from{opacity:.6}to{opacity:1}}
+@keyframes hall-mist{to{transform:translateX(-8%) scale(1.1)}}
+@keyframes hall-lantern-rise{0%{transform:translateY(65px) rotate(-8deg);opacity:0}20%,75%{opacity:.8}100%{transform:translateY(-240px) rotate(8deg);opacity:0}}
+@media(max-width:600px){.halloween-showcase{padding:70px 24px 180px;min-height:650px}.halloween-showcase .showcase-art{background-image:linear-gradient(#1c112b66,#21142cbd 35%,#21142c44),url('assets/halloween/hall-gate.svg')}.hall-ghost{top:auto;bottom:60px;right:40%}.hall-bat{top:15%;right:5%;width:65px}.hall-skull{right:75%;bottom:5%;width:55px}.hall-pumpkin{width:100px}.hall-spider{right:40%;width:60px}.halloween-showcase h2{font-size:34px}}
+@media(prefers-reduced-motion:reduce){.halloween-showcase *,[class*="hall-"].stage *,#ending[class*="theme-hall-"] *{animation:none!important;transition:none!important}.theme-hall-lantern .ending-art i{opacity:.5}}
+
+[class*="hall-"].stage #speaker{color:#f1cfa0}[class*="hall-"].stage #page-count{color:#c9afcf}
