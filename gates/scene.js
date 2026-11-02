@@ -3,7 +3,7 @@ import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/utils/BufferGeometryUtils.js';
 import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText } from './core.js?v=16';
 import {jellyPose,applyJellyPose} from './jelly-motion.js';
-import {loadGameModel,MODEL_FILES} from './model-loader.js?v=19';
+import {loadGameModel,MODEL_FILES} from './model-loader.js?v=20';
 
 const sphere=new T.SphereGeometry(1,20,14), lowSphere=new T.SphereGeometry(1,12,9), box=new T.BoxGeometry(1,1,1),coinGeometry=new T.CylinderGeometry(.21,.21,.07,14);
 const materials=new Map(),leafGeometries=new Map(),shadowGeometry=new T.PlaneGeometry(2,1.6);

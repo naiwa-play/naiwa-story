@@ -18,8 +18,16 @@ export async function downloadModel(url,onProgress=()=>{},options={}){
       const total=Number(response.headers.get('Content-Length'))||0;
       if(!response.body?.getReader){const buffer=await response.arrayBuffer();onProgress({loaded:buffer.byteLength,total:total||buffer.byteLength,attempt});return buffer;}
       const reader=response.body.getReader(),chunks=[];let loaded=0;
-      while(true){const {done,value}=await reader.read();if(done)break;arm();chunks.push(value);loaded+=value.byteLength;onProgress({loaded,total,attempt});}
-      const data=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){data.set(chunk,offset);offset+=chunk.byteLength;}return data.buffer;
+      // Reuse one buffer when the server supplies the decoded size; avoid retaining every chunk plus a full copy.
+      let data=Number.isSafeInteger(total)&&total>0&&!response.headers.get('Content-Encoding')?new Uint8Array(total):null;
+      while(true){
+        const {done,value}=await reader.read();if(done)break;arm();
+        if(data&&loaded+value.byteLength>data.length){chunks.push(data.subarray(0,loaded));data=null;}
+        if(data)data.set(value,loaded);else chunks.push(value);
+        loaded+=value.byteLength;onProgress({loaded,total,attempt});
+      }
+      if(data)return loaded===data.length?data.buffer:data.buffer.slice(0,loaded);
+      data=new Uint8Array(loaded);let offset=0;for(const chunk of chunks){data.set(chunk,offset);offset+=chunk.byteLength;}return data.buffer;
     }catch(error){controller.abort();if(attempt===retries)throw new Error(error.name==='AbortError'?'下载长时间没有进展，请检查网络后重试':error.message,{cause:error});}
     finally{clearTimeout(timer);}
   }
@@ -28,7 +36,7 @@ export async function downloadModel(url,onProgress=()=>{},options={}){
 export async function loadGameModel(loader,name,onProgress=()=>{}){
   const spec=MODEL_FILES[name];loader.setMeshoptDecoder(MeshoptDecoder);
   const load=async url=>{
-    const absolute=new URL(url,import.meta.url);absolute.search=new URL(import.meta.url).search;let buffer;
+    const absolute=new URL(url,import.meta.url);absolute.search='?v=19';let buffer; // Asset revision stays separate from loader updates to retain cached models.
     try{buffer=await downloadModel(absolute,event=>onProgress({...event,phase:'download',label:spec.label,expected:spec.bytes}));}catch(error){error.assetDownload=true;throw error;}
     onProgress({phase:'decode',loaded:buffer.byteLength,total:buffer.byteLength,label:spec.label,expected:spec.bytes});
     let timer;try{return await Promise.race([loader.parseAsync(buffer,new URL('./',absolute).href),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(spec.label+'解析超时，请重新加载')),30000);})]);}finally{clearTimeout(timer);}

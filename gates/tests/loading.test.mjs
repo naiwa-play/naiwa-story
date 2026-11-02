@@ -8,6 +8,10 @@ const originalFetch=globalThis.fetch,bytes=new Uint8Array([1,2,3,4]);
 try{
   const events=[];globalThis.fetch=async()=>new Response(bytes);
   assert.deepEqual(new Uint8Array(await downloadModel('/model',event=>events.push(event))),bytes);assert.equal(events.at(-1).loaded,4);
+  for(const headers of [{'Content-Length':'4'},{'Content-Length':'2'},{'Content-Length':'6'},{'Content-Length':'2','Content-Encoding':'gzip'}]){
+    globalThis.fetch=async()=>new Response(new ReadableStream({start(controller){controller.enqueue(bytes.slice(0,2));controller.enqueue(bytes.slice(2));controller.close();}}),{headers});
+    assert.deepEqual(new Uint8Array(await downloadModel('/streamed-model')),bytes,'Preserve all bytes with known, mismatched or encoded lengths');
+  }
   let requests=0;globalThis.fetch=async()=>++requests===1?new Response('',{status:503}):new Response(bytes);
   assert.equal((await downloadModel('/model')).byteLength,4);assert.equal(requests,2);
   requests=0;globalThis.fetch=(_url,{signal})=>{requests++;return new Promise((_,reject)=>signal.addEventListener('abort',()=>reject(new DOMException('aborted','AbortError'))));};
@@ -18,7 +22,7 @@ try{
   assert.equal((await downloadModel('/older-webview')).byteLength,4);
   const urls=[];globalThis.fetch=async url=>{urls.push(String(url));return new Response(bytes);};let parses=0;
   const loader={setMeshoptDecoder(decoder){assert.ok(decoder.supported);},async parseAsync(){if(++parses===1)throw new Error('Unsupported image decoder');return {scene:'fallback'};}};
-  assert.equal((await loadGameModel(loader,'naiwa')).scene,'fallback');assert.equal(urls.length,2);assert.ok(urls[1].includes('rodin-v4/naiwa-jelly.glb'));
+  assert.equal((await loadGameModel(loader,'naiwa')).scene,'fallback');assert.equal(urls.length,2);assert.ok(urls[1].includes('rodin-v4/naiwa-jelly.glb'));assert.ok(urls.every(url=>new URL(url).search==='?v=19'));
   let parsed=false;requests=0;globalThis.fetch=async()=>{requests++;return new Response('',{status:503});};
   await assert.rejects(loadGameModel({setMeshoptDecoder(){},parseAsync(){parsed=true;}},'naiwa'),/奶蛙.*503/);assert.equal(requests,2);assert.equal(parsed,false);
 }finally{globalThis.fetch=originalFetch;}
