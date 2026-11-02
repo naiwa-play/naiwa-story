@@ -8,7 +8,7 @@ const elements=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{style:{setProperty(){}},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},append(){},close(){},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
 const context=vm.createContext({...core,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
-vm.runInContext(source+'\nglobalThis.testGame={updateShots,update,volley,burst,hit,updateModeHUD,companionAttack,petAttack,dogAttack,threats(t){activeThreats=t;},set(s,v,a=null){state=s;scene=v;active=a;course=[];paused=false;pendingCards=null;nextStage=1;fireTimer=dogTimer=petTimer=0;dogBites=[];activeThreats=[];companionReady=[];pendingMajorReward=false;},course(rows){course=rows;scene.createCourse(rows);},choose(){if(pendingCards){const ids=["dog","mouse","company","damage","rate","scatter","range"],card=ids.map(id=>pendingCards.find(c=>c.id===id)).find(Boolean)||pendingCards[0];chooseCard(state,card.id);pendingCards=null;paused=false;}},getState:()=>state};',context);
+vm.runInContext(source+'\nglobalThis.testGame={updateShots,update,volley,burst,hit,bossAttack,updateThreats,getThreats:()=>activeThreats,updateModeHUD,companionAttack,petAttack,dogAttack,threats(t){activeThreats=t;},set(s,v,a=null){state=s;scene=v;active=a;course=[];paused=false;pendingCards=null;nextStage=1;fireTimer=dogTimer=petTimer=0;dogBites=[];activeThreats=[];companionReady=[];pendingMajorReward=false;},course(rows){course=rows;scene.createCourse(rows);},choose(){if(pendingCards){const ids=["dog","mouse","company","damage","rate","scatter","range"],card=ids.map(id=>pendingCards.find(c=>c.id===id)).find(Boolean)||pendingCards[0];chooseCard(state,card.id);pendingCards=null;paused=false;}},getState:()=>state};',context);
 const game=context.testGame;
 function fixture(at=20){const row={at,type:'fight',group:new T.Group(),used:false},group=new T.Group();row.group.add(group);const scene={home:false,rows:[row],entities:[],shots:[],scene:new T.Scene(),positionRows:ExpeditionScene.prototype.positionRows,shoot(){},beam(){},dropCoins(){},dropPotion(){},rewardText(){},collectCoins(){return 0;},collectPotions(){return 0;},pruneCourse(){},hurt(){},burst(){},ring(){},hit(e,d){e.hp-=d;if(e.hp<=0)e.dead=true;return e.dead;}};scene.scene.add(row.group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.positionRows(0);scene.scene.updateMatrixWorld(true);return {scene,enemy,row};}
 function extraEnemy(scene,row,x=2,z=0){const group=new T.Group();group.position.set(x,0,z);row.group.add(group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.scene.updateMatrixWorld(true);return enemy;}
@@ -51,3 +51,30 @@ hapticNow+=1000;context.document.hidden=true;game.hit(extraEnemy(hapticFixture.s
 context.document.hidden=false;context.window.matchMedia=()=>({matches:false});game.hit(extraEnemy(hapticFixture.scene,hapticFixture.row),100);assert.equal(vibrations.length,3);
 delete context.navigator.vibrate;game.hit(extraEnemy(hapticFixture.scene,hapticFixture.row),100);
 console.log('PASS: mobile kill pulse cooldown, full charge double pulse, no overlapping pulses and unsupported-device fallback.');
+
+// Copy shots inherit their remaining range and cannot farm the same target repeatedly.
+{
+ const {scene,enemy,row}=fixture(20),s=core.freshRun('cyber');s.weapon='replicator';s.range=52;scene.shoot=ExpeditionScene.prototype.shoot;game.set(s,scene);game.volley();assert.equal(scene.shots[0].kind,'replicator');
+ scene.shots=[{x:0,z:-13,damage:4,kind:'replicator',range:52,angle:0,size:1,radius:.28,travel:0,life:0}];game.updateShots(.1);
+ assert.equal(enemy.hp,6);assert.equal(scene.shots.length,2);assert.ok(scene.shots.every(b=>b.generation===1&&b.damage===2.6&&b.size<1));
+ const hp=enemy.hp;game.updateShots(.01);assert.equal(enemy.hp,hp,'Children must not hit their parent target again');
+ let shot=scene.shots[0];
+ for(let generation=1;generation<=5;generation++){
+  scene.shots=[{...shot,x:0,z:-12,angle:0}];scene.entities=[extraEnemy(scene,row,0,2.5)];scene.scene.updateMatrixWorld(true);game.updateShots(.1);
+  if(generation<5){assert.equal(scene.shots.length,2);shot=scene.shots[0];assert.equal(shot.generation,generation+1);}else assert.equal(scene.shots.length,0,'The fifth generation cannot split a sixth time');
+ }
+ scene.entities=[enemy];enemy.dead=false;enemy.hp=1e6;scene.scene.updateMatrixWorld(true);
+ scene.shots=Array.from({length:155},()=>({x:0,z:-13,damage:1,kind:'replicator',range:52,angle:0,size:1,radius:.28,travel:0,life:0}));game.updateShots(.1);assert.equal(scene.shots.length,155,'Splitting respects the shared projectile budget');
+ scene.shots=[{x:0,z:-13,damage:1,kind:'replicator',range:.05,angle:0,size:1,radius:.28,travel:0,life:0}];game.updateShots(.1);assert.equal(scene.shots.length,0,'Expired range cannot be reset by splitting');
+}
+for(const index of [0,1]){
+ const {scene,enemy}=fixture(20),s=core.freshRun('cyber');enemy.boss=core.bossFor('cyber',index);game.set(s,scene);game.bossAttack(enemy);
+ const threats=game.getThreats();assert.ok(threats.length>=2);const projectile=threats.find(t=>t.kind!=='area');projectile.group.position.set(0,.6,5);projectile.vx=0;projectile.vz=12;game.updateThreats(.1);assert.equal(s.health,3,'Both cyber bosses must damage shared health on impact');
+}
+console.log('PASS copy gun: horizontal hits, smaller splitting eggs, five-generation limit, no repeated targets, shared shot cap, preserved range; cyber boss damage.');
+{
+ const {scene}=fixture(20),state=core.freshRun('cyber');state.weapon='replicator';state.splitDepth=6;state.splitCount=3;scene.shoot=ExpeditionScene.prototype.shoot;game.set(state,scene);game.volley();assert.equal(scene.shots[0].splitLimit,6);assert.equal(scene.shots[0].splitChildren,3);
+ scene.shots=[{x:0,z:-13,damage:1,kind:'replicator',range:52,angle:0,size:1,radius:.28,travel:0,life:0,generation:5}];game.updateShots(.1);assert.equal(scene.shots.length,3);assert.ok(scene.shots.every(shot=>shot.generation===6));
+ scene.shots=[{x:0,z:-13,damage:1,kind:'replicator',range:52,angle:0,size:1,radius:.28,travel:0,life:0,generation:5,splitLimit:5,splitChildren:2}];game.updateShots(.1);assert.equal(scene.shots.length,0,'Already-fired shots retain their original upgrade snapshot');
+}
+console.log('PASS copy upgrades: extra split generations, extra eggs and immutable launch parameters.');

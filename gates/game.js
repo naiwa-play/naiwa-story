@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.min.js';
-import {ExpeditionScene} from './scene.js?v=20';
-import {THEMES,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=16';
-import {Soundtrack} from './audio.js?v=17';
+import {ExpeditionScene} from './scene.js?v=21';
+import {THEMES,MAX_STAT,formatStat,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=21';
+import {Soundtrack} from './audio.js?v=21';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
@@ -27,8 +27,8 @@ $('modal-close').onclick=()=>$('modal').close();
 $('modal').addEventListener('cancel',e=>{if(pendingCards)e.preventDefault();});
 $('modal').addEventListener('click',event=>{if(pendingCards||event.target!==$('modal'))return;const r=$('modal').getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)$('modal').close();});
 $('modal').addEventListener('close',()=>{paused=false;pressed.clear();pointer=null;accumulator=0;if(!document.hidden)sound.resume();lastTime=0;});
-$('help').onclick=()=>showModal('一只奶蛙，也能出发。','<ol><li><b>自动前进与攻击。</b> 手机按住画面左右拖动，电脑使用 A / D、方向键或拖动鼠标。敌人会持续向你靠近，侧移可以躲开，碰撞只扣生命，不扣队伍数量。红色血瓶可恢复 2 点生命，补给较少。Boss 攻击命中主角或奶蛙伙伴都会扣除共享生命。</li><li><b>看准射程。</b> 脚下前方的光圈标记最远攻击位置，超出射程不能造成伤害。瞄准后会自动射击。</li><li><b>三选一，决定成长。</b> 经过卡牌路标时暂停选卡：增加追踪伙伴、攻速、威力、移速和射程。武器与攻击形式独立搭配：投掷奶蛋配散射会分散投掷；激光配散射会展开扇形光束。召唤宠物后才会出现对应成长卡。</li><li><b>两种伙伴，两种打法。</b> 奶狗会扑向敌人咬击，奶鼠搓出奶球进行追踪攻击。没有召唤时不会出场。</li><li><b>第一段是热身，之后没有终点。</b> 完成 260 米初行路后直接进入无尽，推进速度逐渐提高，最高 3 倍。遇到 Boss 会停步交战，左右闪避它的墨团。击败小怪增加攻击力，击败 Boss 还会增加伙伴数量和攻速。</li><li><b>能量模式。</b> 能量未满时隐藏效果，蓄满揭晓愤怒、忧郁、恶魔、天使或神格模式。点击右下按钮或按空格进入限时增益；开启声音可听就绪提示。连续击杀的充能有上限，两次模式切换至少间隔 45 秒。</li><li><b>金币带回口袋。</b> 靠近金币即可拾取。结束或返回主界面会保存金币，可在口袋商店购买永久开局强化；记录保存在当前浏览器。</li></ol>');
-$('collection').onclick=()=>showModal('伙伴会在路上相遇。','<div class="pet-entry"><span class="pet-number">01</span><div><b>奶蛙 · 最初的勇气</b><p>主角负责普通射击或散射。增加的奶蛙伙伴各自定时发出红色追踪奶蛋，攻速和攻击力升级也对它们生效。</p></div></div><div class="pet-entry"><span class="pet-number">02</span><div><b>奶狗 · 扑咬搭档</b><p>召唤后冲向敌人、扑咬再返回。可通过专属卡增加数量和咬击伤害。</p></div></div><div class="pet-entry"><span class="pet-number">03</span><div><b>奶鼠 · 奶球法师</b><p>在身前搓出奶球，追踪射程内的敌人。可通过专属卡增加数量和奶球伤害。</p></div></div><a class="credit-link" href="./CREDITS.md" target="_blank" rel="noopener">模型来源与制作说明 ↗</a>','MEET YOUR LITTLE SQUAD');
+$('help').onclick=()=>showModal('一只奶蛙，也能出发。','<ol><li><b>自动前进与攻击。</b> 手机按住画面左右拖动，电脑使用 A / D、方向键或拖动鼠标。敌人会持续向你靠近，侧移可以躲开，碰撞只扣生命，不扣队伍数量。红色血瓶可恢复 2 点生命，补给较少。Boss 攻击命中主角或奶蛙伙伴都会扣除共享生命。</li><li><b>看准射程。</b> 脚下前方的光圈标记最远攻击位置，超出射程不能造成伤害。瞄准后会自动射击。</li><li><b>三选一，决定成长。</b> 经过卡牌路标时暂停选卡：增加追踪伙伴、攻速、威力、移速和射程。武器与攻击形式独立搭配：投掷奶蛋配散射会分散投掷；激光配散射会展开扇形光束。机器复制枪平射奶蛋，命中分裂，每代伤害保留 65%，基础分裂 5 次，可通过专属卡提升层数和分裂数量。召唤宠物后才会出现对应成长卡。</li><li><b>两种伙伴，两种打法。</b> 奶狗会扑向敌人咬击，奶鼠搓出奶球进行追踪攻击。没有召唤时不会出场。</li><li><b>第一段是热身，之后没有终点。</b> 完成 260 米初行路后直接进入无尽，推进速度逐渐提高，最高 3 倍。遇到 Boss 会停步交战，左右闪避它的墨团。击败小怪增加攻击力，击败 Boss 还会增加伙伴数量和攻速。</li><li><b>能量模式。</b> 能量未满时隐藏效果，蓄满揭晓愤怒、忧郁、恶魔、天使或神格模式。点击右下按钮或按空格进入限时增益；开启声音可听就绪提示。连续击杀的充能有上限，两次模式切换至少间隔 45 秒。</li><li><b>金币带回口袋。</b> 靠近金币即可拾取。结束或返回主界面会保存金币，可在口袋商店购买永久开局强化；记录保存在当前浏览器。</li></ol>');
+$('collection').onclick=()=>showModal('伙伴会在路上相遇。','<div class="pet-entry"><span class="pet-number">01</span><div><b>奶蛙 · 最初的勇气</b><p>主角负责普通射击或散射。增加的奶蛙伙伴各自定时发出红色追踪奶蛋，攻速和攻击力升级也对它们生效。</p></div></div><div class="pet-entry"><span class="pet-number">02</span><div><b>奶狗 · 扑咬搭档</b><p>召唤后冲向敌人、扑咬再返回。随击杀成长，也可通过专属卡增加数量和咬击伤害。</p></div></div><div class="pet-entry"><span class="pet-number">03</span><div><b>奶鼠 · 奶球法师</b><p>在身前搓出奶球，追踪射程内的敌人。随击杀成长，也可通过专属卡增加数量和奶球伤害。</p></div></div><a class="credit-link" href="./CREDITS.md" target="_blank" rel="noopener">模型来源与制作说明 ↗</a>','MEET YOUR LITTLE SQUAD');
 $('pause').onclick=()=>{if(scene.home||state.phase==='lost'||pendingCards)return;showModal('歇一口气，等你回来。','<p>画面、敌人和音乐都已暂停。返回主界面也会保存本次拾取的金币。</p><button class="start-button" id="resume">继续冒险 <span>↗</span></button><button class="text-button" id="exit-run">收好金币，返回主界面</button>','TAKE A LITTLE BREAK');$('resume').onclick=()=>$('modal').close();$('exit-run').onclick=()=>{$('modal').close();home();};};
 $('sound').onclick=async()=>{
  const button=$('sound');button.disabled=true;
@@ -39,7 +39,7 @@ $('sound').onclick=async()=>{
   toast(sound.enabled?'音乐已开启':'音乐已关闭');
  }catch{toast('声音尚未启动，请再点一次试试');}finally{button.disabled=false;}
 };
-document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{theme=b.dataset.theme;sound.theme=theme;state=freshRun(theme,1,saved.upgrades,saved.startingPet);scene.rebuildScenery(theme);document.body.classList.toggle('theme-halloween',theme==='halloween');document.querySelectorAll('[data-theme]').forEach(v=>{v.classList.toggle('selected',v===b);v.setAttribute('aria-pressed',String(v===b));});});
+document.querySelectorAll('[data-theme]').forEach(b=>b.onclick=()=>{theme=b.dataset.theme;sound.theme=theme;state=freshRun(theme,1,saved.upgrades,saved.startingPet);scene.rebuildScenery(theme);document.body.classList.toggle('theme-halloween',theme==='halloween');document.body.classList.toggle('theme-cyber',theme==='cyber');document.querySelectorAll('[data-theme]').forEach(v=>{v.classList.toggle('selected',v===b);v.setAttribute('aria-pressed',String(v===b));});});
 function openShop(){
  const items=SHOP.map(item=>{const level=saved.upgrades[item.id]||0,max=level>=item.max,cost=shopPrice(item,level);return '<article class="shop-item"><span class="shop-icon">'+item.icon+'</span><div><h3>'+item.title+'</h3><p>'+item.description+' · '+level+'/'+item.max+'</p></div><button data-buy="'+item.id+'" '+(max||saved.coins<cost?'disabled':'')+'>'+(max?'已收好':cost+' 金币')+'</button></article>';}).join('');
  const pets=[['','独自出发'],['naigou','奶狗同行'],['naishu','奶鼠同行']].filter(([id])=>!id||saved.upgrades[id]).map(([id,label])=>'<button class="loadout-option" data-loadout="'+id+'" aria-pressed="'+((saved.startingPet||'')===id)+'">'+label+'</button>').join('');
@@ -50,7 +50,7 @@ function openShop(){
 $('shop').onclick=openShop;
 function chooseCards(major=false){
  pendingCards=rollCards(state,Math.random,major);
- showModal(major?'征服者，这是你的馈赠。':'下一份快乐，由你决定。','<p class="choice-intro">'+(major?'主题首领已击败 · 选择一项强力成长':'选一张带走 · 选择期间时间暂停')+'</p><div class="choice-grid">'+pendingCards.map((c,i)=>'<button class="upgrade-card '+(['武器','攻击形式'].includes(c.tag)||c.rare||c.majorReward||c.id==='pumpkin'?'rare':'')+'" data-card="'+c.id+'"><small>'+c.tag+'</small><span class="card-art" aria-hidden="true">'+c.icon+'</span><h3>'+c.title+'</h3><p>'+c.description+'</p><span class="card-select">选择这张 <b>'+(i+1)+'</b></span></button>').join('')+'</div>',major?'A GIFT FROM THE CONQUERED WORLD.':'A LITTLE CHOICE. A NEW POSSIBILITY.','cards');
+ showModal(major?'征服者，这是你的馈赠。':'下一份快乐，由你决定。','<p class="choice-intro">'+(major?'主题首领已击败 · 选择一项强力成长':'选一张带走 · 选择期间时间暂停')+'</p><div class="choice-grid">'+pendingCards.map((c,i)=>'<button class="upgrade-card '+(['武器','攻击形式','复制枪专属'].includes(c.tag)||c.rare||c.majorReward||c.id==='pumpkin'?'rare':'')+'" data-card="'+c.id+'"><small>'+c.tag+'</small><span class="card-art" aria-hidden="true">'+c.icon+'</span><h3>'+c.title+'</h3><p>'+c.description+'</p><span class="card-select">选择这张 <b>'+(i+1)+'</b></span></button>').join('')+'</div>',major?'A GIFT FROM THE CONQUERED WORLD.':'A LITTLE CHOICE. A NEW POSSIBILITY.','cards');
  let preparing=false;
  document.querySelectorAll('[data-card]').forEach(b=>b.onclick=async()=>{
   if(preparing||!pendingCards?.some(c=>c.id===b.dataset.card))return;const pet={dog:'naigou',mouse:'naishu'}[b.dataset.card];
@@ -84,7 +84,7 @@ function volley(){
    const startZ=playerZ-.75,endX=x+Math.sin(angle)*state.range,endZ=startZ-Math.cos(angle)*state.range,width=.2*profile.size;
    scene.beam(x,startZ,state.range,angle,width);
    for(const e of targetEnemies()){const p=e.group.getWorldPosition(new T.Vector3());if(sweepHit(x-p.x,startZ-p.z,endX-p.x,endZ-p.z,e.radius+width/2)!==null)hit(e,profile.damage);}
-  }else scene.shoot(x,playerZ-.75,profile.damage,false,null,state.weapon,state.range,angle,profile.size);
+  }else{const shot=scene.shoot(x,playerZ-.75,profile.damage,false,null,state.weapon,state.range,angle,profile.size);if(shot&&state.weapon==='replicator'){shot.splitLimit=state.splitDepth;shot.splitChildren=state.splitCount;}}
  }
 }
 function companionAttack(){
@@ -95,12 +95,12 @@ function companionAttack(){
   const x=state.x+points[i].x,z=5.45+points[i].z;
   const nearby=targets.filter(e=>{const p=e.group.getWorldPosition(new T.Vector3());return p.z<z&&Math.hypot(p.x-x,p.z-z)<=state.range;});
   if(!nearby.length)continue;const target=nearby[(i-1)%nearby.length];
-  scene.shoot(x,z,state.damage*1.8*represented,true,target,'companion',state.range);
+  scene.shoot(x,z,Math.min(MAX_STAT,state.damage*1.8*represented),true,target,'companion',state.range);
   companionReady[i]=state.elapsed+Math.max(.9,3.2*1.5/effectiveRate(state));launched++;
  }
 }
-function petAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-state.range);if(!targets.length)return;for(let i=0;i<state.pets.naishu;i++){const target=targets[i%targets.length];scene.shoot(state.x+1.05+i*.4,playerZ+.2,2.4*state.petDamage.naishu,true,target,'milkball',state.range);scene.chargeMouse(i);}}
-function dogAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(22,state.range));if(!targets.length)return;for(let i=0;i<state.pets.naigou;i++){const enemy=targets[i%targets.length];scene.petLunge(i,enemy.group.getWorldPosition(new T.Vector3()));dogBites.push({enemy,age:0,damage:3.2*state.petDamage.naigou});}}
+function petAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-state.range);if(!targets.length)return;for(let i=0;i<state.pets.naishu;i++){const target=targets[i%targets.length];scene.shoot(state.x+1.05+i*.4,playerZ+.2,Math.min(MAX_STAT,2.4*state.petDamage.naishu),true,target,'milkball',state.range);scene.chargeMouse(i);}}
+function dogAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(22,state.range));if(!targets.length)return;for(let i=0;i<state.pets.naigou;i++){const enemy=targets[i%targets.length];scene.petLunge(i,enemy.group.getWorldPosition(new T.Vector3()));dogBites.push({enemy,age:0,damage:Math.min(MAX_STAT,3.2*state.petDamage.naigou)});}}
 const MODE_ICONS={
  unknown:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16v.2"/>',
  anger:'<path d="M13 2c2 6-4 6-2 10 1-2 3-2 4-4 3 4 5 6 3 10-2 5-10 5-12 0-2-4 0-7 3-10-1 4 1 5 2 5-3-6 1-7 2-11Z"/>',
@@ -141,6 +141,8 @@ function bossAttack(enemy){
  else if(spec.attack==='spores'){for(const angle of [-.26,-.13,0,.13,.26])launchThreat(enemy,{color,angle,speed:7.5});if(n%2===0)markHazard(n%4===0?-2.6:2.6,color,2.4);}
  else if(spec.attack==='haunt'){launchThreat(enemy,{color,homing:true,speed:9.5});if(n%2===0)markHazard(state.x,'#e59455',2);}
  else if(spec.attack==='bones'){for(const x of [-2.8,0,2.8])launchThreat(enemy,{color,kind:'bone',speed:14,x});if(n%2===0){const safe=n%3;[-2.7,0,2.7].forEach((x,i)=>{if(i!==safe)markHazard(x,'#d1899e',1.7);});}}
+ else if(spec.attack==='crossfire'){for(const x of [-2.5,2.5])launchThreat(enemy,{color,x,speed:12,angle:(n%2?1:-1)*x*.055});if(n%3===0)markHazard(state.x,'#f3ae78',1.6);}
+ else if(spec.attack==='assembly'){const safe=n%3;[-2.7,0,2.7].forEach((x,i)=>{if(i!==safe)markHazard(x,'#ffb077',1.8);});for(const angle of [-.16,0,.16])launchThreat(enemy,{color:'#7de4e1',speed:9,angle});}
  return spec.cooldown;
 }
 function updateThreats(dt){
@@ -164,7 +166,7 @@ function updateThreats(dt){
 function end(){if(displayedResult)return;displayedResult=true;state.phase='lost';settle();$('result-kicker').textContent=state.endless?'UNTIL THE NEXT ADVENTURE':'A LITTLE REST. ANOTHER TRY.';$('result-title').textContent='这一程，也很了不起。';$('result-copy').textContent='前进 '+Math.floor(state.distance)+' 米，击退 '+state.kills+' 位对手。已将拾取的金币收进口袋，去商店准备下一次出发吧。';$('result-crowd').textContent=Math.floor(state.distance);$('result-walls').textContent=state.cards;$('result-coins').textContent=reward(state);$('again').innerHTML='再来一次 <span>↗</span>';$('result').hidden=false;$('pause').hidden=true;sound.effect('hurt');}
 function explode(b){const radius=(b.kind==='pumpkin'?4:3)*(b.size||1);scene.burst(b.x,.7,b.z,b.kind==='pumpkin'?'#ec965d':'#ffe8a1',22);scene.ring(b.x,b.z,b.kind==='pumpkin'?'#b891ef':'#f2c566',radius);for(const e of scene.entities){if(e.dead||e.escaped)continue;const p=e.group.getWorldPosition(new T.Vector3());if(Math.hypot(p.x-b.x,p.z-b.z)<radius+e.radius)hit(e,b.damage);}}
 function updateShots(dt){
- const targets=targetEnemies(),positions=new Map(targets.map(enemy=>[enemy,enemy.group.getWorldPosition(new T.Vector3())]));
+ const targets=targetEnemies(),positions=new Map(targets.map(enemy=>[enemy,enemy.group.getWorldPosition(new T.Vector3())])),splits=[];
  scene.shots=scene.shots.filter(b=>{
   b.life+=dt;const previousX=b.x,previousZ=b.z;
   let vx=Math.sin(b.angle||0)*27,vz=-Math.cos(b.angle||0)*27;
@@ -173,13 +175,22 @@ function updateShots(dt){
   const remaining=(b.range??22)-(b.travel??0),length=Math.min(Math.hypot(vx,vz)*dt,remaining),factor=length/(Math.hypot(vx,vz)||1);b.previousZ=b.z;b.x+=vx*factor;b.z+=vz*factor;b.travel=(b.travel??0)+length;
   let nearest=null,impact=Infinity;
   for(const enemy of targets){
-   if(enemy.dead||enemy.escaped)continue;const p=positions.get(enemy),radius=enemy.radius+(b.radius??.14),ax=previousX-(enemy.previousX??p.x),az=previousZ-(enemy.previousZ??p.z),bx=b.x-p.x,bz=b.z-p.z;
+   if(enemy.dead||enemy.escaped||b.splitHits?.includes(enemy))continue;const p=positions.get(enemy),radius=enemy.radius+(b.radius??.14),ax=previousX-(enemy.previousX??p.x),az=previousZ-(enemy.previousZ??p.z),bx=b.x-p.x,bz=b.z-p.z;
    if(Math.min(ax,bx)>radius||Math.max(ax,bx)<-radius||Math.min(az,bz)>radius||Math.max(az,bz)<-radius)continue;
    const t=sweepHit(ax,az,bx,bz,radius);if(t!==null&&t<impact){impact=t;nearest=enemy;}
   }
-  if(nearest){b.x=previousX+(b.x-previousX)*impact;b.z=previousZ+(b.z-previousZ)*impact;if(b.kind==='bomb'||b.kind==='pumpkin')explode(b);else hit(nearest,b.damage);return false;}
+  if(nearest){
+   b.x=previousX+(b.x-previousX)*impact;b.z=previousZ+(b.z-previousZ)*impact;
+   if(b.kind==='bomb'||b.kind==='pumpkin')explode(b);else hit(nearest,b.damage);
+   if(b.kind==='replicator'&&(b.generation||0)<(b.splitLimit??state.splitDepth)){
+    const travel=(b.travel??0)-length*(1-impact),splitHits=[...(b.splitHits||[]),nearest],generation=(b.generation||0)+1;
+    const children=b.splitChildren??state.splitCount;if(travel<(b.range??22))for(let i=0;i<children;i++)splits.push({...b,damage:b.damage*.65,size:Math.max(.32,(b.size||1)*.78),radius:Math.max(.10,(b.radius??.28)*.78),angle:(b.angle||0)+(i-(children-1)/2)*.26/Math.max(1,children-1),travel,life:0,previousZ:b.z,generation,splitHits});
+   }
+   return false;
+  }
   if(b.travel>=(b.range??22)){if(b.kind==='bomb'||b.kind==='pumpkin')explode(b);return false;}return b.life<6;
  });
+ scene.shots.push(...splits.slice(0,Math.max(0,155-scene.shots.length)));
 }
 function takeHit(amount=1){if(damageSquad(state,amount)){scene.hurt();sound.effect('hurt');toast('生命 −'+amount+' · 侧移闪避攻击');document.body.classList.add('hit-flash');setTimeout(()=>document.body.classList.remove('hit-flash'),220);}}
 function update(dt){
@@ -198,7 +209,7 @@ function update(dt){
  scene.positionRows(state.distance);scene.entities.forEach(e=>e.group.position.z=e.offset);scene.scene.updateMatrixWorld(true);
  if(paused)return;
  const encounter=scene.entities.find(e=>!e.dead&&!e.escaped&&e.type==='boss'&&e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(18,state.range-2));
- if(encounter&&state.phase!=='boss'){state.phase='boss';active=encounter.row;encounter.engaged=true;bossTimer=1.3;toast('Boss 战 · 停步攻击，左右闪避墨团');}
+ if(encounter&&state.phase!=='boss'){state.phase='boss';active=encounter.row;encounter.engaged=true;bossTimer=1.3;toast('Boss 战 · 停步攻击，左右闪避攻击');}
  if(!modeActive(state,'angel')){
   fireTimer-=dt;if(fireTimer<=0){volley();fireTimer+=1/attackProfile(state).rate;}
   companionAttack();const attackBoost=modeActive(state,'anger')?1.8:1;
@@ -219,12 +230,12 @@ function update(dt){
  scene.pruneCourse(state.distance);course=course.filter(r=>r.at>state.distance-25);
 }
 function updateHUD(){
- $('count').textContent=state.count;$('squad-role').textContent=state.count>1?'追踪伙伴 '+(state.count-1):'独自出发';$('rate').textContent=attackProfile(state).rate.toFixed(1);$('power').textContent=attackProfile(state).damage.toFixed(2);$('health').textContent='♡ '+state.health+' / '+state.maxHealth;$('run-coins').textContent='◈ '+Math.floor(state.coins);$('run-distance').textContent=Math.floor(state.distance)+' m';$('run-range').textContent=state.range.toFixed(0)+' m';$('run-speed').textContent=runMultiplier(state).toFixed(2)+'×';$('run-weapon').textContent=WEAPONS[state.weapon]+' · '+PATTERNS[state.pattern];
+ $('count').textContent=formatStat(state.count);$('squad-role').textContent=state.count>1?'追踪伙伴 '+formatStat(state.count-1):'独自出发';$('rate').textContent=attackProfile(state).rate.toFixed(1);$('power').textContent=formatStat(attackProfile(state).damage);$('health').textContent='♡ '+state.health+' / '+state.maxHealth;$('run-coins').textContent='◈ '+Math.floor(state.coins);$('run-distance').textContent=Math.floor(state.distance)+' m';$('run-range').textContent=state.range.toFixed(0)+' m';$('run-speed').textContent=runMultiplier(state).toFixed(2)+'×';$('run-weapon').textContent=WEAPONS[state.weapon]+(state.weapon==='replicator'?' '+state.splitDepth+'层×'+state.splitCount:'')+' · '+PATTERNS[state.pattern];
  $('progress-fill').style.width=(state.endless?state.distance%STAGE_LENGTH:state.distance)/STAGE_LENGTH*100+'%';$('progress-caption').textContent=state.endless?'无尽远征 · 第 '+state.stage+' 段':'初行路 → 无尽';
  $('scene-name').textContent=THEMES[theme].name;$('phase-label').textContent=state.phase==='boss'?'Boss 战 · 停步射击，侧移闪避':state.endless?'无尽前进 · '+state.stage+' 段':'初行路 · 敌人持续靠近';
  const summary=state.pets.naigou+','+state.pets.naishu;if(summary!==petSummary){petSummary=summary;$('pet-status').innerHTML='<span><b>奶狗 '+state.pets.naigou+'</b><small>'+(state.pets.naigou?'扑咬搭档':'等待召唤')+'</small></span><i></i><span><b>奶鼠 '+state.pets.naishu+'</b><small>'+(state.pets.naishu?'奶球追踪':'等待召唤')+'</small></span>';}
  updateModeHUD();if(state.elapsed>9)$('hint').style.opacity='0';
- const boss=targetEnemies().find(e=>e.type==='boss');$('boss-hud').hidden=!boss;$('next-gate').hidden=!!boss;if(boss){$('boss-name').textContent=(boss.boss||(boss.row.major?bossFor(theme,Math.floor(((boss.row.stage||0)+1)/3)):eliteFor(theme))).name;$('boss-value').textContent=Math.ceil(boss.hp)+' / '+Math.ceil(boss.maxHp);$('boss-fill').style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';}
+ const boss=targetEnemies().find(e=>e.type==='boss');$('boss-hud').hidden=!boss;$('next-gate').hidden=!!boss;if(boss){$('boss-name').textContent=(boss.boss||(boss.row.major?bossFor(theme,Math.floor(((boss.row.stage||0)+1)/3)):eliteFor(theme))).name;$('boss-value').textContent=formatStat(Math.ceil(boss.hp))+' / '+formatStat(Math.ceil(boss.maxHp));$('boss-fill').style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';}
  const next=course.find(r=>!r.used&&r.type==='gate'&&r.at>state.distance);$('next-gate').textContent=next&&next.at-state.distance<50?'下一道门：'+next.options.map(g=>gateText(g).label+' '+gateText(g).value).join('  /  '):'卡牌塑造你的队伍 · 侧移避开敌人';
 }
 function frame(now){requestAnimationFrame(frame);if(!scene?.main)return;const delta=lastTime?Math.min(.1,(now-lastTime)/1000):0;lastTime=now;if(!paused&&!document.hidden){accumulator+=delta;while(accumulator>=step){accumulator-=step;update(step);if(paused){accumulator=0;break;}}scene.update(state,state.phase==='lost'?0:delta,now/1000);}else scene.renderer.render(scene.scene,scene.camera);if(!scene.home&&now-lastHUD>=100){updateHUD();lastHUD=now;}}
