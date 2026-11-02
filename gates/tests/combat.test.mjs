@@ -3,13 +3,16 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import * as T from '../vendor/three.module.min.js';
 import * as core from '../core.js';
+import * as expansion from '../expansion.js';
+import {CooperativeSession} from '../party.js';
 import {ExpeditionScene} from '../scene.js';
 const elements=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{style:{setProperty(){}},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},append(){},close(){},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
-const context=vm.createContext({...core,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
+const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
 vm.runInContext(source+'\nglobalThis.testGame={updateShots,update,volley,burst,hit,bossAttack,updateThreats,getThreats:()=>activeThreats,updateModeHUD,companionAttack,petAttack,dogAttack,threats(t){activeThreats=t;},set(s,v,a=null){state=s;scene=v;active=a;course=[];paused=false;pendingCards=null;nextStage=1;fireTimer=dogTimer=petTimer=0;dogBites=[];activeThreats=[];companionReady=[];pendingMajorReward=false;},course(rows){course=rows;scene.createCourse(rows);},choose(){if(pendingCards){const ids=["dog","mouse","company","damage","rate","scatter","range"],card=ids.map(id=>pendingCards.find(c=>c.id===id)).find(Boolean)||pendingCards[0];chooseCard(state,card.id);pendingCards=null;paused=false;}},getState:()=>state};',context);
 const game=context.testGame;
+vm.runInContext('globalThis.testGame.getParty=()=>party;globalThis.testGame.partnerCombat=partnerCombat;globalThis.testGame.resolveEvent=()=>{if(eventChoice){applyEvent(state,eventChoice.choices[1]);eventChoice=null;paused=false;}};',context);
 function fixture(at=20){const row={at,type:'fight',group:new T.Group(),used:false},group=new T.Group();row.group.add(group);const scene={home:false,rows:[row],entities:[],shots:[],scene:new T.Scene(),positionRows:ExpeditionScene.prototype.positionRows,shoot(){},beam(){},dropCoins(){},dropPotion(){},rewardText(){},collectCoins(){return 0;},collectPotions(){return 0;},pruneCourse(){},hurt(){},burst(){},ring(){},hit(e,d){e.hp-=d;if(e.hp<=0)e.dead=true;return e.dead;}};scene.scene.add(row.group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.positionRows(0);scene.scene.updateMatrixWorld(true);return {scene,enemy,row};}
 function extraEnemy(scene,row,x=2,z=0){const group=new T.Group();group.position.set(x,0,z);row.group.add(group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.scene.updateMatrixWorld(true);return enemy;}
 const failures=[];
@@ -38,7 +41,7 @@ for(const method of ['shoot','dropCoins','collectCoins','dropPotion','collectPot
 simulation.chargeMouse=simulation.petLunge=()=>{};
 simulation.createCourse=function(rows){for(const row of rows){row.group=new T.Group();this.scene.add(row.group);this.rows.push(row);for(const e of row.enemies||[]){const enemy=extraEnemy(this,row,e.x,e.z||0);enemy.offset=e.z||0;enemy.hp=enemy.maxHp=e.hp;enemy.type=row.type;enemy.radius=row.type==='boss'?2:.8;enemy.reward=e.reward;}if(row.type==='potion')for(const x of row.positions)this.dropPotion(x,5-(row.at-this.distance));if(row.type==='coins')for(const x of row.positions)this.dropCoins(x,5-(row.at-this.distance),1);}this.positionRows(this.distance);this.scene.updateMatrixWorld(true);};
 const run=core.freshRun();run.health=run.maxHealth=200;game.set(run,simulation);game.course(core.makeCourse(0));
-for(let i=0;i<6000&&run.distance<650;i++){game.update(.05);game.choose();}
+for(let i=0;i<6000&&run.distance<650;i++){game.update(.05);game.resolveEvent();game.choose();}
 assert.ok(run.endless&&run.distance>=650,'Tutorial must continue into more than one endless segment');assert.ok(run.bosses>=2,'Boss combat must resume the road after victory');assert.ok(run.coins>0,'Real dropped coins must be collectible');assert.ok(Number.isFinite(run.damage)&&simulation.entities.length<100,'Old course entities must be retired');
 console.log('PASS: health bottle pickup and complete tutorial → boss victories → continuous endless run, with collected coins.');
 let hapticNow=10000;const vibrations=[];context.navigator={vibrate(pattern){vibrations.push(pattern);return true;}};context.performance={now:()=>hapticNow};context.window.matchMedia=()=>({matches:true});
@@ -78,3 +81,23 @@ console.log('PASS copy gun: horizontal hits, smaller splitting eggs, five-genera
  scene.shots=[{x:0,z:-13,damage:1,kind:'replicator',range:52,angle:0,size:1,radius:.28,travel:0,life:0,generation:5,splitLimit:5,splitChildren:2}];game.updateShots(.1);assert.equal(scene.shots.length,0,'Already-fired shots retain their original upgrade snapshot');
 }
 console.log('PASS copy upgrades: extra split generations, extra eggs and immutable launch parameters.');
+vm.runInContext('Object.assign(testGame,{explode,fields:()=>fields,turrets:()=>turrets,takeHit});',context);
+{
+ const {scene,enemy}=fixture(),s=core.freshRun();scene.shoot=ExpeditionScene.prototype.shoot;s.weapon='egg';s.pattern='rapid';s.projectileBonus=1;s.evolutions=['comet'];game.set(s,scene);let piercing=false;for(let i=0;i<4;i++){scene.shots=[];game.volley();piercing||=scene.shots.some(b=>b.piercing);}assert.ok(piercing,'Comet evolution must fire an actual piercing egg');
+ s.weapon='bomb';s.pattern='spread';s.evolutions=['meteor'];scene.shots=[];game.volley();assert.ok(scene.shots.every(b=>b.evolution==='meteor'));game.explode({...scene.shots[0],x:0,z:-15});assert.ok(game.fields().some(f=>f.kind==='echo'));
+ s.weapon='pumpkin';s.evolutions=['ghostfire'];game.explode({x:0,z:-15,damage:1,kind:'pumpkin',evolution:'ghostfire'});assert.ok(game.fields().some(f=>f.kind==='fire'));
+ const session=game.getParty();session.playing=true;session.room.index=0;session.main=s;session.partner=core.freshRun();s.phase=session.partner.phase='boss';s.health=session.partner.health=4;s.damage=session.partner.damage=1.1;enemy.hp=1;enemy.type='boss';scene.shots=[{x:0,z:-14,damage:4,life:0,kind:'egg',owner:1}];game.updateShots(.08);assert.equal(s.bosses,1);assert.equal(session.partner.bosses,1);assert.equal(s.phase,'run','Guest boss kill must resume host road');assert.equal(session.partner.phase,'run');assert.ok(s.damage>1.1&&session.partner.damage>1.1);
+ session.playing=false;
+}
+{
+ const {scene}=fixture(100),s=core.freshRun(),session=game.getParty();scene.shoot=ExpeditionScene.prototype.shoot;scene.chargeMouse=scene.petLunge=()=>{};game.set(s,scene);session.playing=true;session.room.index=0;session.main=s;session.partner=core.freshRun();session.partner.x=0;session.targetX=0;s.health=0;s.downAt=0;s.phase='run';
+ for(let i=0;i<60;i++)game.update(.05);assert.equal(s.health,2,'Nearby living partner revives in 2.5 seconds');assert.ok(s.invincible>0);session.playing=false;
+}
+console.log('PASS expansion combat: real evolution effects, guest kill rewards, boss road resumption and cooperative revival.');
+{
+ const {scene,enemy,row}=fixture(),other=extraEnemy(scene,row,2),s=core.freshRun();s.weapon='laser';s.pets.naishu=1;s.evolutions=['chain'];enemy.markUntil=4;game.set(s,scene);game.volley();assert.ok(other.hp<10,'Marked laser target must transmit damage outside the beam');
+ s.weapon='replicator';scene.shots=[{x:0,z:-14,damage:1,life:0,kind:'replicator',generation:5,splitLimit:5,evolution:'mother'}];game.updateShots(.08);assert.ok(game.turrets().length>0,'Last-generation hit must create a mother turret');
+}
+vm.runInContext('testGame.challenge=(s,v)=>{state=s;scene=v;displayedResult=settled=paused=false;course=[];};',context);
+for(const mode of ['guard','bossrush']){const s=core.freshRun();s.mode=mode;if(mode==='guard'){s.elapsed=179.95;s.baseHealth=12;}else s.bosses=6;game.challenge(s,fixture(100).scene);game.update(.1);assert.ok(s.victory);assert.equal(s.phase,'lost','A completed challenge must leave the combat loop');}
+console.log('PASS: chain lightning, mother turret and both finite challenge victory paths.');

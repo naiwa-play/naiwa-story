@@ -8,23 +8,32 @@ export const THEMES={
  forest:{name:'蜜光密林',sky:0xb9d4c0,ground:0x568a70,road:0xcdd3ac,edge:0x8fba7d,enemy:0x9a739e},
  halloween:{name:'南瓜幽境',sky:0x21182f,ground:0x30223f,road:0x51425f,edge:0xd59153,enemy:0xae7fb8},
  cyber:{name:'霓虹荒原',sky:0x272136,ground:0x51313e,road:0x263945,edge:0x65e1d8,enemy:0x628c9d},
+ abyss:{name:'深海失落研究所',sky:0x123d55,ground:0x17465d,road:0x557d8c,edge:0x90e5db,enemy:0x85c8d6},
+ dream:{name:'云端甜梦游乐园',sky:0xf0c8ca,ground:0xb9bddb,road:0xf5e5cf,edge:0xd497b4,enemy:0xb096cb},
+ lantern:{name:'百鬼夜市',sky:0x242945,ground:0x303b57,road:0x6c6274,edge:0xe2ad7d,enemy:0xc7a0a5},
 };
 export const BOSSES={
  coast:[{id:'crab',name:'潮汐寄居蟹王',attack:'tide',color:'#79cbd1',cooldown:2.8},{id:'jellyfish',name:'风暴水母',attack:'storm',color:'#a8c7f2',cooldown:2.8}],
  forest:[{id:'treant',name:'荆棘古树',attack:'roots',color:'#95bd6e',cooldown:2.8},{id:'mushroom',name:'孢子巨菇',attack:'spores',color:'#c695ad',cooldown:3}],
  halloween:[{id:'witch',name:'南瓜巫师',attack:'haunt',color:'#c493ef',cooldown:2.5},{id:'skeleton',name:'骷髅王',attack:'bones',color:'#f1d9be',cooldown:2.6}],
  cyber:[{id:'sheriff',name:'霓虹警长',attack:'crossfire',color:'#72e8e4',cooldown:2.8},{id:'foundry',name:'铸蛙核心',attack:'assembly',color:'#ffad73',cooldown:3}],
+ abyss:[{id:'octopus',name:'深渊机械章鱼',attack:'tentacles',color:'#75e7df',cooldown:3},{id:'submarine',name:'沉眠潜航者',attack:'torpedoes',color:'#f5c88a',cooldown:2.8}],
+ dream:[{id:'ferris',name:'微笑摩天轮',attack:'fireworks',color:'#f4b2cc',cooldown:3},{id:'carousel',name:'发条旋转木马',attack:'parade',color:'#bba5e5',cooldown:2.8}],
+ lantern:[{id:'paperking',name:'千面纸偶',attack:'papercut',color:'#efb483',cooldown:2.8},{id:'operamask',name:'夜雨戏中人',attack:'curtain',color:'#c2b8ed',cooldown:3}],
 };
 export const bossFor=(theme,stage=0)=>BOSSES[theme][stage%2];
-export const eliteFor=theme=>({id:theme==='cyber'?'cyber-elite':'elite',name:{coast:'潮岸墨团统领',forest:'苔原墨团统领',halloween:'幽境暗影统领',cyber:'边境巡逻队长'}[theme],attack:'ink',color:theme==='cyber'?'#70dce0':theme==='halloween'?'#c48bcc':'#91a8ba',cooldown:2.6});
+export const eliteFor=theme=>({id:({cyber:'cyber-elite',abyss:'abyss-elite',dream:'dream-elite',lantern:'lantern-elite'}[theme]||'elite'),name:{coast:'潮岸墨团统领',forest:'苔原墨团统领',halloween:'幽境暗影统领',cyber:'边境巡逻队长',abyss:'失落研究员',dream:'乐园巡游队长',lantern:'巡夜提灯人'}[theme],attack:'ink',color:theme==='cyber'?'#70dce0':theme==='halloween'?'#c48bcc':'#91a8ba',cooldown:2.6});
 export const MINIONS={
  blob:{name:'小墨团',health:1,speed:1.1,radius:.75},runner:{name:'疾行者',health:.75,speed:1.8,radius:.6},
  tank:{name:'甲壳卫士',health:1.65,speed:.7,radius:.9},shell:{name:'小寄居蟹',health:1.25,speed:.95,radius:.8},
  sprout:{name:'树芽精',health:1.1,speed:1.1,radius:.75},flyer:{name:'泡泡灵',health:.85,speed:1.35,radius:.65},
  pumpkinling:{name:'南瓜仔',health:1.1,speed:1.1,radius:.75},skeletonling:{name:'骷髅兵',health:1.3,speed:1.15,radius:.7},bat:{name:'蝙蝠影',health:.7,speed:1.7,radius:.6},
  drone:{name:'巡检无人机',health:.85,speed:1.35,radius:.65},crawler:{name:'机械爬行兵',health:1,speed:1.4,radius:.7},sentinel:{name:'装甲守卫',health:1.65,speed:.7,radius:.9},coil:{name:'线圈精灵',health:.75,speed:1.7,radius:.6},
+ bubble:{name:'泡泡寄居蟹',health:1.3,speed:.9,radius:.8},manta:{name:'荧光鳐',health:.8,speed:1.6,radius:.7},diver:{name:'失控潜水机',health:1.6,speed:.8,radius:.85},anemone:{name:'幽光海葵',health:1,speed:1.2,radius:.65},
+ balloon:{name:'逃跑的气球',health:.75,speed:1.6,radius:.65},duck:{name:'发条小鸭',health:1.2,speed:1.15,radius:.75},candy:{name:'焦糖守卫',health:1.65,speed:.75,radius:.85},star:{name:'迷路星星',health:.8,speed:1.5,radius:.65},
+ paper:{name:'折纸小偶',health:1,speed:1.3,radius:.65},lanternling:{name:'提灯小鬼',health:1.3,speed:1,radius:.8},umbrella:{name:'独脚纸伞',health:.9,speed:1.5,radius:.7},fox:{name:'纸面狐',health:1.1,speed:1.4,radius:.7},
 };
-export const MONSTER_POOLS={coast:['blob','runner','shell','flyer'],forest:['blob','sprout','tank','runner'],halloween:['pumpkinling','skeletonling','bat','tank'],cyber:['crawler','drone','sentinel','coil']};
+export const MONSTER_POOLS={coast:['blob','runner','shell','flyer'],forest:['blob','sprout','tank','runner'],halloween:['pumpkinling','skeletonling','bat','tank'],cyber:['crawler','drone','sentinel','coil'],abyss:['bubble','manta','diver','anemone'],dream:['balloon','duck','candy','star'],lantern:['paper','lanternling','umbrella','fox']};
 export const MODES={
  anger:{name:'愤怒',duration:10,color:'#d96a52',description:'攻速提高 80%，持续 10 秒'},
  melancholy:{name:'忧郁',duration:12,color:'#719bc7',description:'前进与敌人推进减速 45%，持续 12 秒'},
@@ -36,7 +45,7 @@ export const modeActive=(s,id)=>s.activeMode===id&&s.modeLeft>0;
 export const effectiveRate=s=>s.rate*(modeActive(s,'anger')?1.8:1);
 export function chargeMode(s,amount,random=Math.random,combat=false){if(s.modeLeft>0)return false;if(combat){amount=Math.min(amount,s.modeTokens);s.modeTokens-=amount;}s.joy=Math.min(100,s.joy+amount);if(s.joy>=100&&!s.readyMode&&s.elapsed>=s.modeNextAt){const ids=Object.keys(MODES);s.readyMode=ids[Math.min(ids.length-1,Math.floor(random()*ids.length))];return true;}return false;}
 export function activateMode(s){if(s.joy<100||!s.readyMode||s.modeLeft>0)return false;s.activeMode=s.readyMode;s.modeLeft=MODES[s.activeMode].duration;s.readyMode=null;s.joy=0;s.angelClock=0;s.modeNextAt=s.elapsed+45;return true;}
-export function tickMode(s,dt){s.modeTokens=Math.min(3,s.modeTokens+dt*2);if(s.modeLeft>0){s.modeLeft=Math.max(0,s.modeLeft-dt);if(s.modeLeft===0)s.activeMode=null;}else chargeMode(s,dt*.8);}
+export function tickMode(s,dt,random=Math.random){s.modeTokens=Math.min(3,s.modeTokens+dt*2);if(s.modeLeft>0){s.modeLeft=Math.max(0,s.modeLeft-dt);if(s.modeLeft===0)s.activeMode=null;}else chargeMode(s,dt*.8,random);}
 export const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 export const STAGE_LENGTH=260;
 export const WEAPONS={egg:'奶蛋射击',bomb:'投掷奶蛋',laser:'奶光激光',pumpkin:'南瓜法杖',replicator:'机器复制枪'};
@@ -45,7 +54,7 @@ export function attackProfile(s){const pattern=s.pattern||'standard',bonus=s.pro
  return {count:n,angles:Array.from({length:n},(_,i)=>pattern==='spread'?(i-(n-1)/2)*.48/Math.max(1,n-1):0),damage:Math.min(MAX_STAT,s.damage*(pattern==='spread'?.7:pattern==='heavy'?1.8:pattern==='rapid'?.65:1)*(s.weapon==='bomb'?1.35:s.weapon==='pumpkin'?1.15:1)),rate:effectiveRate(s)*(pattern==='heavy'?.7:pattern==='rapid'?1.65:1),size:pattern==='heavy'?1.6:1};}
 export function freshRun(theme='coast',level=1,upgrades={},startingPet=null){return {theme,level,phase:'run',distance:0,x:0,count:1+(upgrades.company||0),rate:1.5,damage:1.1+(upgrades.power||0)*.15,range:22+(upgrades.range||0)*2,speed:1,health:4+(upgrades.heart||0),maxHealth:4+(upgrades.heart||0),weapon:'egg',pattern:'standard',projectileBonus:0,splitDepth:5,splitCount:2,pets:{naigou:startingPet==='naigou'?1:0,naishu:startingPet==='naishu'?1:0},petDamage:{naigou:1.05,naishu:1.05},coins:0,kills:0,gates:0,cards:0,joy:0,activeMode:null,modeLeft:0,readyMode:null,modeNextAt:0,modeTokens:3,angelClock:0,blessings:0,elapsed:0,endless:false,endlessTime:0,stage:0,bosses:0,invincible:0,coinBonus:1+(upgrades.purse||0)*.1};}
 export function runMultiplier(s){return Math.min(3,(1+s.elapsed/80)*s.speed)*(modeActive(s,'melancholy')?.55:1);}
-export function applyGate(s,g){const old=s[g.stat];s[g.stat]=g.op==='multiply'?old*g.value:old+g.value;const [a,b]=STAT_BOUNDS[g.stat];s[g.stat]=clamp(s[g.stat],a,b);if(g.stat==='count')s.count=Math.floor(s.count);s.gates++;chargeMode(s,7);return s[g.stat]-old;}
+export function applyGate(s,g,random=Math.random){const old=s[g.stat];s[g.stat]=g.op==='multiply'?old*g.value:old+g.value;const [a,b]=STAT_BOUNDS[g.stat];s[g.stat]=clamp(s[g.stat],a,b);if(g.stat==='count')s.count=Math.floor(s.count);s.gates++;chargeMode(s,7,random);return s[g.stat]-old;}
 export function damageSquad(s,amount){if(s.invincible>0||s.phase==='lost'||modeActive(s,'god'))return false;s.health=Math.max(0,s.health-amount);s.invincible=.9;if(s.health===0)s.phase='lost';return true;}
 export function killReward(s,boss=false,multiplier=1){
  const growth=rewardGrowth(s.stage),damage=(boss?.2:.02)*multiplier*growth,companions=Math.max(1,Math.round(multiplier*growth));s.damage=Math.min(MAX_STAT,Math.round((s.damage+damage)*10000)/10000);
@@ -105,6 +114,7 @@ export const CARDS=[
  {id:name+'-pack',title:label+'小分队',description:'再召唤 1 只'+label+'，最多同时拥有 3 只。',icon:'＋',tag:'伙伴成长',eligible:s=>s.pets[name]>0&&s.pets[name]<3,apply:s=>s.pets[name]++},
  {id:name+'-power',title:label+'的拿手好戏',description:label+'的攻击力提高 35%。',icon:'✦',tag:'伙伴成长',eligible:s=>s.pets[name]>0&&s.petDamage[name]<MAX_STAT,apply:s=>s.petDamage[name]=Math.min(MAX_STAT,s.petDamage[name]*1.35)},
  ]),
+ ...[['naigou','guard','忠诚守卫','每 8 秒替你抵挡一次伤害。'],['naigou','strike','勇敢突击','奶狗扑咬伤害提高 25%。'],['naishu','support','星光标记','奶球标记持续 8 秒；配合奶狗触发协同。'],['naishu','burst','奶球扩散','奶球对附近敌人造成 25% 的范围伤害。']].map(([pet,role,title,description])=>({id:pet+'-'+role,title,description,icon:'✧',tag:'宠物专精',weight:3,eligible:s=>s.pets[pet]>0&&s.petRoles?.[pet]!==role,apply:s=>{(s.petRoles??={})[pet]=role;}})),
  {id:'squad-multiplier',title:'奶蛙大集合',description:'奶蛙队伍数量提高 50%，向上取整。',icon:'×',tag:'稀有成长',weight:.25,majorReward:true,rare:true,eligible:s=>s.count<MAX_STAT,apply:s=>s.count=Math.min(MAX_STAT,Math.ceil(s.count*1.5))},
  {id:'major-coins',title:'远征补给',description:'额外获得 5 枚金币。主题首领专属馈赠。',icon:'◈',tag:'首领馈赠',weight:0,majorReward:true,apply:s=>s.coins+=5},
  {id:'major-rest',title:'远征者的余裕',description:'恢复全部生命，上限增加 1 点，最多 99 点。',icon:'♡',tag:'首领馈赠',weight:0,majorReward:true,apply:s=>{s.maxHealth=Math.min(99,s.maxHealth+1);s.health=s.maxHealth;}},

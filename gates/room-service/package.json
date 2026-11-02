@@ -1,0 +1,1 @@
+{"name":"naiwa-friend-rooms","private":true,"type":"module","scripts":{"start":"node server.mjs","test":"node room.test.mjs"},"dependencies":{"ws":"8.22.1"},"engines":{"node":">=22"}}

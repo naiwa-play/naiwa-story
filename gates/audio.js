@@ -37,7 +37,7 @@ export class Soundtrack {
     if(!this.enabled||!this.playing||this.ctx.state!=='running'||this.timer!==null)return;
     const beat=()=>{
       const coast=[60,64,67,72,71,67,64,67,62,65,69,74,72,69,67,64],forest=[60,65,69,72,69,67,65,64,62,65,69,74,72,69,67,65];
-      const halloween=[57,60,63,69,67,63,60,63,56,59,62,68,67,62,59,56],cyber=[57,64,69,72,76,72,69,64,55,62,67,71,74,71,67,62],notes=this.theme==='cyber'?cyber:this.theme==='halloween'?halloween:this.theme==='forest'?forest:coast,n=notes[this.step%notes.length],frequency=440*2**((n-69)/12),duck=this.voiceActive ? .16 : 1;
+      const halloween=[57,60,63,69,67,63,60,63,56,59,62,68,67,62,59,56],cyber=[57,64,69,72,76,72,69,64,55,62,67,71,74,71,67,62],abyss=[52,59,64,67,71,67,64,59,50,57,62,65,69,65,62,57],dream=[65,69,72,77,76,72,69,72,67,71,74,79,77,74,72,69],lantern=[57,60,64,69,67,64,60,64,55,59,62,67,65,62,59,55],notes=this.theme==='abyss'?abyss:this.theme==='dream'?dream:this.theme==='lantern'?lantern:this.theme==='cyber'?cyber:this.theme==='halloween'?halloween:this.theme==='forest'?forest:coast,n=notes[this.step%notes.length],frequency=440*2**((n-69)/12),duck=this.voiceActive ? .16 : 1;
       this.tone(frequency,.35,.16*duck,'triangle');
       if(this.step%4===0)this.tone(frequency/2,.65,.08*duck,'triangle');
       if(this.step%2===1)this.tone(frequency*2,.13,.025*duck,'sine',.135);

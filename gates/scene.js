@@ -1,8 +1,9 @@
 import * as T from './vendor/three.module.min.js';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/utils/BufferGeometryUtils.js';
-import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText, formatStat } from './core.js?v=21';
+import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText, formatStat } from './core.js?v=22';
 import {CyberFrontier} from './cyber-frontier.js?v=21';
+import {DestinationScenery,destinationEnemy,destinationBoss} from './destinations.js?v=22';
 import {jellyPose,applyJellyPose} from './jelly-motion.js';
 import {loadGameModel,MODEL_FILES} from './model-loader.js?v=20';
 
@@ -73,6 +74,7 @@ function cobweb(){
 
 function bossEyes(g,y,z,spacing=.36){for(const x of [-spacing,spacing]){ell(g,'#fff5d8',[x,y,z],[.25,.29,.14]);ell(g,'#293844',[x,y,z+.12],[.10,.15,.045]);}}
 function minionBody(kind,color){
+ const destination=destinationEnemy(kind);if(destination)return destination;
  const g=new T.Group();
  if(['drone','crawler','sentinel','coil'].includes(kind)){
   const metal=mat('#527583',.4,{metalness:.55}),brass=mat('#b88a68',.5,{metalness:.5}),neon=mat('#6af9ed',.3,{emissive:'#3de5dc',emissiveIntensity:.6});
@@ -102,6 +104,7 @@ function minionBody(kind,color){
 }
 
 function bossBody(id){
+ const destination=destinationBoss(id);if(destination)return destination;
  const g=new T.Group();
  if(id==='elite'){const unit=minionBody('blob','#827797');unit.scale.setScalar(2);g.add(unit);for(let i=0;i<3;i++)mesh(new T.ConeGeometry(.16,.4,6),mat('#dfbd70'),g,[(i-1)*.36,2.8,0]);}
  else if(id==='crab'){
@@ -148,7 +151,7 @@ function bossBody(id){
 
 export class ExpeditionScene {
   constructor(canvas,onProgress){
-    this.canvas=canvas;this.scene=new T.Scene();this.theme='coast';this.time=0;this.home=true;
+    this.canvas=canvas;this.scene=new T.Scene();this.theme='coast';this.time=0;this.home=true;this.enemySerial=0;
     this.renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;
     this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.02;
@@ -196,6 +199,7 @@ export class ExpeditionScene {
     })().finally(()=>{delete this.petLoads[name];delete this.petProgress[name];});return this.petLoads[name];
   }
   hurt(){this.hurtAge=0;}
+  setPartner(state){this.partnerState=state;if(!state){if(this.partnerHero)this.partnerHero.visible=false;return;}if(!this.partnerHero&&this.main){this.partnerHero=new T.Group();this.partnerMotion=new T.Group();this.partnerBody=this.main.clone(true);this.partnerBody.rotation.y=Math.PI;this.partnerMotion.add(this.partnerBody);this.partnerHero.add(this.partnerMotion);shadow(this.partnerHero);const marker=mesh(new T.RingGeometry(.65,.74,32),mat('#eab6d4',.7,{emissive:'#b477ab',emissiveIntensity:.2}),this.partnerHero,[0,.025,0]);marker.rotation.x=-Math.PI/2;this.scene.add(this.partnerHero);}if(this.partnerHero)this.partnerHero.visible=true;}
   buildCrowd(){
     this.crowd=new T.Group();this.scene.add(this.crowd);this.crowdParts=[];
   }
@@ -238,7 +242,7 @@ export class ExpeditionScene {
       const jack=b.kind==='pumpkin',big=b.kind==='bomb'||jack,size=(big?.72:b.kind==='milkball'?.60:.56)*(b.size||1),angle=b.angle||0;
       const y=.9+(big?Math.sin(Math.PI*Math.min(1,(b.travel||0)/b.range))*2.2:0),parts=jack?this.pumpkinParts:this.shotParts,index=jack?pumpkins++:eggs++;
       this.tmp.position.set(b.x,y,b.z);this.tmp.rotation.set(0,-angle,Math.sin(b.life*10)*.09);this.tmp.scale.setScalar(size);this.tmp.updateMatrix();
-      for(const m of parts){m.setMatrixAt(index,this.tmp.matrix);m.setColorAt(index,b.kind==='companion'&&m.userData.tintBody?this.projectileRed:this.projectileWhite);}
+      for(const m of parts){m.setMatrixAt(index,this.tmp.matrix);m.setColorAt(index,m.userData.tintBody?(b.kind==='companion'?this.projectileRed:this.projectileSkin||this.projectileWhite):this.projectileWhite);}
       if(jack){this.tmp.position.set(b.x,y+.55*size,b.z);this.tmp.rotation.set(0,0,Math.sin(b.life*18)*.15);this.tmp.scale.set(size,size*(1+Math.sin(b.life*16)*.12),size);this.tmp.updateMatrix();this.pumpkinFlame.setMatrixAt(index,this.tmp.matrix);}
       this.tmp.position.set(b.x-Math.sin(angle)*.52,y,b.z+Math.cos(angle)*.52);this.tmp.rotation.set(Math.PI/2,0,angle);this.tmp.scale.set(1,1.1,1);this.tmp.updateMatrix();this.shotTrail.setMatrixAt(i,this.tmp.matrix);this.shotTrail.setColorAt(i,jack?this.pumpkinColor:b.kind==='companion'?this.projectileRed:b.kind==='replicator'?this.projectileCyan:this.projectileWhite);
     });
@@ -267,12 +271,14 @@ export class ExpeditionScene {
   }
   rebuildScenery(theme){
     this.cyber?.dispose();this.cyber=null;
+    this.destination?.dispose();this.destination=null;
     for(const d of this.decor){d.traverse(o=>{if(o.userData.merged)o.geometry.dispose();});this.environment.remove(d);}this.decor=[];const data=THEMES[theme];this.theme=theme;
     this.scene.background=new T.Color(data.sky);this.scene.fog=new T.Fog(data.sky,theme==='halloween'?30:45,120);this.water.material=mat(data.ground,.42);this.road.material=mat(data.road);this.edges.forEach(e=>e.material=mat(data.edge));
     this.skyLight.color.set(theme==='cyber'?'#b3d7ff':'#fff8df');this.skyLight.groundColor.set(theme==='cyber'?'#8e536e':'#649e87');this.skyLight.intensity=theme==='cyber'?2:2.55;this.sunLight.color.set(theme==='cyber'?'#ffb88b':'#fff4d6');this.sunLight.intensity=theme==='cyber'?2.1:3;
     this.dashes.forEach(d=>d.material=mat(theme==='cyber'?'#a3eee0':'#fff8de'));this.platform.material=mat(theme==='cyber'?'#496579':'#f4e7bf');
     if(theme==='cyber'){this.cyber=new CyberFrontier(this.crowdParts);this.environment.add(this.cyber.group);const positions=this.water.geometry.attributes.position;for(let i=0;i<positions.count;i++)positions.setZ(i,0);positions.needsUpdate=true;}
-    for(let i=0;theme!=='cyber'&&i<26;i++){
+    if(['abyss','dream','lantern'].includes(theme)){this.destination=new DestinationScenery(theme);this.environment.add(this.destination.group);this.scene.fog=new T.Fog(data.sky,theme==='lantern'?26:40,110);this.skyLight.color.set(theme==='abyss'?'#a5dcf0':theme==='dream'?'#fff0e3':'#c4c6ec');this.sunLight.color.set(theme==='abyss'?'#b7e8e0':theme==='dream'?'#ffe0c2':'#f0c29d');this.skyLight.intensity=2.2;this.sunLight.intensity=2.6;}
+    for(let i=0;!['cyber','abyss','dream','lantern'].includes(theme)&&i<26;i++){
       const g=new T.Group(),side=i%2?-1:1;g.position.set(side*(7.1+((i*13)%17)*.4),-.15,10-i*5.4);g.userData.baseZ=g.position.z;
       const island=ell(g,theme==='halloween'?'#493451':theme==='coast'?'#efd7a3':'#71956e',[0,-.25,0],[2.8,.4,3.3]);island.receiveShadow=true;
       const plant=theme==='halloween'?pumpkin():theme==='coast'?palm():tree();plant.scale.setScalar(.75+(i%4)*.16);g.add(plant);g.userData.plant=plant;
@@ -282,7 +288,7 @@ export class ExpeditionScene {
       g.remove(plant);consolidate(g);consolidate(plant);g.add(plant);if(theme==='halloween'&&i%3===0){const spirit=ghost();spirit.position.set(.8,2.7,0);g.add(spirit);g.userData.ghost=spirit;}this.environment.add(g);this.decor.push(g);
     }
     if(!this.moon){this.moon=ell(this.environment,'#e7d8ec',[20,19,-65],[5,5,1]);this.moon.material=mat('#d9bfe7',1,{emissive:'#9b82bd',emissiveIntensity:.5});}this.moon.visible=theme==='halloween';
-    this.clouds.forEach(c=>c.visible=!['halloween','cyber'].includes(theme));
+    this.clouds.forEach(c=>c.visible=!['halloween','cyber','abyss','lantern'].includes(theme));
     if(!this.clouds.length)for(let i=0;i<8;i++){const cloud=new T.Group();for(let j=0;j<3;j++)ell(cloud,'#eaf4e6',[(j-1)*1.2,j===1?.3:0,0],[1.6,.48,.7]);cloud.position.set((i%2?-1:1)*(10+i*2),10+i%3*2,-30-i*11);this.environment.add(cloud);this.clouds.push(cloud);}
   }
   setMode(home){this.hurtAge=Infinity;for(const p of this.petRoots){p.userData.attack=null;p.userData.charge=0;}this.home=home;this.platform.visible=home;this.crowd.visible=!home;if(this.eggHome)this.eggHome.visible=home;this.hero.scale.setScalar(home?2.2:1);this.hero.position.set(home?3:0,0,home?1:5);if(this.main)this.main.rotation.y=home?.38:Math.PI;
@@ -294,17 +300,19 @@ export class ExpeditionScene {
       const frame=new T.Group();frame.position.x=i===0?-2.55:2.55;group.add(frame);const color=g.stat==='count'?'#76b89e':g.stat==='rate'?'#d1b15f':'#7eacd0';
       const pane=mesh(new T.PlaneGeometry(4.4,2.7),new T.MeshStandardMaterial({color,transparent:true,opacity:.30,side:T.DoubleSide,depthWrite:false}),frame,[0,1.65,0]);pane.userData.disposable=true;
       for(const x of [-2.25,2.25])mesh(new T.CylinderGeometry(.075,.075,3.05,8),mat(color),frame,[x,1.5,0]);mesh(box,mat(color),frame,[0,3.0,0],[4.6,.11,.12]);
-      const text=gateText(g),sprite=label(text.value,text.label,['halloween','cyber'].includes(this.theme)?'#fff3d2':g.stat==='count'?'#234f37':g.stat==='rate'?'#654615':'#234c70',4.2,2.1);sprite.position.y=1.85;frame.add(sprite);
+      const text=gateText(g),sprite=label(text.value,text.label,['halloween','cyber','abyss','lantern'].includes(this.theme)?'#fff3d2':g.stat==='count'?'#234f37':g.stat==='rate'?'#654615':'#234c70',4.2,2.1);sprite.position.y=1.85;frame.add(sprite);
       mesh(box,mat(color,.5,{transparent:true,opacity:.55}),frame,[0,.015,0],[4.4,.025,1.7]);
-    });else if(row.type==='card'){
+    });else if(row.type==='event'){
+      const sign=label('岔路','奇遇 · 选择下一程','#d9b788',3.8,1.7);sign.position.y=2;group.add(sign);for(const x of [-2.2,2.2]){const arrow=mesh(box,mat('#ba96b9'),group,[x,.1,0],[1.6,.08,.45]);arrow.rotation.y=-Math.sign(x)*.3;}
+    }else if(row.type==='card'){
       const marker=label('✦','成长卡牌','#9a78b9',3.1,1.7);marker.position.y=1.4;group.add(marker);mesh(box,mat('#b28bc2',.5,{emissive:'#9869b7',emissiveIntensity:.2}),group,[0,.03,0],[3.6,.06,.7]);
     }else if(row.type==='coins'){for(const x of row.positions)this.dropCoins(x,5-(row.at-this.distance),1);
     }else if(row.type==='potion'){for(const x of row.positions)this.dropPotion(x,5-(row.at-this.distance));
-    }else row.pendingEnemies=[...row.enemies];
+    }else row.pendingEnemies=[...(row.enemies||[])];
   }}
   makeEnemy(type,definition,row,index){
     const g=new T.Group(),body=new T.Group();g.add(body);g.position.set(definition.x,0,definition.z||0);const boss=type==='boss',crate=type==='crate',size=boss?2:crate?1:.72;
-    const bossSpec=boss?(row.major?bossFor(this.theme,Math.floor(((row.stage||0)+1)/3)):eliteFor(this.theme)):null;
+    const bossSpec=boss?(row.major?bossFor(this.theme,row.bossIndex??Math.floor(((row.stage||0)+1)/3)):eliteFor(this.theme)):null;
     const kind=definition.kind||'blob',role=MINIONS[kind]||MINIONS.blob;
     this.enemyBodies??=new Map();const key=boss?'boss:'+bossSpec.id:crate?'crate':this.theme+':'+kind;
     if(!this.enemyBodies.has(key)){
@@ -314,8 +322,8 @@ export class ExpeditionScene {
     }
     if(boss&&!row.major)body.scale.setScalar(.82);
     const shade=shadow(g,0,0,size);body.visible=false;shade.visible=false;
-    const hp=label(formatStat(Math.ceil(definition.hp)),crate?'金币补给':'',['halloween','cyber'].includes(this.theme)?'#ffefd0':'#4d4967',boss?3.5:2.1,boss?1.4:1.05,!boss);hp.position.set(0,boss?4.45:crate?2.5:2.0,0);g.add(hp);
-    return {group:g,body,bodyKey:key,shadow:shade,label:hp,row,type,index,boss:bossSpec,kind,advanceSpeed:role.speed,hp:definition.hp,maxHp:definition.hp,radius:crate?1:boss?2.0:role.radius,dead:false,reward:definition.reward??(boss?5:1),offset:definition.z||0,contact:0,hit:0};
+    const hp=label(formatStat(Math.ceil(definition.hp)),crate?'金币补给':'',['halloween','cyber','abyss','lantern'].includes(this.theme)?'#ffefd0':'#4d4967',boss?3.5:2.1,boss?1.4:1.05,!boss);hp.position.set(0,boss?4.45:crate?2.5:2.0,0);g.add(hp);
+    return {group:g,body,bodyKey:key,shadow:shade,label:hp,row,type,index,boss:bossSpec,kind,advanceSpeed:role.speed,hp:definition.hp,maxHp:definition.hp,radius:crate?1:boss?2.0:role.radius,dead:false,reward:definition.reward??(boss?5:1),offset:definition.z||0,contact:0,hit:0,netId:++this.enemySerial};
   }
   drawEnemies(){
     this.enemyBatches??=new Map();
@@ -349,7 +357,10 @@ export class ExpeditionScene {
   updateEnemies(time,dt){for(const e of this.entities){if(e.dead||e.escaped)continue;e.group.visible=e.row.group.position.z+e.offset> -74;e.body.scale.set(1+Math.sin(time*3+e.index)*.025,1-Math.sin(time*3+e.index)*.035,1);e.body.position.y=Math.max(0,e.hit)*.12+(['drone','coil'].includes(e.kind)?.12+Math.sin(time*3+e.index)*.1:0);if(e.kind==='crawler')e.body.rotation.z=Math.sin(time*7+e.index)*.055;e.hit=Math.max(0,e.hit-dt*5);e.group.position.z=e.offset;updateLabel(e.label,formatStat(Math.max(0,Math.ceil(e.hp))));}this.drawEnemies();}
   hit(enemy,damage){enemy.hp-=damage;enemy.hit=1;this.burst(enemy.group.getWorldPosition(new T.Vector3()).x,.8,enemy.group.getWorldPosition(new T.Vector3()).z,'#fff0ab',3);if(enemy.hp<=0){enemy.hp=0;enemy.dead=true;enemy.group.visible=false;const p=enemy.group.getWorldPosition(new T.Vector3());this.burst(p.x,1,p.z,'#c6b7da',24);this.ring(p.x,p.z,'#d6c4df');return true;}return false;}
   update(state,dt,wallTime){
-    this.time+=dt;this.hurtAge+=dt;const t=this.time,moving=!this.home&&state.phase!=='lost'&&state.phase!=='boss';this.rangeMarker.visible=!this.home;this.rangeMarker.position.z=4.25-state.range;
+    this.partnerPets??=[];for(const name of ['naigou','naishu'])if(this.partnerState?.pets?.[name]&&this.models?.[name]&&!this.partnerPets.some(p=>p.userData.name===name)){const root=new T.Group(),motion=new T.Group();root.add(motion);motion.add(this.models[name].scene.clone(true));root.userData={name,motion};root.scale.setScalar(.6);this.scene.add(root);shadow(root,0,0,.5);this.partnerPets.push(root);}for(const p of this.partnerPets){p.visible=!!this.partnerState&&!this.home&&!!this.partnerState.pets[p.userData.name];if(p.visible){p.position.set(this.partnerState.x+(p.userData.name==='naigou'?-1.1:1.1),0,5.7);p.rotation.y=Math.PI;applyJellyPose(p.userData.motion,jellyPose(this.time,{moving:this.partnerState.phase!=='boss'?1:0,phase:.5}));}}
+    if(!this.incubator&&this.models){this.incubator=new T.Group();this.incubator.position.set(0,0,8);this.scene.add(this.incubator);mesh(new T.CylinderGeometry(1.1,1.25,.2,32),mat('#b4ccbd'),this.incubator,[0,.13,0]);mesh(new T.TorusGeometry(.98,.06,8,32),mat('#d4eee2'),this.incubator,[0,.24,0]).rotation.x=Math.PI/2;const egg=this.models.naidan.scene.clone(true);egg.scale.setScalar(.48);egg.position.y=.38;this.incubator.add(egg);mesh(new T.CylinderGeometry(.95,.95,1.9,24,1,true),new T.MeshStandardMaterial({color:'#c5ebe2',transparent:true,opacity:.18,depthWrite:false,roughness:.2}),this.incubator,[0,1.2,0]);}if(this.incubator)this.incubator.visible=!this.home&&state.mode==='guard';
+    if(this.partnerState&&this.partnerHero){const p=this.partnerState;this.partnerHero.visible=!this.home;this.partnerHero.position.set(p.x,0,5);const pose=jellyPose(this.time,{moving:p.health>0&&p.phase!=='boss'?1:0,phase:.4});applyJellyPose(this.partnerMotion,pose);this.partnerBody.rotation.y=Math.PI;this.partnerHero.rotation.z=p.health<=0?-.7:0;}
+    this.time+=dt;this.hurtAge+=dt;const t=this.time,moving=!this.home&&state.phase!=='lost'&&state.phase!=='boss'&&state.mode!=='guard';this.rangeMarker.visible=!this.home;this.rangeMarker.position.z=4.25-state.range;
     this.modeAura.visible=!this.home&&state.modeLeft>0;this.modeShield.visible=!this.home&&state.activeMode==='god'&&state.modeLeft>0;if(this.modeAura.visible){this.modeAura.material.color.set(MODES[state.activeMode].color);this.modeAura.scale.setScalar(1+Math.sin(t*7)*.06);this.modeAura.rotation.z=t*.6;}
     this.strideMix+=((moving?1:0)-this.strideMix)*Math.min(1,dt*12);
     if(this.main)applyJellyPose(this.heroBody,jellyPose(t,{moving:this.strideMix,hurtAge:this.hurtAge}));
@@ -363,13 +374,14 @@ export class ExpeditionScene {
 
       if(this.eggHome){this.eggHome.position.set(-.90,.25+Math.sin(t*2)*.10,-.15);const p=this.eggHome.getWorldPosition(this.target);this.eggHome.rotation.y=Math.atan2(this.camera.position.x-p.x,this.camera.position.z-p.z)+Math.sin(t*.7)*.045;}
     }else{
-      this.hero.position.x=state.x;this.hero.position.y=0;this.main.rotation.y=Math.PI+(state.x-this.previousX||0)*-.4;this.previousX=state.x;
+      this.hero.position.x=state.x;this.hero.position.y=state.bounceLeft>0?Math.sin(state.bounceLeft/.8*Math.PI)*.65:0;this.main.rotation.y=Math.PI+(state.x-this.previousX||0)*-.4;this.previousX=state.x;
       this.updateCrowd(state,t);this.positionRows(state.distance);
     }
-    const scroll=this.home?0:state.distance;
+    const scroll=this.home||state.mode==='guard'?0:state.distance;
     for(const d of this.decor){d.position.z=((d.userData.baseZ+scroll+150)%150)-130;d.visible=!this.home||d.position.z< -7;d.userData.plant.rotation.z=Math.sin(t*.65+d.position.z)*.018;}
     this.dashes.forEach((d,i)=>d.position.z=((10-Math.floor(i/2)*6+scroll+165)%165)-145);
     this.cyber?.update(t,scroll,this.home);
+    this.destination?.update(t,scroll,this.home);
     if(this.theme!=='cyber'){const p=this.water.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(p.getX(i)*.24+t*.8)*Math.cos(p.getY(i)*.15+t*.35)*.065);p.needsUpdate=true;}
     this.clouds.forEach((c,i)=>c.position.x+=Math.sin(wallTime*.05+i)*dt*.03);
     for(const d of this.decor){if(d.userData.ghost){const ghost=d.userData.ghost;ghost.position.y=2.7+Math.sin(t*1.1+d.position.z)*.22;ghost.rotation.z=Math.sin(t*.8+d.position.z)*.06;const p=ghost.getWorldPosition(this.target);ghost.rotation.y=Math.atan2(this.camera.position.x-p.x,this.camera.position.z-p.z)+Math.sin(t*.55+d.userData.baseZ)*.55;}}

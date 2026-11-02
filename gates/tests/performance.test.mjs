@@ -4,13 +4,15 @@ import vm from 'node:vm';
 import {performance} from 'node:perf_hooks';
 import * as T from '../vendor/three.module.min.js';
 import * as core from '../core.js';
+import * as expansion from '../expansion.js';
+import {CooperativeSession} from '../party.js';
 import {ExpeditionScene} from '../scene.js';
 
 const canvasContext={clearRect(){},fillRect(){},fillText(){},scale(){},createRadialGradient(){return {addColorStop(){}};}};
 const element=()=>({style:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},close(){},showModal(){}});
 const document={getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:element(),createElement:()=>({getContext:()=>({...canvasContext})})};
 globalThis.document=document;
-const context=vm.createContext({...core,T,ExpeditionScene,document,window:{addEventListener(){}},localStorage:{getItem(){}},Soundtrack:class{effect(){}},location:{hostname:'test'},requestAnimationFrame(){},setTimeout(){},clearTimeout(){},console});
+const context=vm.createContext({...core,...expansion,CooperativeSession,T,ExpeditionScene,document,window:{addEventListener(){}},localStorage:{getItem(){}},Soundtrack:class{effect(){}},location:{hostname:'test'},requestAnimationFrame(){},setTimeout(){},clearTimeout(){},console});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
 vm.runInContext(source+'\nglobalThis.bench={step:updateShots,set(s,v){state=s;scene=v;}};',context);
 const scene={scene:new T.Scene(),entities:[],shots:[],hit(){return false;}};

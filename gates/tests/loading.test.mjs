@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import * as core from '../core.js';
+import * as expansion from '../expansion.js';
+import {CooperativeSession} from '../party.js';
 import {downloadModel,loadGameModel,MODEL_FILES} from '../model-loader.js';
 
 const originalFetch=globalThis.fetch,bytes=new Uint8Array([1,2,3,4]);
@@ -30,7 +32,7 @@ try{
 // A summon must wait for its painted model; a failed download must leave the choice available.
 const elements=new Map(),buttons=[{dataset:{card:'dog'},disabled:false,copy:{textContent:'召唤奶狗'},querySelector(){return this.copy;}}];
 function element(id){if(!elements.has(id))elements.set(id,{style:{},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},close(){this.closed=true;},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
-const context=vm.createContext({...core,rollCards:()=>[{id:'dog',title:'奶狗',tag:'召唤伙伴',icon:'',description:'召唤奶狗'}],Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:selector=>selector==='[data-card]'?buttons:[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},innerWidth:1280,setTimeout(){},clearTimeout(){},console});
+const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:()=>[{id:'dog',title:'奶狗',tag:'召唤伙伴',icon:'',description:'召唤奶狗'}],Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:selector=>selector==='[data-card]'?buttons:[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},innerWidth:1280,setTimeout(){},clearTimeout(){},console});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
 vm.runInContext(source+'\nglobalThis.testGame={chooseCards,set(s,v){state=s;scene=v;pendingCards=null;}};',context);
 let release;const state=core.freshRun(),scene={preparePet:()=>new Promise(resolve=>release=resolve),setWeapon(){}};
