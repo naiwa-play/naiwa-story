@@ -101,3 +101,7 @@ console.log('PASS expansion combat: real evolution effects, guest kill rewards, 
 vm.runInContext('testGame.challenge=(s,v)=>{state=s;scene=v;displayedResult=settled=paused=false;course=[];};',context);
 for(const mode of ['guard','bossrush']){const s=core.freshRun();s.mode=mode;if(mode==='guard'){s.elapsed=179.95;s.baseHealth=12;}else s.bosses=6;game.challenge(s,fixture(100).scene);game.update(.1);assert.ok(s.victory);assert.equal(s.phase,'lost','A completed challenge must leave the combat loop');}
 console.log('PASS: chain lightning, mother turret and both finite challenge victory paths.');
+{
+ const {scene,enemy}=fixture(35),s=core.freshRun(),session=game.getParty();s.range=12;session.playing=true;session.room.index=0;session.partner=core.freshRun();session.partner.range=40;session.main=s;game.set(s,scene);scene.shots=[{x:0,z:-25,damage:4,life:0,kind:'egg',owner:1,range:40,travel:29}];game.updateShots(.2);assert.equal(enemy.hp,6,'Guest range must remain independent of the host range');session.playing=false;
+}
+console.log('PASS: independent cooperative projectile ranges.');

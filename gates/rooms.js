@@ -1,4 +1,4 @@
-import {ROOM_SERVER} from './rooms-config.js?v=22';
+import {ROOM_SERVER} from './rooms-config.js?v=23';
 export const roomEndpoint=()=>ROOM_SERVER||(['localhost','127.0.0.1'].includes(location.hostname)?'ws://127.0.0.1:5198':'');
 export class FriendRoom{
  constructor(onMessage){this.onMessage=onMessage;this.index=null;this.code='';this.token='';this.socket=null;this.manual=false;this.reconnectTimer=null;this.reconnectAt=0;}

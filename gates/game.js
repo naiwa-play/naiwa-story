@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.min.js';
-import {ExpeditionScene} from './scene.js?v=22';
-import {THEMES,MINIONS,MAX_STAT,formatStat,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=22';
-import {Soundtrack} from './audio.js?v=22';
-import {PLAY_MODES,seededRandom,dayKey,EVENTS,expeditionCourse,applyEvent,rollModification,EVOLUTIONS,availableEvolutions,evolutionActive,evolve,MILESTONES,recordRun} from './expansion.js?v=22';
-import {CooperativeSession} from './party.js?v=22';
+import {ExpeditionScene} from './scene.js?v=23';
+import {THEMES,MINIONS,MAX_STAT,formatStat,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=23';
+import {Soundtrack} from './audio.js?v=23';
+import {PLAY_MODES,seededRandom,dayKey,EVENTS,expeditionCourse,applyEvent,rollModification,EVOLUTIONS,availableEvolutions,evolutionActive,evolve,MILESTONES,recordRun} from './expansion.js?v=23';
+import {CooperativeSession} from './party.js?v=23';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
@@ -97,7 +97,7 @@ $('start').onclick=start;$('again').onclick=start;$('back-home').onclick=home;
 function hit(enemy,damage,owner=actor){if(owner===1&&actor!==1&&party.host)return withPartner(()=>hit(enemy,damage,1));if(enemy.dead||enemy.escaped)return;
  if(state.theme==='abyss'&&enemy.kind==='bubble'&&(enemy.shieldHits||0)<3){enemy.shieldHits=(enemy.shieldHits||0)+1;damage*=.45;scene.ring(enemy.group.position.x,enemy.group.getWorldPosition(new T.Vector3()).z,'#a8e4df',.6);}
  if(scene.hit(enemy,damage)){state.kills++;if(party.host){const other=actor===0?party.partner:party.main;other.kills++;killReward(other,enemy.type==='boss',modeActive(state,'demon')?2:1);if(enemy.type==='boss'){other.bosses++;other.phase=other.endless?'endless':'run';if(other.health===1)other.lastHeartBoss=true;}}const boss=enemy.type==='boss',multiplier=modeActive(state,'demon')?2:1,text=killReward(state,boss,multiplier),p=enemy.group.getWorldPosition(new T.Vector3());scene.dropCoins(p.x,p.z,Math.round(enemy.reward*multiplier));chargeMode(state,boss?15:2,modeRandom,!boss);scene.rewardText(p.x,p.z,text);if(boss){state.bosses++;if(state.health===1)state.lastHeartBoss=true;if(state.mode==='bossrush')state.rushAdvance=true;if(enemy.row.major)pendingMajorReward=true;if(state.phase==='boss'){state.phase=state.endless?'endless':'run';active=null;clearThreats();}toast('击败 Boss · '+text);sound.effect('boss');}else{sound.effect('kill');vibrate('kill');}}sound.effect('hit');}
-function targetEnemies(){return scene.entities.filter(e=>!e.dead&&!e.escaped&&e.group.visible&&(()=>{const p=e.group.getWorldPosition(new T.Vector3());return p.z<playerZ+1&&p.z>=playerZ-state.range-3;})());}
+function targetEnemies(range=state.range){return scene.entities.filter(e=>!e.dead&&!e.escaped&&e.group.visible&&(()=>{const p=e.group.getWorldPosition(new T.Vector3());return p.z<playerZ+1&&p.z>=playerZ-range-3;})());}
 function volley(){
  const profile=attackProfile(state);volleyCount++;
  for(let i=0;i<profile.count;i++){
@@ -123,7 +123,7 @@ function companionAttack(){
  }
 }
 function petAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-state.range);if(!targets.length)return;for(let i=0;i<state.pets.naishu;i++){const target=targets[i%targets.length];scene.shoot(state.x+1.05+i*.4,playerZ+.2,Math.min(MAX_STAT,2.4*state.petDamage.naishu),true,target,'milkball',state.range);scene.chargeMouse(i);}}
-function dogAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(22,state.range)).sort((a,b)=>(b.markUntil>state.elapsed?1:0)-(a.markUntil>state.elapsed?1:0));if(!targets.length)return;for(let i=0;i<state.pets.naigou;i++){const enemy=targets[i%targets.length];if(actor===0)scene.petLunge(i,enemy.group.getWorldPosition(new T.Vector3()));dogBites.push({enemy,age:0,owner:actor,damage:Math.min(MAX_STAT,3.2*state.petDamage.naigou*(state.petRoles?.naigou==='strike'?1.25:1))});}}
+function dogAttack(){const targets=targetEnemies().filter(e=>e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(22,state.range)).sort((a,b)=>(b.markUntil>state.elapsed?1:0)-(a.markUntil>state.elapsed?1:0));if(!targets.length)return;for(let i=0;i<state.pets.naigou;i++){const enemy=targets[i%targets.length];const point=enemy.group.getWorldPosition(new T.Vector3());(state.petLunges??=[])[i]={id:state.dogSerial=(state.dogSerial||0)+1,x:point.x,z:point.z};if(actor===0)scene.petLunge(i,point);else if(i===0)scene.partnerPetLunge(point);dogBites.push({enemy,age:0,owner:actor,damage:Math.min(MAX_STAT,3.2*state.petDamage.naigou*(state.petRoles?.naigou==='strike'?1.25:1))});}}
 const MODE_ICONS={
  unknown:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4M12 16v.2"/>',
  anger:'<path d="M13 2c2 6-4 6-2 10 1-2 3-2 4-4 3 4 5 6 3 10-2 5-10 5-12 0-2-4 0-7 3-10-1 4 1 5 2 5-3-6 1-7 2-11Z"/>',
@@ -134,7 +134,7 @@ const MODE_ICONS={
 };
 function burst(){
  if(party.guest){party.room.send({type:'input',x:targetX,burst:true});return;}if(scene.home||paused||state.phase==='lost'||!activateMode(state))return;
- const spec=MODES[state.activeMode];if(state.activeMode==='angel'){scene.shots=[];dogBites=[];scene.drawShots();}
+ const spec=MODES[state.activeMode];if(state.activeMode==='angel'){scene.shots=party.playing?scene.shots.filter(b=>(b.owner||0)!==actor):[];dogBites=party.playing?dogBites.filter(b=>(b.owner||0)!==actor):[];scene.drawShots();}
  fireTimer=0;scene.burst(state.x,1,playerZ,spec.color,40);scene.ring(state.x,playerZ,spec.color,1.1);sound.effect('burst');toast('已切换'+spec.name+'模式 · '+spec.description);
 }
 $('burst').onclick=burst;
@@ -203,7 +203,7 @@ function end(){
 function explode(b){if(b.owner===1&&actor!==1&&party.host)return withPartner(()=>explode(b));const radius=(b.kind==='pumpkin'?4:3)*(b.size||1)*(b.evolution==='meteor'?1.35:1);scene.burst(b.x,.7,b.z,b.kind==='pumpkin'?'#ec965d':'#ffe8a1',22);scene.ring(b.x,b.z,b.kind==='pumpkin'?'#b891ef':'#f2c566',radius);for(const e of scene.entities){if(e.dead||e.escaped)continue;const p=e.group.getWorldPosition(new T.Vector3());if(Math.hypot(p.x-b.x,p.z-b.z)<radius+e.radius)hit(e,b.damage);}if(b.evolution==='meteor'&&fields.filter(f=>f.kind==='echo').length<8)fields.push({kind:'echo',x:b.x,z:b.z,damage:b.damage*.35,radius,age:0,tick:.3,life:.35,atDistance:state.distance,owner:b.owner||0});if(b.evolution==='ghostfire'&&fields.filter(f=>f.kind==='fire').length<4)fields.push({kind:'fire',x:b.x,z:b.z,damage:b.damage*.18,radius,age:0,tick:.45,life:2,atDistance:state.distance,owner:b.owner||0});}
 function updateFields(dt){fields=fields.filter(f=>{f.age+=dt;f.z+=state.distance-(f.atDistance??state.distance);f.atDistance=state.distance;f.tick-=dt;if(f.tick<=0){f.tick+=.5;scene.ring(f.x,f.z,f.kind==='fire'?'#bca4e1':'#f0cc9a',f.radius);for(const e of targetEnemies()){const p=e.group.getWorldPosition(new T.Vector3());if(Math.hypot(p.x-f.x,p.z-f.z)<f.radius+e.radius)hit(e,f.damage,f.owner||0);}}return f.age<f.life;});turrets=turrets.filter(t=>{t.life-=dt;t.z+=state.distance-t.atDistance;t.atDistance=state.distance;t.tick-=dt;if(t.tick<=0){t.tick+=.7;const e=targetEnemies().find(e=>e.group.getWorldPosition(new T.Vector3()).z<t.z);if(e){const b=scene.shoot(t.x,t.z,t.damage,true,e,'companion',22);if(b)b.owner=t.owner||0;}scene.ring(t.x,t.z,'#8edcdb',.35);}return t.life>0&&t.z<10;});}
 function updateShots(dt){
- const targets=targetEnemies(),positions=new Map(targets.map(enemy=>[enemy,enemy.group.getWorldPosition(new T.Vector3())])),splits=[];
+ const targets=targetEnemies(party.host?Math.max(state.range,party.partner.range):state.range),positions=new Map(targets.map(enemy=>[enemy,enemy.group.getWorldPosition(new T.Vector3())])),splits=[];
  scene.shots=scene.shots.filter(b=>{
   b.life+=dt;const previousX=b.x,previousZ=b.z;
   let vx=Math.sin(b.angle||0)*27,vz=-Math.cos(b.angle||0)*27;
