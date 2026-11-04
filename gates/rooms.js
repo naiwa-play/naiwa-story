@@ -1,7 +1,9 @@
-import {ROOM_SERVER} from './rooms-config.js?v=23';
-export const roomEndpoint=()=>ROOM_SERVER||(['localhost','127.0.0.1'].includes(location.hostname)?'ws://127.0.0.1:5198':'');
+import {ROOM_SERVER} from './rooms-config.js?v=24';
+import {PeerRoom} from './peer-room.js?v=24';
+export const roomEndpoint=()=>ROOM_SERVER||'peerjs';
+export const directRooms=()=>!ROOM_SERVER;
 export class FriendRoom{
- constructor(onMessage){this.onMessage=onMessage;this.index=null;this.code='';this.token='';this.socket=null;this.manual=false;this.reconnectTimer=null;this.reconnectAt=0;}
+ constructor(onMessage){if(directRooms())return new PeerRoom(onMessage);this.onMessage=onMessage;this.index=null;this.code='';this.token='';this.socket=null;this.manual=false;this.reconnectTimer=null;this.reconnectAt=0;}
  async connect(){if(this.socket?.readyState===1)return;const url=roomEndpoint();if(!url)throw new Error('好友房间正在准备云端服务。单人冒险已可正常游玩。');this.manual=false;await new Promise((resolve,reject)=>{const socket=this.socket=new WebSocket(url),timeout=setTimeout(()=>{socket.close();reject(new Error('连接房间服务超时，请检查网络后重试'));},10000);socket.onopen=()=>{clearTimeout(timeout);resolve();};socket.onerror=()=>{clearTimeout(timeout);reject(new Error('暂时无法连接房间服务，请稍后重试'));};socket.onmessage=e=>{let message;try{message=JSON.parse(e.data);}catch{return;}if(message.type==='joined'){this.index=message.index;this.code=message.code;this.token=message.token;this.reconnectAt=0;}if(message.type==='ended'){this.code='';this.token='';}this.onMessage(message);};socket.onclose=()=>{clearTimeout(timeout);if(socket!==this.socket||this.manual||!this.code)return;this.onMessage({type:'offline'});this.reconnectAt||=Date.now();clearTimeout(this.reconnectTimer);if(Date.now()-this.reconnectAt<19000)this.reconnectTimer=setTimeout(()=>this.connect().then(()=>this.send({type:'resume',version:22,code:this.code,token:this.token})).catch(()=>this.retry()),1000);else this.onMessage({type:'ended',reason:'重连超时，请重新创建房间'});};});}
  retry(){if(this.manual||!this.code)return;if(Date.now()-this.reconnectAt>=19000){this.onMessage({type:'ended',reason:'重连超时，请重新创建房间'});return;}clearTimeout(this.reconnectTimer);this.reconnectTimer=setTimeout(()=>this.connect().then(()=>this.send({type:'resume',version:22,code:this.code,token:this.token})).catch(()=>this.retry()),1200);}
  send(message){if(this.socket?.readyState!==1||this.socket.bufferedAmount>192*1024)return false;this.socket.send(JSON.stringify(message));return true;}

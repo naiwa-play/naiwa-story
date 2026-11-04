@@ -1,9 +1,9 @@
 import * as T from './vendor/three.module.min.js';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { mergeGeometries } from './vendor/utils/BufferGeometryUtils.js';
-import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText, formatStat } from './core.js?v=23';
+import { THEMES, MODES, bossFor, eliteFor, MINIONS, formation, clamp, gateText, formatStat } from './core.js?v=24';
 import {CyberFrontier} from './cyber-frontier.js?v=21';
-import {DestinationScenery,destinationEnemy,destinationBoss} from './destinations.js?v=23';
+import {DestinationScenery,destinationEnemy,destinationBoss} from './destinations.js?v=24';
 import {jellyPose,applyJellyPose} from './jelly-motion.js';
 import {loadGameModel,MODEL_FILES} from './model-loader.js?v=20';
 

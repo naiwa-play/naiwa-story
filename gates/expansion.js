@@ -1,4 +1,4 @@
-import {MAX_STAT,CARDS,makeCourse,STAGE_LENGTH,rewardGrowth} from './core.js?v=23';
+import {MAX_STAT,CARDS,makeCourse,STAGE_LENGTH,rewardGrowth} from './core.js?v=24';
 
 export const PLAY_MODES={expedition:{name:'分岔远征',copy:'选路、奇遇与进化 · 无尽冒险'},guard:{name:'三分钟守卫',copy:'守住孵化器 · 生存 180 秒'},bossrush:{name:'首领连战',copy:'六场首领战 · 场间补给'},daily:{name:'每日远征',copy:'相同起点与路线 · 本地成绩'}};
 export function seededRandom(seed){let n=2166136261;for(const c of String(seed))n=Math.imul(n^c.charCodeAt(0),16777619);return()=>{n+=0x6D2B79F5;let t=Math.imul(n^n>>>15,1|n);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
