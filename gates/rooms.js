@@ -1,5 +1,5 @@
 import {ROOM_SERVER} from './rooms-config.js?v=24';
-import {PeerRoom} from './peer-room.js?v=24';
+import {PeerRoom} from './peer-room.js?v=25';
 export const roomEndpoint=()=>ROOM_SERVER||'peerjs';
 export const directRooms=()=>!ROOM_SERVER;
 export class FriendRoom{

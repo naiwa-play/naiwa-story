@@ -4,6 +4,7 @@ const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const THEMES = new Set(['coast', 'forest', 'halloween', 'cyber', 'abyss', 'dream', 'lantern']);
 const LIMIT = 96 * 1024;
 const TIMEOUT = 15000;
+const DIRECT_FAILED = '双方未能建立直连。请让房主保持游戏页面打开，双方用 Safari 或 Chrome 并连接同一个 Wi-Fi 后重试。';
 const cleanName = value => typeof value === 'string' ? value.trim().slice(0, 12) || '奶蛙朋友' : '奶蛙朋友';
 const validCode = code => typeof code === 'string' && /^[A-HJ-NP-Z2-9]{6}$/.test(code);
 const validMembers = members => Array.isArray(members) && members.length === 2 && members.every(m => m === null || (m && typeof m.name === 'string' && m.name.length <= 12 && typeof m.ready === 'boolean'));
@@ -68,15 +69,32 @@ export class PeerRoom {
   this.cleanup();
   this.emit(joined ? {type: 'ended', reason: message} : {type: 'error', message});
  }
- armTimeout() {
+ connectionFailed(message) {
+  if (this.index !== 0 || this.status !== 'lobby' || this.members[1]) {
+   this.fail(message);
+   return;
+  }
+  // A guest who never joined should not destroy the host's waiting room.
+  const connection = this.connection;
+  this.connection = null;
+  this.clearDeadline();
+  this.connections.delete(connection);
+  connection.close();
+  this.emit({type: 'error', message: '好友未能完成连接，可用原房间码重试。'});
+ }
+ armTimeout(onTimeout) {
   this.clearTimeout(this.timer);
-  this.timer = this.setTimeout(() => this.fail('双人直连超过 15 秒仍未建立，请换用浏览器或网络后重试'), TIMEOUT);
+  this.timer = this.setTimeout(onTimeout, TIMEOUT);
  }
  clearDeadline() { this.clearTimeout(this.timer); this.timer = null; }
  makePeer(id, onOpen) {
   this.manual = false;
   this.busy = true;
-  this.armTimeout();
+  this.armTimeout(() => {
+   if (!this.connection) this.fail('连接房间服务超过 15 秒，请检查网络后重试。');
+   else if (!this.connection.open) this.fail(DIRECT_FAILED);
+   else this.fail('直连已建立，但房主尚未确认加入。请房主保持游戏页面打开，再用原房间码重试。');
+  });
   let peer;
   try {
    peer = new this.Peer(id, {secure: true, config: {iceServers: [{urls: 'stun:stun.cloudflare.com:3478'}]}});
@@ -131,7 +149,9 @@ export class PeerRoom {
   this.role = 'guest';
   this.expectedCode = code;
   this.name = cleanName(message.name);
-  this.makePeer(undefined, peer => {
+  // A client-generated ID avoids the guest-only HTTP request to allocate one.
+  this.makePeer('naiwa-guest-' + this.random(24), peer => {
+   this.emit({type: 'connecting', message: '已连接房间服务，正在尝试和房主直连…'});
    let connection;
    try {
     connection = peer.connect(PREFIX + code, {serialization: 'json', reliable: true, metadata: {version: VERSION, name: this.name}});
@@ -139,7 +159,9 @@ export class PeerRoom {
    this.connection = connection;
    this.watch(connection);
    connection.on('open', () => {
-    if (this.connection === connection) this.post({type: 'join', version: VERSION, code, name: this.name});
+    if (this.connection !== connection) return;
+    this.emit({type: 'connecting', message: '直连已建立，正在等待房主确认…'});
+    this.post({type: 'join', version: VERSION, code, name: this.name});
    });
   });
   return true;
@@ -156,7 +178,7 @@ export class PeerRoom {
   // Reserve the only guest slot before waiting for the channel to open.
   this.connection = connection;
   this.watch(connection);
-  this.armTimeout();
+  this.armTimeout(() => this.connectionFailed(DIRECT_FAILED));
  }
  reject(connection, message) {
   this.connections.add(connection);
@@ -174,15 +196,21 @@ export class PeerRoom {
   connection.on('data', raw => {
    if (this.connection !== connection || this.manual) return;
    const message = packet(raw);
-   if (!message) { this.fail('收到无效房间数据，连接已结束，请重新创建房间'); return; }
+   if (!message) { this.connectionFailed('收到无效房间数据，连接已结束，请重新创建房间'); return; }
    this.receive(message);
   });
   connection.on('close', () => {
    this.connections.delete(connection);
-   if (this.connection === connection && !this.manual) this.fail('伙伴连接已中断，本次房间已结束，请重新创建房间');
+   if (this.connection === connection && !this.manual) {
+    const message = this.index === null ? DIRECT_FAILED : '伙伴连接已中断，本次房间已结束，请重新创建房间';
+    this.connectionFailed(message);
+   }
   });
-  connection.on('error', () => {
-   if (this.connection === connection && !this.manual) this.fail('伙伴连接发生错误，本次房间已结束，请重新创建房间');
+  connection.on('error', error => {
+   if (this.connection === connection && !this.manual) {
+    const message = this.index === null && error.type === 'negotiation-failed' ? DIRECT_FAILED : '伙伴连接发生错误，请重试。';
+    this.connectionFailed(message);
+   }
   });
  }
  post(message) {
@@ -191,11 +219,11 @@ export class PeerRoom {
   if (['snapshot', 'input'].includes(message.type) && (connection.bufferSize > 0 || connection.dataChannel?.bufferedAmount > 192 * 1024)) return false;
   if (!packet(message)) return false;
   try { connection.send(message); return true; }
-  catch { this.fail('伙伴连接已中断，本次房间已结束，请重新创建房间'); return false; }
+  catch { this.connectionFailed('伙伴连接已中断，请重试。'); return false; }
  }
  lobby() {
   const message = {type: 'room', code: this.code, theme: this.theme, status: this.status, members: this.members.map(m => m ? {...m} : null)};
-  if (this.connection && !this.post(message)) return;
+  if (this.members[1] && !this.post(message)) return;
   this.deliver(message);
  }
  start() {
@@ -212,15 +240,17 @@ export class PeerRoom {
  }
  receive(message) {
   if (message.type === 'error') {
-   if (typeof message.message === 'string' && message.message.length <= 160) this.fail(message.message);
+   if (typeof message.message === 'string' && message.message.length <= 160) this.connectionFailed(message.message);
    return;
   }
   if (this.role === 'host') {
    if (message.type === 'join' && !this.members[1]) {
-    if (message.version !== VERSION || message.code !== this.code) { this.fail('游戏版本或房间码不匹配，请双方刷新后重试'); return; }
-    this.members[1] = {name: cleanName(message.name || this.connection.metadata?.name), ready: false, online: true};
+    if (message.version !== VERSION || message.code !== this.code) { this.connectionFailed('游戏版本或房间码不匹配，请双方刷新后重试'); return; }
+    const guest = {name: cleanName(message.name || this.connection.metadata?.name), ready: false, online: true};
+    const welcome = {type: 'welcome', version: VERSION, code: this.code, index: 1, token: this.random(24), theme: this.theme, members: [this.members[0], guest]};
+    if (!this.post(welcome)) return;
+    this.members[1] = guest;
     this.clearDeadline();
-    this.post({type: 'welcome', version: VERSION, code: this.code, index: 1, token: this.random(24), theme: this.theme, members: this.members});
     this.lobby();
     return;
    }

@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.min.js';
-import {FriendRoom,directRooms} from './rooms.js?v=24';
+import {FriendRoom,directRooms} from './rooms.js?v=25';
 import {THEMES,rollCards,chooseCard,freshRun,killReward,clamp} from './core.js?v=24';
 import {availableEvolutions,evolve,applyEvent,rollModification} from './expansion.js?v=24';
 const $=id=>document.getElementById(id),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),round=x=>Math.round(x*100)/100;
@@ -12,6 +12,7 @@ export class CooperativeSession{
  }
  lobby(){if(this.playing)return;const me=this.members[this.room.index];this.ctx.showModal('出发前，再等一位朋友。','<p>房间码</p><div class="room-code">'+escape(this.room.code)+'</div><p>'+escape(THEMES[this.theme||'coast'].name)+' · 双人分岔远征</p><div class="room-members">'+[0,1].map(i=>'<div class="room-member"><b>'+escape(this.members[i]?.name||'等待好友加入')+'</b><small>'+(this.members[i]?(this.members[i].ready?'已准备':'尚未准备'):'空位 · 最多 2 人')+'</small></div>').join('')+'</div><div class="status-row"><button id="room-copy">复制邀请链接</button><button id="room-ready">'+(me?.ready?'取消准备':'我准备好了')+'</button>'+(this.room.index===0?'<button id="room-start">一起出发</button>':'')+'<button id="room-leave">离开房间</button></div><p id="room-note" class="room-error"></p>','TWO LITTLE HEROES','room');$('modal-close').hidden=true;$('room-copy').onclick=async()=>{try{const link=new URL('./',location.href);link.hash='room='+this.room.code;await navigator.clipboard.writeText(link.href);this.ctx.toast('邀请链接已复制 · 房间码 '+this.room.code);}catch{this.ctx.toast('房间码 '+this.room.code);}};$('room-ready').onclick=()=>this.room.send({type:'ready',ready:!me?.ready});if($('room-start'))$('room-start').onclick=()=>this.room.send({type:'start'});$('room-leave').onclick=()=>{this.leave();$('modal').close();};}
  async message(m){
+  if(m.type==='connecting'){if($('room-note'))$('room-note').textContent=m.message;return;}
   if(m.type==='joined'){this.theme=m.theme;return;}
   if(m.type==='room'){this.members=m.members;this.theme=m.theme;if(!this.playing)this.lobby();return;}
   if(m.type==='error'){if($('room-note'))$('room-note').textContent=m.message;this.ctx.toast(m.message);return;}

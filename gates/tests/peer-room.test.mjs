@@ -137,5 +137,20 @@ timeout();
 await assert.rejects(waiting, /15 秒/);
 assert.equal(timedPeer.destroyed, true);
 assert.equal(stalled.room.peer, null);
-for (const participant of [host, guest, third, missing, invalid, cancellation, stalled]) participant.room.leave();
-console.log('Peer rooms: handshake, two-player cap, ready/start, authoritative messages, backpressure, disconnect, cancellation and timeout passed');
+
+let guestDeadline;
+const waitingHost = make({setTimeout: fn => (guestDeadline = fn, 1), clearTimeout: () => {}});
+await create(waitingHost.room);
+const waitingCode = waitingHost.room.code;
+const stalledChannel = new Channel({version: 22});
+waitingHost.room.peer.emit('connection', stalledChannel);
+guestDeadline();
+assert.equal(waitingHost.room.code, waitingCode, 'guest handshake timeout must keep the existing host room');
+assert.equal(stalledChannel.closed, true);
+assert.equal(waitingHost.room.connection, null);
+const retriedGuest = make();
+await join(retriedGuest.room, waitingCode);
+assert.equal(retriedGuest.room.index, 1, 'another join can use the same room code after a failed attempt');
+
+for (const participant of [host, guest, third, missing, invalid, cancellation, stalled, waitingHost, retriedGuest]) participant.room.leave();
+console.log('Peer rooms: handshake, two-player cap, ready/start, authoritative messages, backpressure, disconnect, cancellation, timeout and retry passed');
