@@ -3,7 +3,7 @@ import {ExpeditionScene} from './scene.js?v=24';
 import {THEMES,MINIONS,MAX_STAT,formatStat,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=24';
 import {Soundtrack} from './audio.js?v=24';
 import {PLAY_MODES,seededRandom,dayKey,EVENTS,expeditionCourse,applyEvent,rollModification,EVOLUTIONS,availableEvolutions,evolutionActive,evolve,MILESTONES,recordRun} from './expansion.js?v=24';
-import {CooperativeSession} from './party.js?v=25';
+import {CooperativeSession} from './party.js?v=26';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
