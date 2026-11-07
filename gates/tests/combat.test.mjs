@@ -7,8 +7,9 @@ import * as expansion from '../expansion.js';
 import {CooperativeSession} from '../party.js';
 import {ExpeditionScene} from '../scene.js';
 const elements=new Map();
+const windowEvents=new Map();
 function element(id){if(!elements.has(id))elements.set(id,{style:{setProperty(){}},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},append(){},close(){},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
-const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(){}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
+const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(name,handler){windowEvents.set(name,handler);}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
 vm.runInContext(source+'\nglobalThis.testGame={updateShots,update,volley,burst,hit,bossAttack,updateThreats,getThreats:()=>activeThreats,updateModeHUD,companionAttack,petAttack,dogAttack,threats(t){activeThreats=t;},set(s,v,a=null){state=s;scene=v;active=a;course=[];paused=false;pendingCards=null;nextStage=1;fireTimer=dogTimer=petTimer=0;dogBites=[];activeThreats=[];companionReady=[];pendingMajorReward=false;},course(rows){course=rows;scene.createCourse(rows);},choose(){if(pendingCards){const ids=["dog","mouse","company","damage","rate","scatter","range"],card=ids.map(id=>pendingCards.find(c=>c.id===id)).find(Boolean)||pendingCards[0];chooseCard(state,card.id);pendingCards=null;paused=false;}},getState:()=>state};',context);
 const game=context.testGame;
@@ -105,3 +106,24 @@ console.log('PASS: chain lightning, mother turret and both finite challenge vict
  const {scene,enemy}=fixture(35),s=core.freshRun(),session=game.getParty();s.range=12;session.playing=true;session.room.index=0;session.partner=core.freshRun();session.partner.range=40;session.main=s;game.set(s,scene);scene.shots=[{x:0,z:-25,damage:4,life:0,kind:'egg',owner:1,range:40,travel:29}];game.updateShots(.2);assert.equal(enemy.hp,6,'Guest range must remain independent of the host range');session.playing=false;
 }
 console.log('PASS: independent cooperative projectile ranges.');
+{
+ const {scene}=fixture();
+ game.set(core.freshRun(),scene);
+ vm.runInContext('pressed.clear()',context);
+ const down=windowEvents.get('keydown'),up=windowEvents.get('keyup');
+ down({key:'Process',code:'KeyD',preventDefault(){}});
+ assert.equal(vm.runInContext('pressed.has("d")',context),true,'Physical D must work while an IME owns the character');
+ up({key:'в',code:'KeyD'});
+ assert.equal(vm.runInContext('pressed.size',context),0,'Releasing D must stop movement after the input language changes');
+ down({key:'ф',code:'KeyA',preventDefault(){}});
+ assert.equal(vm.runInContext('pressed.has("a")',context),true);
+ up({key:'A',code:'KeyA'});
+ down({key:'A',preventDefault(){}});
+ assert.equal(vm.runInContext('pressed.has("a")',context),true,'Older browsers retain key-based controls');
+ up({key:'a'});
+ element('modal').open=true;
+ down({key:'Process',code:'KeyD',preventDefault(){}});
+ assert.equal(vm.runInContext('pressed.size',context),0,'Typing in an open dialog must not move the hero');
+ element('modal').open=false;
+}
+console.log('PASS: physical movement keys, IME input, language changes, legacy keys and dialog input.');

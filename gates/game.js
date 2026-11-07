@@ -296,8 +296,13 @@ canvas.addEventListener('pointerdown',e=>{if(scene?.home||paused||displayedResul
 canvas.addEventListener('pointermove',e=>{if(pointer!==e.pointerId||paused)return;targetX=clamp(dragStart+(e.clientX-dragOrigin)/Math.min(innerWidth,650)*10*state.speed,-3.8,3.8);});
 function releasePointer(e){if(pointer===e.pointerId)pointer=null;}
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,releasePointer);
-window.addEventListener('keydown',e=>{const key=e.key.length===1?e.key.toLowerCase():e.key;if(pendingCards&&['1','2','3'].includes(key)){e.preventDefault();const selected=pendingCards[Number(key)-1];if(selected)document.querySelector('[data-card="'+selected.id+'"]')?.click();return;}if($('modal').open)return;if(['ArrowLeft','ArrowRight','a','d',' '].includes(key)&&scene&&!scene.home){e.preventDefault();pressed.add(key);if(key===' '&&!e.repeat)burst();}if((key==='p'||key==='Escape')&&!e.repeat)$('pause').click();});
-window.addEventListener('keyup',e=>pressed.delete(e.key.length===1?e.key.toLowerCase():e.key));
+function gameKey(event){
+ if(event.code==='KeyA')return 'a';
+ if(event.code==='KeyD')return 'd';
+ return event.key.length===1?event.key.toLowerCase():event.key;
+}
+window.addEventListener('keydown',e=>{const key=gameKey(e);if(pendingCards&&['1','2','3'].includes(key)){e.preventDefault();const selected=pendingCards[Number(key)-1];if(selected)document.querySelector('[data-card="'+selected.id+'"]')?.click();return;}if($('modal').open)return;if(['ArrowLeft','ArrowRight','a','d',' '].includes(key)&&scene&&!scene.home){e.preventDefault();pressed.add(key);if(key===' '&&!e.repeat)burst();}if((key==='p'||key==='Escape')&&!e.repeat)$('pause').click();});
+window.addEventListener('keyup',e=>pressed.delete(gameKey(e)));
 window.addEventListener('blur',()=>{pressed.clear();pointer=null;if(!party.playing&&scene&&!scene.home&&!paused&&!displayedResult)$('pause').click();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){sound.pause();pressed.clear();pointer=null;if(scene&&!scene.home&&!paused&&!displayedResult)$('pause').click();}else if(!paused)sound.resume();lastTime=0;});
 window.addEventListener('resize',()=>scene?.resize());
