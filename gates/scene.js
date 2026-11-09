@@ -341,8 +341,9 @@ export class ExpeditionScene {
       for(const part of this.enemyBatches.get(enemy.bodyKey))if(part.count<110)part.setMatrixAt(part.count++,enemy.body.matrixWorld);
       if(shadows<110){enemy.shadow.updateMatrix();this.enemyMatrix.multiplyMatrices(enemy.group.matrixWorld,enemy.shadow.matrix);this.enemyShadows.setMatrixAt(shadows++,this.enemyMatrix);}
     }
-    for(const batch of this.enemyBatches.values())for(const part of batch)part.instanceMatrix.needsUpdate=true;
-    this.enemyShadows.count=shadows;this.enemyShadows.instanceMatrix.needsUpdate=true;
+    for(const batch of this.enemyBatches.values())for(const part of batch)if(part.count)part.instanceMatrix.needsUpdate=true;
+    this.enemyShadows.count=shadows;
+    if(shadows)this.enemyShadows.instanceMatrix.needsUpdate=true;
   }
   positionRows(distance){
     this.distance=distance;let live=this.entities.filter(e=>!e.dead&&!e.escaped).length;
@@ -357,7 +358,21 @@ export class ExpeditionScene {
   }
   pruneCourse(distance){const dispose=group=>group.traverse(o=>{if(o.isSprite){o.material.map?.dispose();o.material.dispose();}else if(o.isMesh&&!o.userData.sharedEnemy&&![sphere,lowSphere,box].includes(o.geometry)){o.geometry.dispose();if(o.userData.disposable)o.material.dispose();}});for(const e of this.entities)if(e.dead||e.escaped){e.row.group.remove(e.group);dispose(e.group);}this.entities=this.entities.filter(e=>!e.dead&&!e.escaped);const old=this.rows.filter(r=>r.at+(r.tail||0)<distance-25);for(const row of old){this.scene.remove(row.group);dispose(row.group);}const retired=new Set(old);this.rows=this.rows.filter(r=>!retired.has(r));this.entities=this.entities.filter(e=>!retired.has(e.row));}
   updateEnemies(time,dt){for(const e of this.entities){if(e.dead||e.escaped)continue;e.group.visible=e.row.group.position.z+e.offset> -74;e.body.scale.set(1+Math.sin(time*3+e.index)*.025,1-Math.sin(time*3+e.index)*.035,1);e.body.position.y=Math.max(0,e.hit)*.12+(['drone','coil'].includes(e.kind)?.12+Math.sin(time*3+e.index)*.1:0);if(e.kind==='crawler')e.body.rotation.z=Math.sin(time*7+e.index)*.055;e.hit=Math.max(0,e.hit-dt*5);e.group.position.z=e.offset;updateLabel(e.label,formatStat(Math.max(0,Math.ceil(e.hp))));}this.drawEnemies();}
-  hit(enemy,damage){enemy.hp-=damage;enemy.hit=1;this.burst(enemy.group.getWorldPosition(new T.Vector3()).x,.8,enemy.group.getWorldPosition(new T.Vector3()).z,'#fff0ab',3);if(enemy.hp<=0){enemy.hp=0;enemy.dead=true;enemy.group.visible=false;const p=enemy.group.getWorldPosition(new T.Vector3());this.burst(p.x,1,p.z,'#c6b7da',24);this.ring(p.x,p.z,'#d6c4df');return true;}return false;}
+  hit(enemy,damage){
+    enemy.hp-=damage;
+    enemy.hit=1;
+    const point=enemy.group.getWorldPosition(new T.Vector3());
+    this.burst(point.x,.8,point.z,'#fff0ab',3);
+    if(enemy.hp<=0){
+      enemy.hp=0;
+      enemy.dead=true;
+      enemy.group.visible=false;
+      this.burst(point.x,1,point.z,'#c6b7da',24);
+      this.ring(point.x,point.z,'#d6c4df');
+      return true;
+    }
+    return false;
+  }
   update(state,dt,wallTime){
     if(this.partnerLunge)this.partnerLunge.age+=dt;this.partnerPets??=[];for(const name of ['naigou','naishu'])if(this.partnerState?.pets?.[name]&&this.models?.[name]&&!this.partnerPets.some(p=>p.userData.name===name)){const root=new T.Group(),motion=new T.Group();root.add(motion);motion.add(this.models[name].scene.clone(true));root.userData={name,motion};root.scale.setScalar(.6);this.scene.add(root);shadow(root,0,0,.5);this.partnerPets.push(root);}for(const p of this.partnerPets){p.visible=!!this.partnerState&&!this.home&&!!this.partnerState.pets[p.userData.name];if(p.visible){p.position.set(this.partnerState.x+(p.userData.name==='naigou'?-1.1:1.1),0,5.7);if(p.userData.name==='naigou'&&this.partnerLunge?.age<.65){const f=Math.sin(this.partnerLunge.age/.65*Math.PI);p.position.x+=(this.partnerLunge.x-p.position.x)*f;p.position.z+=(this.partnerLunge.z-p.position.z)*f;p.position.y=f*.7;}p.rotation.y=Math.PI;applyJellyPose(p.userData.motion,jellyPose(this.time,{moving:this.partnerState.phase!=='boss'?1:0,phase:.5}));}}
     if(!this.incubator&&this.models){this.incubator=new T.Group();this.incubator.position.set(0,0,8);this.scene.add(this.incubator);mesh(new T.CylinderGeometry(1.1,1.25,.2,32),mat('#b4ccbd'),this.incubator,[0,.13,0]);mesh(new T.TorusGeometry(.98,.06,8,32),mat('#d4eee2'),this.incubator,[0,.24,0]).rotation.x=Math.PI/2;const egg=this.models.naidan.scene.clone(true);egg.scale.setScalar(.48);egg.position.y=.38;this.incubator.add(egg);mesh(new T.CylinderGeometry(.95,.95,1.9,24,1,true),new T.MeshStandardMaterial({color:'#c5ebe2',transparent:true,opacity:.18,depthWrite:false,roughness:.2}),this.incubator,[0,1.2,0]);}if(this.incubator)this.incubator.visible=!this.home&&state.mode==='guard';

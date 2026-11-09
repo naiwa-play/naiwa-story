@@ -30,7 +30,12 @@ for(let round=0;round<6;round++){
   for(let frame=0;frame<30;frame++){scene.shots=shots.map(shot=>({...shot}));context.bench.step(1/60);}
   collisionTimes.push((performance.now()-start)/30);
 }
-const readsPerFrame=worldReads/180;T.Object3D.prototype.getWorldPosition=original;
+const readsPerFrame=worldReads/180;
+worldReads=0;
+scene.shots=[];
+context.bench.step(1/60);
+const emptyFrameReads=worldReads;
+T.Object3D.prototype.getWorldPosition=original;
 const spawnTimes=[];let geometries,textures,meshes,renderer;
 for(let round=0;round<4;round++){
   renderer=Object.create(ExpeditionScene.prototype);renderer.theme='coast';renderer.scene=new T.Scene();renderer.entities=[];const row={group:new T.Group(),major:false,at:100};renderer.rows=[row];renderer.scene.add(row.group);geometries=new Set();textures=0;meshes=0;
@@ -48,7 +53,8 @@ const batches=[...renderer.enemyBatches.values()].flat(),enemyBodyDraws=batches.
 const median=values=>values.slice().sort((a,b)=>a-b)[Math.floor(values.length/2)];
 console.log(JSON.stringify({monsters:96,shots:155,collisionFrameMs:+median(collisionTimes.slice(1)).toFixed(3),worldReadsPerFrame:readsPerFrame,spawn96Ms:+median(spawnTimes.slice(1)).toFixed(1),uniqueEnemyGeometries:geometries.size,enemyBodyDraws,hpTextureMiB:+(textures/1024**2).toFixed(2)}));
 if(!process.argv.includes('--measure-only')){
-  assert.ok(readsPerFrame<400,'Dense shots must not repeat world transforms per enemy and projectile');
+  assert.ok(readsPerFrame<=scene.entities.length,'Dense shots should read each enemy world position at most once per step');
+  assert.equal(emptyFrameReads,0,'Without projectiles there should be no projectile targeting scans');
   assert.ok(geometries.size<100,'Repeated monster shapes should reuse geometry');
   assert.ok(textures<16*1024**2,'Dense enemy health labels must stay within a small texture budget');
   assert.ok(enemyBodyDraws<24,'Monster bodies and shadows must use shared instanced draws');

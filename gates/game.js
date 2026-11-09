@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.min.js';
-import {ExpeditionScene} from './scene.js?v=24';
+import {ExpeditionScene} from './scene.js?v=28';
 import {THEMES,MINIONS,MAX_STAT,formatStat,WEAPONS,PATTERNS,attackProfile,STAGE_LENGTH,SHOP,MODES,bossFor,eliteFor,modeActive,effectiveRate,chargeMode,activateMode,tickMode,squadContact,clamp,formation,freshRun,runMultiplier,applyGate,damageSquad,killReward,makeCourse,reward,gateText,crossed,rollCards,chooseCard,buyUpgrade,shopPrice,sweepHit} from './core.js?v=24';
 import {Soundtrack} from './audio.js?v=24';
 import {PLAY_MODES,seededRandom,dayKey,EVENTS,expeditionCourse,applyEvent,rollModification,EVOLUTIONS,availableEvolutions,evolutionActive,evolve,MILESTONES,recordRun} from './expansion.js?v=24';
@@ -7,7 +7,21 @@ import {CooperativeSession} from './party.js?v=26';
 
 const $=id=>document.getElementById(id),sound=new Soundtrack(),storeKey='naiwa-expedition-v1';
 let saved={coins:0,best:0,bestDistance:0,upgrades:{},startingPet:null,tutorialSeen:false};
-try{const old=JSON.parse(localStorage.getItem(storeKey));if(old&&typeof old==='object'){saved={...saved,...old,coins:Math.max(0,Number(old.coins??old.stars)||0),upgrades:old.upgrades||{}};for(const item of SHOP)saved.upgrades[item.id]=clamp(Math.floor(Number(saved.upgrades[item.id])||0),0,item.max);if(!['naigou','naishu'].includes(saved.startingPet)||!saved.upgrades[saved.startingPet])saved.startingPet=null;}}catch{}
+function nonnegativeNumber(value){
+ const number=Number(value);
+ return Number.isFinite(number)?Math.max(0,number):0;
+}
+try{
+ const old=JSON.parse(localStorage.getItem(storeKey));
+ if(old&&typeof old==='object'&&!Array.isArray(old)){
+  const upgrades=Object.fromEntries(SHOP.map(item=>[item.id,Math.min(item.max,Math.floor(nonnegativeNumber(old.upgrades?.[item.id])))]));
+  saved={...saved,...old,coins:nonnegativeNumber(old.coins??old.stars),best:nonnegativeNumber(old.best),bestDistance:nonnegativeNumber(old.bestDistance),upgrades};
+  if(!['naigou','naishu'].includes(saved.startingPet)||!upgrades[saved.startingPet])saved.startingPet=null;
+  const journal=old.journal;
+  saved.journal={daily:Object.fromEntries(Object.entries(journal?.daily??{}).filter(([date,score])=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&Number.isFinite(score)&&score>=0))};
+  for(const key of ['enemies','evolutions','milestones','themes'])saved.journal[key]=Array.isArray(journal?.[key])?journal[key].filter(id=>typeof id==='string'):[];
+ }
+}catch{}
 let theme='coast',state=freshRun(),course=[],scene,paused=false,active=null,fireTimer=0,petTimer=0,dogTimer=0,bossTimer=0,toastTimer,accumulator=0,lastTime=0,displayedResult=false,settled=false,nextStage=1,pendingCards=null;
 let pressed=new Set(),pointer=null,dragOrigin=0,dragStart=0,targetX=0,activeThreats=[],dogBites=[],petSummary='',companionReady=[],modeUIKey='',lastReadyMode='',pendingMajorReward=false;
 const playerZ=5,step=1/60;
@@ -42,10 +56,11 @@ function showModal(title,content,kicker='FIELD NOTES',kind='normal'){
 $('modal-close').onclick=()=>$('modal').close();
 $('modal').addEventListener('cancel',e=>{if(pendingCards||eventChoice||party.choosing)e.preventDefault();});
 $('modal').addEventListener('click',event=>{if(pendingCards||eventChoice||party.choosing||event.target!==$('modal'))return;const r=$('modal').getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)$('modal').close();});
-$('modal').addEventListener('close',()=>{if(party.choosing)return;if(party.playing&&$('modal').className!=='party')party.requestPause(false);paused=false;pressed.clear();pointer=null;accumulator=0;if(!document.hidden)sound.resume();lastTime=0;});
+// An old close event can arrive after a follow-up choice has reopened the dialog.
+$('modal').addEventListener('close',()=>{if($('modal').open||party.choosing)return;if(party.playing&&$('modal').className!=='party')party.requestPause(false);paused=false;pressed.clear();pointer=null;accumulator=0;if(!document.hidden)sound.resume();lastTime=0;});
 $('help').onclick=()=>showModal('一只奶蛙，也能出发。','<ol><li><b>自动前进与攻击。</b> 手机按住画面左右拖动，电脑使用 A / D、方向键或拖动鼠标。敌人会持续向你靠近，侧移可以躲开，碰撞只扣生命，不扣队伍数量。红色血瓶可恢复 2 点生命，补给较少。Boss 攻击命中主角或奶蛙伙伴都会扣除共享生命。</li><li><b>看准射程。</b> 脚下前方的光圈标记最远攻击位置，超出射程不能造成伤害。瞄准后会自动射击。</li><li><b>三选一，决定成长。</b> 经过卡牌路标时暂停选卡：增加追踪伙伴、攻速、威力、移速和射程。武器与攻击形式独立搭配：投掷奶蛋配散射会分散投掷；激光配散射会展开扇形光束。机器复制枪平射奶蛋，命中分裂，每代伤害保留 65%，基础分裂 5 次，可通过专属卡提升层数和分裂数量。召唤宠物后才会出现对应成长卡。</li><li><b>两种伙伴，两种打法。</b> 奶狗会扑向敌人咬击，奶鼠搓出奶球进行追踪攻击。没有召唤时不会出场。</li><li><b>第一段是热身，之后没有终点。</b> 完成 260 米初行路后直接进入无尽，推进速度逐渐提高，最高 3 倍。遇到 Boss 会停步交战，左右闪避它的墨团。击败小怪增加攻击力，击败 Boss 还会增加伙伴数量和攻速。</li><li><b>能量模式。</b> 能量未满时隐藏效果，蓄满揭晓愤怒、忧郁、恶魔、天使或神格模式。点击右下按钮或按空格进入限时增益；开启声音可听就绪提示。连续击杀的充能有上限，两次模式切换至少间隔 45 秒。</li><li><b>金币带回口袋。</b> 靠近金币即可拾取。结束或返回主界面会保存金币，可在口袋商店购买永久开局强化；记录保存在当前浏览器。</li></ol>');
 $('collection').onclick=()=>showModal('伙伴会在路上相遇。','<div class="pet-entry"><span class="pet-number">01</span><div><b>奶蛙 · 最初的勇气</b><p>主角负责普通射击或散射。增加的奶蛙伙伴各自定时发出红色追踪奶蛋，攻速和攻击力升级也对它们生效。</p></div></div><div class="pet-entry"><span class="pet-number">02</span><div><b>奶狗 · 扑咬搭档</b><p>召唤后冲向敌人、扑咬再返回。随击杀成长，也可通过专属卡增加数量和咬击伤害。</p></div></div><div class="pet-entry"><span class="pet-number">03</span><div><b>奶鼠 · 奶球法师</b><p>在身前搓出奶球，追踪射程内的敌人。随击杀成长，也可通过专属卡增加数量和奶球伤害。</p></div></div><a class="credit-link" href="./CREDITS.md" target="_blank" rel="noopener">模型来源与制作说明 ↗</a>','MEET YOUR LITTLE SQUAD');
-$('pause').onclick=()=>{if(scene.home||state.phase==='lost'||pendingCards)return;showModal('歇一口气，等你回来。','<p>画面、敌人和音乐都已暂停。返回主界面也会保存本次拾取的金币。</p><button class="start-button" id="resume">继续冒险 <span>↗</span></button><button class="text-button" id="exit-run">收好金币，返回主界面</button>','TAKE A LITTLE BREAK');$('resume').onclick=()=>$('modal').close();$('exit-run').onclick=()=>{$('modal').close();home();};};
+$('pause').onclick=()=>{if(!scene?.main||scene.home||state.phase==='lost'||pendingCards)return;showModal('歇一口气，等你回来。','<p>画面、敌人和音乐都已暂停。返回主界面也会保存本次拾取的金币。</p><button class="start-button" id="resume">继续冒险 <span>↗</span></button><button class="text-button" id="exit-run">收好金币，返回主界面</button>','TAKE A LITTLE BREAK');$('resume').onclick=()=>$('modal').close();$('exit-run').onclick=()=>{$('modal').close();home();};};
 $('sound').onclick=async()=>{
  const button=$('sound');button.disabled=true;
  try{
@@ -86,18 +101,37 @@ async function start(){
  catch(error){toast(error.message+'；请重试');return;}finally{button.disabled=false;button.innerHTML=label;}
  if($('modal').open)$('modal').close();pendingCards=null;eventChoice=null;fields=[];turrets=[];volleyCount=0;
  runRandom=coopSeed?seededRandom(coopSeed):playMode==='daily'?seededRandom('naiwa-daily-v22-'+dayKey()):Math.random;if(playMode==='daily')selectTheme(Object.keys(THEMES)[Math.floor(runRandom()*Object.keys(THEMES).length)]);
- courseRandom=playMode==='daily'||coopSeed?seededRandom((coopSeed||dayKey())+':course'):Math.random;modeRandom=playMode==='daily'||coopSeed?seededRandom((coopSeed||dayKey())+':modes'):Math.random;state=freshRun(theme,1,playMode==='daily'||party.playing?{}:saved.upgrades,pet);Object.assign(state,{mode:playMode,evolutions:[],events:0,seenEnemies:[],routeRisk:1,baseHealth:12,dailyKey:dayKey()});
+ const today=dayKey();
+ courseRandom=playMode==='daily'||coopSeed?seededRandom((coopSeed||today)+':course'):Math.random;modeRandom=playMode==='daily'||coopSeed?seededRandom((coopSeed||today)+':modes'):Math.random;state=freshRun(theme,1,playMode==='daily'||party.playing?{}:saved.upgrades,pet);Object.assign(state,{mode:playMode,evolutions:[],events:0,seenEnemies:[],routeRisk:1,baseHealth:12,dailyKey:today});
  course=expeditionCourse(0,courseRandom,theme,playMode);nextStage=1;pendingMajorReward=false;active=null;clearThreats();fireTimer=petTimer=dogTimer=bossTimer=0;companionReady=[];paused=false;displayedResult=settled=false;targetX=state.mode==='guard'?-1.8:0;state.x=targetX;pressed.clear();accumulator=0;scene.shots=[];scene.clearCoins();scene.setMode(false);scene.setWeapon('egg');if(party.host)for(const row of course)for(const e of row.enemies||[])e.hp=Math.min(MAX_STAT,e.hp*1.65);scene.createCourse(party.guest?[]:course);
  $('home').hidden=true;$('hud').hidden=false;$('result').hidden=true;$('pause').hidden=false;$('boss-hud').hidden=true;$('hint').style.opacity='1';document.body.classList.add('playing');sound.resume();lastTime=0;updateHUD();
  if(!saved.tutorialSeen&&!party.playing){showModal('第一段路，从这里开始。','<p>主角自动向前跑、发射奶蛋；增加的奶蛙伙伴会定时发出红色追踪奶蛋。<b>按住画面左右拖动</b>，电脑也可使用 <b>A / D 或方向键</b>。</p><p>选数字门提升数值，遇到卡牌再挑选伙伴。先试着移动到一侧，敌人会一直向你靠近。</p><button class="start-button" id="tutorial-go">准备好啦，出发 ↗</button>','YOUR FIRST LITTLE ADVENTURE');$('tutorial-go').onclick=()=>{saved.tutorialSeen=true;save();$('modal').close();};}else toast(({guard:'守住孵化器，坚持 180 秒',bossrush:'六场首领战，场间可选卡与补给',daily:'每日远征，今天从相同的起点出发'}[state.mode]||'初行路 · 260 米后进入无尽远征'));
 }
-function settle(){if(settled)return;settled=true;saved.coins+=reward(state);saved.best=Math.max(saved.best,state.count);saved.bestDistance=Math.max(saved.bestDistance,state.distance);recordRun(saved,state);save();}
+function settle(){
+ if(settled)return [];
+ settled=true;
+ saved.coins+=reward(state);
+ saved.best=Math.max(saved.best,state.count);
+ saved.bestDistance=Math.max(saved.bestDistance,state.distance);
+ const unlocked=recordRun(saved,state);
+ save();
+ return unlocked;
+}
 function home(){if(!scene.home)settle();if(party.playing)party.leave();pendingCards=null;$('result').hidden=true;$('hud').hidden=true;$('home').hidden=false;$('pause').hidden=true;document.body.classList.remove('playing');scene.setMode(true);scene.setWeapon('egg');scene.clearCoins();clearThreats();active=null;pressed.clear();state=freshRun(theme,1,saved.upgrades,saved.startingPet);sound.resume();}
 $('start').onclick=start;$('again').onclick=start;$('back-home').onclick=home;
 function hit(enemy,damage,owner=actor){if(owner===1&&actor!==1&&party.host)return withPartner(()=>hit(enemy,damage,1));if(enemy.dead||enemy.escaped)return;
  if(state.theme==='abyss'&&enemy.kind==='bubble'&&(enemy.shieldHits||0)<3){enemy.shieldHits=(enemy.shieldHits||0)+1;damage*=.45;scene.ring(enemy.group.position.x,enemy.group.getWorldPosition(new T.Vector3()).z,'#a8e4df',.6);}
  if(scene.hit(enemy,damage)){state.kills++;if(party.host){const other=actor===0?party.partner:party.main;other.kills++;killReward(other,enemy.type==='boss',modeActive(state,'demon')?2:1);if(enemy.type==='boss'){other.bosses++;other.phase=other.endless?'endless':'run';if(other.health===1)other.lastHeartBoss=true;}}const boss=enemy.type==='boss',multiplier=modeActive(state,'demon')?2:1,text=killReward(state,boss,multiplier),p=enemy.group.getWorldPosition(new T.Vector3());scene.dropCoins(p.x,p.z,Math.round(enemy.reward*multiplier));chargeMode(state,boss?15:2,modeRandom,!boss);scene.rewardText(p.x,p.z,text);if(boss){state.bosses++;if(state.health===1)state.lastHeartBoss=true;if(state.mode==='bossrush')state.rushAdvance=true;if(enemy.row.major)pendingMajorReward=true;if(state.phase==='boss'){state.phase=state.endless?'endless':'run';active=null;clearThreats();}toast('击败 Boss · '+text);sound.effect('boss');}else{sound.effect('kill');vibrate('kill');}}sound.effect('hit');}
-function targetEnemies(range=state.range){return scene.entities.filter(e=>!e.dead&&!e.escaped&&e.group.visible&&(()=>{const p=e.group.getWorldPosition(new T.Vector3());return p.z<playerZ+1&&p.z>=playerZ-range-3;})());}
+function targetEnemies(range=state.range,positions=null){
+ const point=new T.Vector3();
+ return scene.entities.filter(enemy=>{
+  if(enemy.dead||enemy.escaped||!enemy.group.visible)return false;
+  enemy.group.getWorldPosition(point);
+  if(point.z>=playerZ+1||point.z<playerZ-range-3)return false;
+  if(positions)positions.set(enemy,point.clone());
+  return true;
+ });
+}
 function volley(){
  const profile=attackProfile(state);volleyCount++;
  for(let i=0;i<profile.count;i++){
@@ -193,27 +227,28 @@ function updateThreats(dt){
  });
 }
 function end(){
- if(displayedResult)return;displayedResult=true;state.phase='lost';if(party.host)party.partner.phase='lost';settle();
+ if(displayedResult)return;displayedResult=true;state.phase='lost';if(party.host)party.partner.phase='lost';const unlocked=settle();
  $('result-kicker').textContent=state.victory?'A LITTLE HERO. A WELL-EARNED VICTORY.':'UNTIL THE NEXT ADVENTURE';
  $('result-title').textContent=state.victory?(state.mode==='guard'?'把快乐，守住了。':'六场风雨，一起走过。'):'这一刻，也很了不起。';
- const unlocked=MILESTONES.filter(m=>saved.journal?.milestones.includes(m.id)&&m.test(state));
- $('result-copy').textContent='前进 '+Math.floor(state.distance)+' 米，遇见 '+state.kills+' 位对手，探索 '+(state.events||0)+' 次岔路。'+(state.evolutions?.length?'进化：'+state.evolutions.map(id=>EVOLUTIONS.find(e=>e.id===id).title).join('、')+'。':'')+(unlocked.length?'旅途纪念：'+unlocked.map(m=>m.reward).join('、')+'。':'收好金币，下次再一起出发。');
+ $('result-copy').textContent='前进 '+Math.floor(state.distance)+' 米，遇见 '+state.kills+' 位对手，探索 '+(state.events||0)+' 次岔路。'+(state.evolutions?.length?'进化：'+state.evolutions.map(id=>EVOLUTIONS.find(e=>e.id===id).title).join('、')+'。':'')+(unlocked.length?'新获得的旅途纪念：'+unlocked.map(m=>m.reward).join('、')+'。':'收好金币，下次再一起出发。');
  $('result-crowd').textContent=Math.floor(state.distance);$('result-walls').textContent=state.cards;$('result-coins').textContent=reward(state);$('again').innerHTML='再走一程 <span>↗</span>';$('result').hidden=false;$('pause').hidden=true;$('again').onclick=party.playing?()=>{party.leave();home();party.open();}:start;if(party.playing)$('again').innerHTML='重新组队 ↗';sound.effect(state.victory?'win':'hurt');
 }
 function explode(b){if(b.owner===1&&actor!==1&&party.host)return withPartner(()=>explode(b));const radius=(b.kind==='pumpkin'?4:3)*(b.size||1)*(b.evolution==='meteor'?1.35:1);scene.burst(b.x,.7,b.z,b.kind==='pumpkin'?'#ec965d':'#ffe8a1',22);scene.ring(b.x,b.z,b.kind==='pumpkin'?'#b891ef':'#f2c566',radius);for(const e of scene.entities){if(e.dead||e.escaped)continue;const p=e.group.getWorldPosition(new T.Vector3());if(Math.hypot(p.x-b.x,p.z-b.z)<radius+e.radius)hit(e,b.damage);}if(b.evolution==='meteor'&&fields.filter(f=>f.kind==='echo').length<8)fields.push({kind:'echo',x:b.x,z:b.z,damage:b.damage*.35,radius,age:0,tick:.3,life:.35,atDistance:state.distance,owner:b.owner||0});if(b.evolution==='ghostfire'&&fields.filter(f=>f.kind==='fire').length<4)fields.push({kind:'fire',x:b.x,z:b.z,damage:b.damage*.18,radius,age:0,tick:.45,life:2,atDistance:state.distance,owner:b.owner||0});}
 function updateFields(dt){fields=fields.filter(f=>{f.age+=dt;f.z+=state.distance-(f.atDistance??state.distance);f.atDistance=state.distance;f.tick-=dt;if(f.tick<=0){f.tick+=.5;scene.ring(f.x,f.z,f.kind==='fire'?'#bca4e1':'#f0cc9a',f.radius);for(const e of targetEnemies()){const p=e.group.getWorldPosition(new T.Vector3());if(Math.hypot(p.x-f.x,p.z-f.z)<f.radius+e.radius)hit(e,f.damage,f.owner||0);}}return f.age<f.life;});turrets=turrets.filter(t=>{t.life-=dt;t.z+=state.distance-t.atDistance;t.atDistance=state.distance;t.tick-=dt;if(t.tick<=0){t.tick+=.7;const e=targetEnemies().find(e=>e.group.getWorldPosition(new T.Vector3()).z<t.z);if(e){const b=scene.shoot(t.x,t.z,t.damage,true,e,'companion',22);if(b)b.owner=t.owner||0;}scene.ring(t.x,t.z,'#8edcdb',.35);}return t.life>0&&t.z<10;});}
 function updateShots(dt){
- const targets=targetEnemies(party.host?Math.max(state.range,party.partner.range):state.range),positions=new Map(targets.map(enemy=>[enemy,enemy.group.getWorldPosition(new T.Vector3())])),splits=[];
+ if(!scene.shots.length)return;
+ const positions=new Map(),splits=[];
+ const targets=targetEnemies(party.host?Math.max(state.range,party.partner.range):state.range,positions);
  scene.shots=scene.shots.filter(b=>{
   b.life+=dt;const previousX=b.x,previousZ=b.z;
   let vx=Math.sin(b.angle||0)*27,vz=-Math.cos(b.angle||0)*27;
   if(b.pet&&(!b.target||b.target.dead||b.target.escaped||!positions.has(b.target)))b.target=targets.find(e=>{const p=positions.get(e);return !e.dead&&!e.escaped&&Math.hypot(p.x-b.x,p.z-b.z)<=(b.range??22)-(b.travel??0);});
   if(b.pet&&b.target&&!b.target.dead&&!b.target.escaped){const p=positions.get(b.target),dx=p.x-b.x,dz=p.z-b.z,len=Math.hypot(dx,dz)||1;vx=dx/len*25;vz=dz/len*25;b.angle=Math.atan2(vx,-vz);}
-  const remaining=(b.range??22)-(b.travel??0),length=Math.min(Math.hypot(vx,vz)*dt,remaining),factor=length/(Math.hypot(vx,vz)||1);b.previousZ=b.z;b.x+=vx*factor;b.z+=vz*factor;b.travel=(b.travel??0)+length;
+  const speed=Math.hypot(vx,vz),remaining=(b.range??22)-(b.travel??0),length=Math.min(speed*dt,remaining),factor=length/(speed||1);b.previousZ=b.z;b.x+=vx*factor;b.z+=vz*factor;b.travel=(b.travel??0)+length;
   let nearest=null,impact=Infinity;
   for(const enemy of targets){
    if(enemy.dead||enemy.escaped||b.splitHits?.includes(enemy))continue;const p=positions.get(enemy),radius=enemy.radius+(b.radius??.14),ax=previousX-(enemy.previousX??p.x),az=previousZ-(enemy.previousZ??p.z),bx=b.x-p.x,bz=b.z-p.z;
-   if(Math.min(ax,bx)>radius||Math.max(ax,bx)<-radius||Math.min(az,bz)>radius||Math.max(az,bz)<-radius)continue;
+   if((ax>radius&&bx>radius)||(ax<-radius&&bx<-radius)||(az>radius&&bz>radius)||(az<-radius&&bz<-radius))continue;
    const t=sweepHit(ax,az,bx,bz,radius);if(t!==null&&t<impact){impact=t;nearest=enemy;}
   }
   if(nearest){
@@ -240,6 +275,7 @@ function update(dt){
  if(state.theme==='abyss'&&state.phase!=='boss')state.x=clamp(state.x+Math.sin(state.elapsed*.7)*dt*.28,-3.8,3.8);
  if(state.theme==='lantern'&&scene.scene.fog)scene.scene.fog.near=state.lightUntil>state.elapsed?48:26;
  if(state.mode==='guard'&&state.elapsed>=180){state.victory=true;end();return;}
+ const enemyPoint=new T.Vector3();
  if(state.mode==='bossrush'&&state.bosses>=6){state.victory=true;end();return;}
  if(state.rushAdvance){state.rushAdvance=false;state.distance=(Math.floor(state.distance/STAGE_LENGTH)+1)*STAGE_LENGTH;}
  for(const e of scene.entities){const p=e.group.getWorldPosition(new T.Vector3());e.previousX=p.x;e.previousZ=p.z;}
@@ -252,8 +288,9 @@ function update(dt){
   else if(row.type==='event'&&crossed(old,state.distance,row.at)){row.used=true;chooseEvent(row);break;}}
  for(const e of scene.entities){if(e.kind&&!(state.seenEnemies||=[]).includes(e.kind))state.seenEnemies.push(e.kind);}
  // Every live monster advances at a constant velocity; contact never cancels it.
- for(const e of scene.entities)if(!e.dead&&!e.escaped&&!e.engaged&&(e.activated||e.row.at-state.distance<75)){e.activated=true;if(state.mode==='guard')e.group.position.x*=Math.exp(-dt*.12);if(!(e.staggerUntil>state.elapsed))e.offset+=dt*(e.advanceSpeed||1.1)*runMultiplier(state);}
- scene.positionRows(state.distance);scene.entities.forEach(e=>e.group.position.z=e.offset);scene.scene.updateMatrixWorld(true);
+ const movementScale=runMultiplier(state);
+ for(const e of scene.entities)if(!e.dead&&!e.escaped&&!e.engaged&&(e.activated||e.row.at-state.distance<75)){e.activated=true;if(state.mode==='guard')e.group.position.x*=Math.exp(-dt*.12);if(!(e.staggerUntil>state.elapsed))e.offset+=dt*(e.advanceSpeed||1.1)*movementScale;}
+ scene.positionRows(state.distance);scene.entities.forEach(e=>e.group.position.z=e.offset);
  if(paused)return;
  const encounter=scene.entities.find(e=>!e.dead&&!e.escaped&&e.type==='boss'&&e.group.getWorldPosition(new T.Vector3()).z>=playerZ-Math.min(18,state.range-2));
  if(encounter&&state.phase!=='boss'){state.phase='boss';active=encounter.row;encounter.engaged=true;bossTimer=1.3;toast('Boss 战 · 停步攻击，左右闪避攻击');}
@@ -269,8 +306,15 @@ function update(dt){
   dogBites=dogBites.filter(b=>{b.age+=dt;if(b.age<.28)return true;if(!b.enemy.dead&&!b.enemy.escaped){const p=b.enemy.group.getWorldPosition(new T.Vector3());if(p.z>=playerZ-state.range&&p.z<playerZ+1){const combo=b.enemy.markUntil>state.elapsed;hit(b.enemy,b.damage*(combo?1.5:1),b.owner||0);b.enemy.staggerUntil=state.elapsed+(b.enemy.type==='boss'?.2:.8);if(combo){b.enemy.markUntil=0;scene.ring(p.x,p.z,'#dbb7e9',.8);}}}return false;});
  updateShots(dt);
  updateFields(dt);
- const bosses=targetEnemies().filter(e=>e.type==='boss');active=bosses[0]?.row||null;bossTimer-=dt;if(bosses.length&&bossTimer<=0){bossTimer=bossAttack(bosses[0]);}
- for(const e of scene.entities){if(e.dead||e.escaped)continue;const p=e.group.getWorldPosition(new T.Vector3());const contact=sweepHit((e.previousX??p.x)-state.x,(e.previousZ??p.z)-playerZ,p.x-state.x,p.z-playerZ,e.radius+.35);if(contact!==null&&Math.abs(p.x-state.x)<e.radius+.4)takeHit(e.type==='boss'?2:1);if(party.host&&party.partner.health>0){const p1=party.partner;if(sweepHit((e.previousX??p.x)-p1.x,(e.previousZ??p.z)-playerZ,p.x-p1.x,p.z-playerZ,e.radius+.35)!==null)withPartner(()=>takeHit(e.type==='boss'?2:1));}if(p.z>playerZ+5){e.escaped=true;e.group.visible=false;if(state.mode==='guard')state.baseHealth=Math.max(0,state.baseHealth-(e.type==='boss'?3:1));}}
+ const boss=scene.entities.find(enemy=>{
+  if(enemy.type!=='boss'||enemy.dead||enemy.escaped||!enemy.group.visible)return false;
+  const point=enemy.group.getWorldPosition(enemyPoint);
+  return point.z<playerZ+1&&point.z>=playerZ-state.range-3;
+ });
+ active=boss?.row||null;
+ bossTimer-=dt;
+ if(boss&&bossTimer<=0)bossTimer=bossAttack(boss);
+ for(const e of scene.entities){if(e.dead||e.escaped)continue;const p=e.group.getWorldPosition(enemyPoint);const contact=sweepHit((e.previousX??p.x)-state.x,(e.previousZ??p.z)-playerZ,p.x-state.x,p.z-playerZ,e.radius+.35);if(contact!==null&&Math.abs(p.x-state.x)<e.radius+.4)takeHit(e.type==='boss'?2:1);if(party.host&&party.partner.health>0){const p1=party.partner;if(sweepHit((e.previousX??p.x)-p1.x,(e.previousZ??p.z)-playerZ,p.x-p1.x,p.z-playerZ,e.radius+.35)!==null)withPartner(()=>takeHit(e.type==='boss'?2:1));}if(p.z>playerZ+5){e.escaped=true;e.group.visible=false;if(state.mode==='guard')state.baseHealth=Math.max(0,state.baseHealth-(e.type==='boss'?3:1));}}
  updateThreats(dt);
  const collected=scene.collectCoins(state.x,state.distance,dt);const shared=collected+(party.host?scene.collectCoins(party.partner.x,state.distance,dt):0);state.coins+=shared*state.coinBonus;if(party.host)party.partner.coins+=shared*party.partner.coinBonus;
  const healed=state.health>0?scene.collectPotions(state.x,state.distance,dt,state.health,state.maxHealth):0;if(healed){state.health=Math.min(state.maxHealth,state.health+healed);toast('拾取血瓶 · 生命 +'+healed);sound.effect('gate');}if(party.host&&party.partner.health>0)withPartner(()=>{state.health=Math.min(state.maxHealth,state.health+scene.collectPotions(state.x,state.distance,dt,state.health,state.maxHealth));});
@@ -290,7 +334,7 @@ function updateHUD(){
  const boss=targetEnemies().find(e=>e.type==='boss');$('boss-hud').hidden=!boss;$('next-gate').hidden=!!boss;if(boss){$('boss-name').textContent=(boss.boss||(boss.row.major?bossFor(theme,Math.floor(((boss.row.stage||0)+1)/3)):eliteFor(theme))).name;$('boss-value').textContent=formatStat(Math.ceil(boss.hp))+' / '+formatStat(Math.ceil(boss.maxHp));$('boss-fill').style.width=Math.max(0,boss.hp/boss.maxHp*100)+'%';}
  const next=course.find(r=>!r.used&&r.type==='gate'&&r.at>state.distance);$('next-gate').textContent=next&&next.at-state.distance<50?'下一道门：'+next.options.map(g=>gateText(g).label+' '+gateText(g).value).join('  /  '):'卡牌塑造你的队伍 · 侧移避开敌人';
 }
-function frame(now){requestAnimationFrame(frame);if(!scene?.main)return;const delta=lastTime?Math.min(.1,(now-lastTime)/1000):0;lastTime=now;party.tick(delta,targetX);if(party.guest&&!paused&&!document.hidden){const axis=(pressed.has('ArrowRight')||pressed.has('d')?1:0)-(pressed.has('ArrowLeft')||pressed.has('a')?1:0);targetX=clamp(targetX+axis*delta*7*state.speed,-3.8,3.8);}if(!paused&&!document.hidden){accumulator+=delta;while(accumulator>=step){accumulator-=step;update(step);if(paused){accumulator=0;break;}}scene.update(state,state.phase==='lost'?0:delta,now/1000);}else scene.renderer.render(scene.scene,scene.camera);if(!scene.home&&now-lastHUD>=100){updateHUD();lastHUD=now;}}
+function frame(now){requestAnimationFrame(frame);if(!scene?.main)return;if(document.hidden&&!party.playing){lastTime=0;return;}const delta=lastTime?Math.min(.1,(now-lastTime)/1000):0;lastTime=now;party.tick(delta,targetX);if(party.guest&&!paused&&!document.hidden){const axis=(pressed.has('ArrowRight')||pressed.has('d')?1:0)-(pressed.has('ArrowLeft')||pressed.has('a')?1:0);targetX=clamp(targetX+axis*delta*7*state.speed,-3.8,3.8);}if(!paused&&!document.hidden){accumulator+=delta;while(accumulator>=step){accumulator-=step;update(step);if(paused){accumulator=0;break;}}scene.update(state,state.phase==='lost'?0:delta,now/1000);}else scene.renderer.render(scene.scene,scene.camera);if(!scene.home&&now-lastHUD>=100){updateHUD();lastHUD=now;}}
 const canvas=$('world');
 canvas.addEventListener('pointerdown',e=>{if(scene?.home||paused||displayedResult||pointer!==null)return;pointer=e.pointerId;dragOrigin=e.clientX;dragStart=targetX;canvas.setPointerCapture(e.pointerId);$('hint').style.opacity='0';});
 canvas.addEventListener('pointermove',e=>{if(pointer!==e.pointerId||paused)return;targetX=clamp(dragStart+(e.clientX-dragOrigin)/Math.min(innerWidth,650)*10*state.speed,-3.8,3.8);});

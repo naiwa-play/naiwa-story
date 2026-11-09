@@ -8,11 +8,17 @@ import {CooperativeSession} from '../party.js';
 import {ExpeditionScene} from '../scene.js';
 const elements=new Map();
 const windowEvents=new Map();
-function element(id){if(!elements.has(id))elements.set(id,{style:{setProperty(){}},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(){},setAttribute(){},append(){},close(){},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
-const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(name,handler){windowEvents.set(name,handler);}},localStorage:{getItem(){return null;}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
+const modalEvents=new Map();
+function element(id){if(!elements.has(id))elements.set(id,{style:{setProperty(){}},dataset:{},classList:{add(){},remove(){},toggle(){}},addEventListener(name,handler){if(id==='modal')modalEvents.set(name,handler);},setAttribute(){},append(){},close(){},showModal(){},getBoundingClientRect(){return {left:0,right:100,top:0,bottom:100};}});return elements.get(id);}
+const oldSave={stars:17,upgrades:{heart:'2',naigou:1},startingPet:'naigou',journal:{milestones:['guardian',false],daily:{'2026-11-08':900,'2026-11-09':'invalid'}}};
+const context=vm.createContext({...core,...expansion,CooperativeSession,rollCards:(s,random,major)=>core.rollCards(s,()=>.43,major),T,ExpeditionScene,Soundtrack:class{effect(){}pause(){}resume(){}},document:{getElementById:element,querySelectorAll:()=>[],addEventListener(){},body:{classList:{add(){},remove(){}}}},window:{addEventListener(name,handler){windowEvents.set(name,handler);}},localStorage:{getItem(){return JSON.stringify(oldSave);}},location:{hostname:'test'},innerWidth:1280,setTimeout(){},clearTimeout(){},console,requestAnimationFrame(){}});
 const source=fs.readFileSync(new URL('../game.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace(/boot\(\);\s*$/,'');
 vm.runInContext(source+'\nglobalThis.testGame={updateShots,update,volley,burst,hit,bossAttack,updateThreats,getThreats:()=>activeThreats,updateModeHUD,companionAttack,petAttack,dogAttack,threats(t){activeThreats=t;},set(s,v,a=null){state=s;scene=v;active=a;course=[];paused=false;pendingCards=null;nextStage=1;fireTimer=dogTimer=petTimer=0;dogBites=[];activeThreats=[];companionReady=[];pendingMajorReward=false;},course(rows){course=rows;scene.createCourse(rows);},choose(){if(pendingCards){const ids=["dog","mouse","company","damage","rate","scatter","range"],card=ids.map(id=>pendingCards.find(c=>c.id===id)).find(Boolean)||pendingCards[0];chooseCard(state,card.id);pendingCards=null;paused=false;}},getState:()=>state};',context);
 const game=context.testGame;
+assert.equal(vm.runInContext('saved.coins',context),17,'Legacy stars should carry forward as coins');
+assert.equal(vm.runInContext('saved.startingPet',context),'naigou','Keep the purchased starting pet');
+assert.equal(vm.runInContext('saved.upgrades.heart',context),2,'Restore purchased upgrades');
+assert.equal(vm.runInContext('JSON.stringify(saved.journal)',context),JSON.stringify({daily:{'2026-11-08':900},enemies:[],evolutions:[],milestones:['guardian'],themes:[]}));
 vm.runInContext('globalThis.testGame.getParty=()=>party;globalThis.testGame.partnerCombat=partnerCombat;globalThis.testGame.resolveEvent=()=>{if(eventChoice){applyEvent(state,eventChoice.choices[1]);eventChoice=null;paused=false;}};',context);
 function fixture(at=20){const row={at,type:'fight',group:new T.Group(),used:false},group=new T.Group();row.group.add(group);const scene={home:false,rows:[row],entities:[],shots:[],scene:new T.Scene(),positionRows:ExpeditionScene.prototype.positionRows,shoot(){},beam(){},dropCoins(){},dropPotion(){},rewardText(){},collectCoins(){return 0;},collectPotions(){return 0;},pruneCourse(){},hurt(){},burst(){},ring(){},hit(e,d){e.hp-=d;if(e.hp<=0)e.dead=true;return e.dead;}};scene.scene.add(row.group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.positionRows(0);scene.scene.updateMatrixWorld(true);return {scene,enemy,row};}
 function extraEnemy(scene,row,x=2,z=0){const group=new T.Group();group.position.set(x,0,z);row.group.add(group);const enemy={row,group,type:'fight',hp:10,maxHp:10,radius:.8,offset:0,contact:0,reward:1,dead:false};scene.entities.push(enemy);scene.scene.updateMatrixWorld(true);return enemy;}
@@ -127,3 +133,24 @@ console.log('PASS: independent cooperative projectile ranges.');
  element('modal').open=false;
 }
 console.log('PASS: physical movement keys, IME input, language changes, legacy keys and dialog input.');
+{
+ const modal=element('modal');
+ modal.open=true;
+ vm.runInContext('paused=true',context);
+ modalEvents.get('close')();
+ assert.equal(vm.runInContext('paused',context),true,'Closing the previous choice must not resume the game when its successor is open');
+ modal.open=false;
+ modalEvents.get('close')();
+ assert.equal(vm.runInContext('paused',context),false);
+}
+{
+ vm.runInContext('delete saved.journal',context);
+ for(let run=0;run<2;run++){
+  const s=core.freshRun();
+  s.bosses=1;
+  game.challenge(s,fixture().scene);
+  vm.runInContext('end()',context);
+  assert.equal(element('result-copy').textContent.includes('晨光奶蛋'),run===0,'A milestone should appear on the results only when newly earned');
+ }
+}
+console.log('PASS: chained modal pauses, older save compatibility and first-time milestone rewards.');
