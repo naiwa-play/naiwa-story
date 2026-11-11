@@ -112,3 +112,22 @@ assert(halloweenGame.$('ending').className.includes('theme-hall-lantern'));asser
 halloweenGame.$('next').onclick();assert(halloweenGame.$('reader').hidden);assert.equal(halloweenGame.$('bgm').src,'assets/calm.ogg');
 halloweenGame.$('halloween-motion').onclick();assert.equal(halloweenGame.$('halloween-motion')['aria-pressed'],'true');
 console.log('PASS: Halloween featured entry, early branch, manual save, route tree, ending/reward, animation pause and music restoration.');
+
+const winterGame = setup(async()=>[]);
+await vm.runInContext('bootPromise', winterGame.context);
+winterGame.$('winter-start').onclick();
+assert.equal(vm.runInContext('state.node', winterGame.context), 'winter_gate_0');
+assert(winterGame.$('portrait-wrap').hidden);
+for(let i=0; i<79; i++){
+ const choices=winterGame.$('choices').children;
+ if(choices.length) choices[0].onclick();
+ else winterGame.$('next').onclick();
+ if(i===7)assert(!winterGame.$('portrait-wrap').hidden);
+}
+assert(winterGame.$('winter-finale').open);
+assert.equal(winterGame.$('winter-finale-title').textContent, story.endings.winter_window.title);
+assert(winterGame.saved.get('naiwa-letter-endings-v1').includes('winter_window'));
+winterGame.$('winter-finale-return').onclick();
+assert(!winterGame.$('winter-finale').open);
+assert(winterGame.$('reader').hidden);
+console.log('PASS: Winter entry, full playthrough, fullscreen ending, autosave and map return.');

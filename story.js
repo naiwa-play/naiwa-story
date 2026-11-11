@@ -1,3 +1,4 @@
+import {addWinter} from './winter.js?v=1';
 import {addHalloween} from './halloween.js?v=1';
 import {addUrban} from './urban.js?v=14';
 import {addTravel} from './travels.js?v=14';
@@ -53,6 +54,7 @@ rebuildMain(story,endings,chapters,secrets);
 addTravel(story,endings,chapters,scenes,secrets);
 addUrban(story,endings,chapters,scenes,secrets);
 addHalloween(story,endings,chapters,scenes,secrets);
+addWinter(story,endings,chapters,scenes);
 completePortraits(story);
 export const fresh=(chapter='prologue')=>({version:1,node:chapters[chapter]?.entry||'arrival',history:[]});
 export function validSave(s){return !!s&&s.version===1&&Object.hasOwn(story,s.node)&&Array.isArray(s.history)&&s.history.length<=200&&s.history.every(id=>typeof id==='string'&&Object.hasOwn(story,id));}

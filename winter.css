@@ -1,0 +1,205 @@
+.winter-showcase,
+.winter-finale {
+  --winter-ink: #f4f1e7;
+  --winter-paper: #d9e2e8;
+  --winter-night: #1c2a3d;
+  --winter-lamp: #e6d3aa;
+  color: var(--winter-ink);
+  background: var(--winter-night);
+  isolation: isolate;
+}
+
+.winter-showcase {
+  position: relative;
+  display: grid;
+  align-items: end;
+  min-height: clamp(440px, 48vw, 570px);
+  margin-block: 32px;
+  padding: 70px clamp(26px, 6vw, 72px) clamp(30px, 6vw, 64px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.winter-art, .winter-wash, .winter-snow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.winter-art {
+  background: #26394e url('assets/winter/street.svg') 67% center / cover no-repeat;
+  z-index: -3;
+}
+
+.winter-wash {
+  background: linear-gradient(90deg, #142133f7, #19283ad9 29%, #19283a24 75%),
+              linear-gradient(0deg, #172538c9, transparent 48%);
+  z-index: -1;
+}
+
+.winter-snow { overflow: hidden; z-index: -2; }
+
+.winter-snow::before, .winter-snow::after {
+  content: '';
+  position: absolute;
+  inset: -360px -40px 0;
+  background-image:
+    radial-gradient(circle at 17% 24%, #e5eff5b8 0 1.2px, transparent 2.2px),
+    radial-gradient(circle at 35% 77%, #ebf5ff9e 0 1px, transparent 2px),
+    radial-gradient(circle at 58% 35%, #d8eaf286 0 1.4px, transparent 2.5px),
+    radial-gradient(circle at 87% 91%, #f1f7fb9f 0 1.2px, transparent 2.1px),
+    radial-gradient(circle at 93% 49%, #eff7fa87 0 1px, transparent 2px),
+    radial-gradient(circle at 8% 68%, #eff6f687 0 1px, transparent 1.8px);
+  background-size: 278px 330px;
+  transform: skewX(5deg);
+  animation: winter-fall 18s linear infinite;
+}
+
+.winter-snow::after {
+  opacity: .62;
+  background-image:
+    radial-gradient(circle at 27% 62%, #f3f5f9c5 0 2.2px, transparent 4px),
+    radial-gradient(circle at 61% 30%, #e7f2fad0 0 1.6px, transparent 3px),
+    radial-gradient(circle at 90% 83%, #f6f7ecc5 0 2px, transparent 3.5px);
+  background-size: 397px 330px;
+  animation-duration: 12s;
+  animation-delay: -7s;
+}
+
+@keyframes winter-fall { to { transform: skewX(5deg) translateY(330px); } }
+
+.winter-copy { max-width: 31rem; }
+.winter-copy h2, .winter-finale h2 {
+  margin: 0;
+  color: var(--winter-ink);
+  font: 500 clamp(2.7rem, 6.5vw, 5.5rem)/1.12 "Songti SC", "Noto Serif SC", "SimSun", serif;
+  letter-spacing: .1em;
+  text-wrap: balance;
+}
+
+.winter-copy p, .winter-finale p {
+  color: var(--winter-paper);
+  font-size: clamp(.95rem, 1.4vw, 1.12rem);
+  line-height: 1.85;
+  margin: 18px 0 24px;
+  max-width: 28em;
+}
+
+.winter-showcase .card-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.winter-showcase button, .winter-finale button {
+  min-height: 44px;
+  color: var(--winter-ink);
+  background: #1d2b3ee8;
+  border: 1px solid #91a4b4;
+}
+
+.winter-showcase .winter-primary, .winter-finale .winter-primary {
+  background: var(--winter-lamp);
+  color: #253140;
+  border-color: var(--winter-lamp);
+  font-weight: 600;
+}
+.winter-showcase button:hover, .winter-finale button:hover { border-color: #fff5df; }
+.winter-showcase button:focus-visible, .winter-finale button:focus-visible {
+  outline: 2px solid #fff5df;
+  outline-offset: 4px;
+}
+.winter-showcase .showcase-motion, .winter-finale .showcase-motion {
+  top: max(17px, env(safe-area-inset-top));
+  right: max(17px, env(safe-area-inset-right));
+  font-size: .8rem;
+  padding-inline: 13px;
+}
+.winter-showcase.motion-paused .winter-snow::before,
+.winter-showcase.motion-paused .winter-snow::after,
+.winter-finale.motion-paused .winter-snow::before,
+.winter-finale.motion-paused .winter-snow::after,
+.winter-finale.motion-paused .winter-finale-light {
+  animation-play-state: paused;
+}
+
+.stage[class*="winter-"] { background: #273a4f; color: #e8eef4; }
+.stage[class*="winter-"] .scenery { background: var(--winter-scene) 65% center / cover no-repeat; }
+.stage[class*="winter-"] .scenery > :not(.winter-snow) { display: none; }
+.stage .winter-snow { display: none; }
+.stage[class*="winter-"]:not(.winter-shop) .winter-snow { display: block; z-index: auto; }
+.winter-gate, .winter-corner, .winter-return, .winter-letter { --winter-scene: url('assets/winter/street.svg'); }
+.winter-shop { --winter-scene: url('assets/winter/shop.svg'); }
+.winter-stop { --winter-scene: url('assets/winter/stop.svg'); }
+.winter-river { --winter-scene: url('assets/winter/river.svg'); }
+.stage[class*="winter-"] .scene-meta { background: #1b2b3ce8; color: #edf2f4; }
+.stage[class*="winter-"] .dialogue { margin-top: 310px; background: #233447; border-color: #7890a4; }
+.stage[class*="winter-"] :is(#speaker, #page-count, #line) { color: #f0f3f4; }
+.stage[class*="winter-"] :is(.choices button, .next) {
+  background: #344b62;
+  border-color: #849daf;
+  color: #f1f4f4;
+}
+.stage[class*="winter-"] .choices button:hover { background: #425d76; }
+.stage[class*="winter-"] #ending { background: #1d3045; color: #f7ecd6; border-color: #879eae; }
+.stage[class*="winter-"] #ending-note { color: #e1e9ed; }
+
+.winter-finale {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  overflow: auto;
+}
+.winter-finale::backdrop { background: #1c2a3d; }
+.winter-finale[open] { display: grid; align-items: end; }
+.winter-finale .winter-wash {
+  background: linear-gradient(90deg, #172437e8, #1a283942 73%),
+              linear-gradient(0deg, #162336f7, #16233600 62%);
+}
+.winter-finale-light {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 69% 55%, #dbc29626, transparent 26%);
+  animation: winter-lamp-reveal 4s ease-out both;
+}
+@keyframes winter-lamp-reveal { from { opacity: 0; } to { opacity: 1; } }
+
+.winter-finale-copy {
+  padding: 90px clamp(26px, 8vw, 120px) max(clamp(38px, 9vh, 108px), env(safe-area-inset-bottom));
+  animation: winter-caption-in .85s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes winter-caption-in {
+  from { opacity: .5; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.winter-finale-frog {
+  position: absolute;
+  pointer-events: none;
+  right: 17%;
+  bottom: 18%;
+  width: clamp(104px, 16vw, 222px);
+  height: auto;
+  max-height: 41vh;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 14px #1220309c);
+}
+body:has(.winter-finale[open]) { overflow: hidden; }
+
+@media (max-width: 600px) {
+  .winter-showcase { min-height: 510px; }
+  .stage[class*="winter-"] .dialogue { margin-top: 250px; }
+  .winter-wash { background: linear-gradient(0deg, #142133f7 5%, #172639d9 36%, #17263900 80%); }
+  .winter-finale-frog { right: 12%; bottom: 42%; max-height: 27vh; }
+  .winter-finale .winter-wash { background: linear-gradient(0deg, #162336f7 6%, #162336cf 35%, #16233600 76%); }
+  .winter-finale h2 { font-size: clamp(2.25rem, 10vw, 3.3rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .winter-snow::before, .winter-snow::after,
+  .winter-finale-light, .winter-finale-copy { animation: none; }
+  .winter-showcase .showcase-motion, .winter-finale .showcase-motion { display: none; }
+}

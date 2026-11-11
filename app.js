@@ -1,6 +1,6 @@
 import {relics,collectedRelics,rewardFor} from './relics.js?v=15';
 import {portraits,portraitFor,endingMood} from './portraits.js?v=14';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=15';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=16';
 import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=14';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
@@ -85,11 +85,11 @@ function prepareNext(id){
 }
 function render(){
  selectMusic(story[state.node].chapter);stopCelebration();
- const n=story[state.node],chapter=chapters[n.chapter],p=portraitFor(state.node);
+ const n=story[state.node],chapter=chapters[n.chapter],p=n.hidePortrait?null:portraitFor(state.node);
  $('stage').className='stage '+n.scene+(n.chapter==='nightmares'?' nightmare-stage':'')+(p&&!textOnly?'':' no-portrait');
  $('dream-return').hidden=n.chapter!=='nightmares';
  $('chapter-title').textContent=chapter.title;$('chapter-tag').textContent=chapter.tag;$('scene-name').textContent=scenes[n.scene];$('scene-chapter').textContent=chapter.tag;
- if(textOnly)paintPortrait(null);else requestPortrait(p);
+ if(textOnly||!p){paintPortrait(null);$('portrait-status').textContent='';$('retry-portrait').hidden=true;}else requestPortrait(p);
  prepareNext(state.node);
  $('speaker').textContent=n.speaker;$('line').textContent=n.text;$('page-count').textContent='第 '+(state.history.length+1)+' 幕';$('choices').replaceChildren();
  voice.pause();voice.onended=null;const clip=media.voices[state.node];bgm.volume=.18;
@@ -100,12 +100,28 @@ function render(){
  $('ending').className='';if(n.ending){void $('ending').offsetWidth;const mood=endingMood(n.ending,endings[n.ending]);$('ending').className='ending-reveal '+mood.tone+' theme-'+mood.theme;const mini=$('ending-frog');mini.hidden=textOnly||!imageCache.has(mood.portrait.src);mini.src=mood.portrait.src;mini.alt='奶蛙 · '+mood.portrait.label;mini.className=mood.portrait.frame;}
  if(n.ending){const gift=rewardFor(n.ending);$('reward').hidden=!gift;if(gift)$('reward').textContent=(unlocked.includes(n.ending)?'已珍藏 · ':'获得回忆物品 · ')+gift.name+' — '+gift.text;stopAuto();$('ending-title').textContent=endings[n.ending].title;$('ending-note').textContent=endings[n.ending].note;if(!unlocked.includes(n.ending)){unlocked.push(n.ending);write(ENDS,unlocked);}album();}
  if(n.ending&&!textOnly){const at=state.node,mood=endingMood(n.ending,endings[n.ending]);loadImage(mood.portrait.src).then(()=>{if(playing&&state.node===at&&!textOnly)$('ending-frog').hidden=false;}).catch(()=>{});}
- if(n.ending)celebrate(endings[n.ending]);
+ if(n.ending){
+  const ending=endings[n.ending];
+  if(ending.winterFinale)showWinterFinale(ending);
+  else celebrate(ending);
+ }
  $('rewind').hidden=!state.history.some(id=>story[id].choices);
  paths[state.node]=state;write(PATHS,paths);write(AUTO,state);$('load').disabled=!validSave(read(KEY));updateDlc();schedule();
 }
 function enter(s){if(!ready||!validSave(s))return;if(story[s.node].chapter==='nightmares'&&story[state.node].chapter!=='nightmares'){if(!dlcOpen()){notify('请先推进主线至岛城地下检修门，解锁惊悚故事集。');return;}if(!write(WAKE,state))return;}stopAuto();state=s;lastPortrait=null;playing=true;$('home').hidden=true;$('reader').hidden=false;$('back-home').hidden=false;render();window.scrollTo({top:0,behavior:'instant'});}
-function home(){selectMusic('daily');stopCelebration();playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title+(story[state.node].legacy?'（旧版存档）':'');album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
+function showWinterFinale(ending){
+ const finale=$('winter-finale'), frog=$('winter-finale-frog');
+ $('winter-finale-title').textContent=ending.title;
+ $('winter-finale-note').textContent=ending.note;
+ if(!textOnly)frog.src=portraits.glance.src;
+ frog.hidden=textOnly;
+ if(!finale.open)finale.showModal();
+}
+function showHomeFromLoading(){
+ home();
+ if(window.location?.hash==='#winter-showcase')$('winter-showcase').scrollIntoView();
+}
+function home(){if($('winter-finale').open)$('winter-finale').close();selectMusic('daily');stopCelebration();playing=false;stopAuto();voice.pause();bgm.volume=.18;$('home').hidden=false;$('reader').hidden=true;$('back-home').hidden=true;$('resume').hidden=!validSave(read(AUTO));$('resume').textContent='继续旅程 · '+chapters[story[state.node].chapter].title+(story[state.node].legacy?'（旧版存档）':'');album();updateDlc();window.scrollTo({top:0,behavior:'instant'});}
 function go(choice){if(!playing)return;if(story[state.node].ending){if(story[state.node].chapter==='prologue')enter(fresh('adventure'));else home();return;}state=advance(state,choice);render();}
 function modal(title){stopAuto();$('modal-title').textContent=title;$('modal-body').replaceChildren();$('modal').showModal();$('modal-body').scrollTop=0;}
 function routeTree(chapter){
@@ -120,14 +136,17 @@ function routeTree(chapter){
 }
 function startChapter(id){if(id==='nightmares'){if(!dlcOpen()){notify('请先推进主线至岛城地下检修门。');return;}enter(fresh(id));return;}if(validSave(read(AUTO))&&state.node!==chapters[id].entry){modal('开始一段新的旅程？');const p=document.createElement('p');p.textContent='这会替换当前自动进度。手动存档、已读路线和已收集结局都会保留。';$('modal-body').append(p,button('开始 · '+chapters[id].title,()=>{$('modal').close();enter(fresh(id));}));}else enter(fresh(id));}
 for(const [id,ch]of Object.entries(chapters)){
- if(id==='nightmares'||id==='polar'||id==='halloween')continue;
+ if(['nightmares','polar','halloween','winter'].includes(id))continue;
  const card=document.createElement('article');card.className='chapter-card '+ch.scene;const art=document.createElement('div');art.className='chapter-art';art.setAttribute('aria-hidden','true');const tag=document.createElement('small');tag.textContent=ch.tag;const title=document.createElement('h2');title.textContent=ch.title;const p=document.createElement('p');p.textContent=ch.description;const actions=document.createElement('div');actions.className='card-actions';actions.append(button('开始阅读',()=>startChapter(id)),button('路线树',()=>routeTree(id)));card.append(art,tag,title,p,actions);$('chapters').append(card);
 }
 $('resume').onclick=()=>enter(state);$('back-home').onclick=home;$('next').onclick=()=>go();
 $('retry-portrait').onclick=()=>requestPortrait(portraitFor(state.node));
+$('winter-start').onclick=()=>startChapter('winter');
+$('winter-tree').onclick=()=>routeTree('winter');
+$('winter-finale-return').onclick=home;
 $('halloween-start').onclick=()=>startChapter('halloween');$('halloween-tree').onclick=()=>routeTree('halloween');
 $('polar-start').onclick=()=>startChapter('polar');$('polar-tree').onclick=()=>routeTree('polar');
-for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声'],['halloween','万圣长夜']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id+'-showcase').classList.toggle('motion-paused',paused);};}
+for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声'],['halloween','万圣长夜'],['winter','冬夜序曲'],['winter-finale','冬夜结算']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id==='winter-finale'?id:id+'-showcase').classList.toggle('motion-paused',paused);};}
 $('dlc-start').onclick=()=>startChapter('nightmares');$('dlc-tree').onclick=()=>routeTree('nightmares');
 $('dream-return').onclick=()=>{const s=read(WAKE);if(validSave(s)&&story[s.node].chapter!=='nightmares')enter(s);else enter(fresh('adventure'));};
 $('rewind').onclick=()=>{const id=[...state.history].reverse().find(id=>story[id].choices);if(!id)return;const cut=state.history.lastIndexOf(id);enter({version:1,node:id,history:state.history.slice(0,cut)});};
@@ -149,7 +168,7 @@ function outsideModal(event){const r=$('modal').getBoundingClientRect();return e
 $('modal').onpointerdown=e=>{backdropStarted=e.target===$('modal')&&outsideModal(e);};
 $('modal').onclick=e=>{if(backdropStarted&&e.target===$('modal')&&outsideModal(e))$('modal').close();backdropStarted=false;};
 $('gallery').onclick=()=>{modal('奶蛙的表情与姿态');const grid=document.createElement('div');grid.className='portrait-grid';for(const p of Object.values(portraits)){const card=document.createElement('figure'),img=document.createElement('img'),label=document.createElement('figcaption');img.loading='lazy';img.src=p.src;img.alt=p.label;label.textContent=p.label;card.append(img,label);grid.append(card);}$('modal-body').append(grid);};
-document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});
+document.addEventListener('keydown',e=>{if(!playing||e.repeat||$('modal').open||$('winter-finale').open||['BUTTON','A','INPUT'].includes(document.activeElement?.tagName))return;if((e.code==='Space'||e.code==='ArrowRight')&&!story[state.node].choices){e.preventDefault();go();}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopAuto();bgm.pause();voice.pause();}else if(musicWanted){void resumeMusic();}musicLabel();});
 let loading=false;
 async function boot(){
@@ -160,8 +179,8 @@ async function boot(){
  if(musicTrack==='daily'&&mediaCache.has('music'))bgm.src=mediaCache.get('music');
  if(ready)return;
  if(failed.length)notify('已进入游戏：有 '+failed.length+' 张图片暂未加载，文字与已加载图片可正常使用。慢速图片会继续下载，无需刷新。');
- ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();prepareNext(state.node);
+ ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;showHomeFromLoading();prepareNext(state.node);
 }
-$('text-mode').onclick=()=>{textOnly=true;ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;home();notify('已进入纯文字模式，刷新页面可重新加载立绘');};
+$('text-mode').onclick=()=>{textOnly=true;ready=true;$('loading-screen').hidden=true;$('app-shell').hidden=false;showHomeFromLoading();notify('已进入纯文字模式，刷新页面可重新加载立绘');};
 $('retry-load').onclick=boot;
 const bootPromise=boot();
