@@ -88,7 +88,7 @@ export function addWinter(story, endings, chapters, scenes) {
 旁白|车开走以后，站牌玻璃里的两棵银杏很快消失。你只看见自己的影子，以及地上奶蛙踩出来的最后两个小坑。
 你|你没有忽然想通这学期的事。报告仍要改，实习也已经错过。只是刚才那句要留给明天的话，现在读起来已经不那么难了。
 旁白|你把画着纸杯的票角摸了出来。落在纸面上的雪没有马上化，过了几秒，才在其中一只杯子上留下透明的圆点。
-旁白|校门还开着，街角也还亮着。你把票角收回内袋，决定把这一晚安放在哪里。
+旁白|校门还开着，街角也还亮着。你把票角收回内袋。这一晚有几件事还没说完，也有几件事，你只想等心情安静一些再碰。
 `]
  ];
  function sequence(name, scene, script, tail) {
@@ -97,7 +97,7 @@ export function addWinter(story, endings, chapters, scenes) {
    const [cue, text] = row.split('|');
    const [speaker, mood] = cue.split('.');
    const id = `winter_${name}_${index}`;
-   story[id] = {chapter:'winter', scene, speaker, text, hidePortrait:name === 'gate' && index < 8,
+   story[id] = {chapter:'winter', scene, speaker, text, hidePortrait:(name === 'gate' && index < 8) || ['room','post','cold'].includes(name),
     ...(index + 1 === rows.length ? tail : {next:`winter_${name}_${index + 1}`})};
    scenePortraits[id] = mood || 'normal';
   });
@@ -108,7 +108,8 @@ export function addWinter(story, endings, chapters, scenes) {
   scenes[scene] = title;
   sequence(name, scene, script, index === acts.length - 1 ? {choices:[
    {text:'走回宿舍，把剩下的事留到明早',to:'winter_room_0'},
-   {text:'在街灯下，把第一封信写给奶蛙',to:'winter_post_0'}
+   {text:'在街灯下，把第一封信写给奶蛙',to:'winter_post_0'},
+   {text:'现在还说不出口，沿空街慢慢走一段',to:'winter_cold_0'}
   ]} : {next:`winter_${acts[index + 1][0]}_0`});
  }
  function fork(name, index, routes) {
@@ -137,18 +138,28 @@ export function addWinter(story, endings, chapters, scenes) {
  ['约同学明天一起看那份报告',`你|你发出一句短消息，约对方明天一起过一遍报告。你很想马上确认有没有回复，最后把手机翻过去，给了自己几分钟空白。
 奶蛙.glance|奶蛙没有问对方回了什么。它站在你身边看河，只在有辆车经过的时候轻轻往里拉了一下你的袖子。`]
  ]);
- endings.winter_window = {chapter:'winter',title:'留到明早的事',note:'你把书包放下，窗外的雪还在落。床头留了一张旧票，明早可以慢慢醒来。',theme:'winter',winterFinale:true};
- endings.winter_letter = {chapter:'winter',title:'寄往路灯下',note:'你在信封上写下路口和初雪的日期，把那颗纽扣留在掌心，等下次见面再还给奶蛙。',theme:'winter',winterFinale:true};
- sequence('room','winter-letter',`
+ endings.winter_window = {chapter:'winter',title:'留到明早的事',note:'窗玻璃映着一小块台灯的光。你把旧票夹进笔记本，剩下的话，等明早有力气了再说。',theme:'winter',winterFinale:'hush'};
+ endings.winter_letter = {chapter:'winter',title:'寄往路灯下',note:'你在信封上写下路口和初雪的日期，把那颗纽扣留在掌心，等下次见面再还给奶蛙。',theme:'winter',winterFinale:'violet'};
+ scenes['winter-room'] = '宿舍 · 窗内留灯';
+ scenes['winter-post'] = '街角 · 写给初雪的信';
+ scenes['winter-cold'] = '空街 · 末班车以后';
+ endings.winter_snow = {chapter:'winter',title:'雪还没有停',note:'夜色没有变轻。你终于把「能来接我吗」发了出去。风还是很冷，你留在灯照得到的地方等。',theme:'winter',winterFinale:'frost'};
+ sequence('room','winter-room',`
 旁白|你刷卡进门，楼道传来一阵洗衣机的低响。室友把保温袋从椅子上拿下来，告诉你先洗手，米饭还热着。
 你|你吃到一半才讲起今天的事。室友没问你下一步打算，只把剩下半碗汤往你这边推了推。
 旁白|关灯以前，你把那张票角夹进笔记本，放在最后一节课没写完的公式旁。第一次没有因为书还摊着，就觉得自己得起来继续。
 你|窗户映着楼下那盏灯。你对着玻璃轻轻说了声晚安，给奶蛙，也给那个几小时前走出校门的自己。
 `,{ending:'winter_window'});
- sequence('post','winter-letter',`
+ sequence('post','winter-post',`
 旁白|你借了门卫的一支笔，把那张画着纸杯的票角展平。信的第一句很短：你走之后，雪没有停。
 你|你写到热豆浆和倒掉的纸杯，也写那两块被裁掉的橡皮。最后你把纽扣包进纸里，想了想又拿出来，约定下次见面亲手归还。
-旁白|纸叠好之后，你才看到自己已经站在最早遇见奶蛙的那一小块屋檐下。新的脚印从这里伸向校门，旁边还有一串浅得快看不见的。
-你|你带着信走回去。灯光在你身后，微微照着没有来得及化掉的雪。下次再走到这里，你会认得这条路。
+旁白|你翻到纸背，才发现奶蛙给两只纸杯画了腿。短腿那只跨得特别大，像怕长腿那只走丢。你在空街上笑出了声，声音比想象中轻快。
+你|你带着信往回走。这一次经过打印店，你看见坏掉的钟后面有一排亮窗。你想，等下次见面，也许可以一起从这里走回学校。
 `,{ending:'winter_letter'});
+ sequence('cold','winter-cold',`
+旁白|你沿着车开走的方向走了一段。走到打印店背面，雪忽然密起来，对面楼梯上的灯被风吹散成一小团冷白。
+你|你原以为自己会一直记得奶蛙离开前那个笑。现在想起来却隔得很远。你在站牌后坐下来，连把票角折好都嫌费力。
+旁白|手机亮了又暗。你把「我没事」打完，停了一会儿，慢慢删掉。再写的那几个字很短，发出去以后，你把手缩回袖口。
+你|你没有站起来赶路。路边的雪开始盖住来时的脚印，站牌下还有一点灯光。你留在那里，等手机再次亮起来。
+`,{ending:'winter_snow'});
 }

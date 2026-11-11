@@ -1,6 +1,6 @@
 import {relics,collectedRelics,rewardFor} from './relics.js?v=15';
 import {portraits,portraitFor,endingMood} from './portraits.js?v=14';
-import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=16';
+import {story,scenes,endings,chapters,secrets,media,fresh,validSave,advance,canEnterNightmares} from './story.js?v=17';
 import {imageCache,mediaCache,preloadAssets,loadImage} from './loader.js?v=14';
 const $=id=>document.getElementById(id),KEY='naiwa-letter-save-v1',AUTO='naiwa-letter-auto-v1',ENDS='naiwa-letter-endings-v1',PATHS='naiwa-paths-v1';
 let state=fresh(),unlocked=[],auto=false,timer,noticeTimer,playing=false,ready=false,textOnly=false;
@@ -80,8 +80,13 @@ function prepareNext(id){
  if(textOnly)return;const seen=new Set(),queue=[[id,0]],art={};
  while(queue.length){const [node,depth]=queue.shift();if(seen.has(node)||depth>8)continue;seen.add(node);const n=story[node],p=portraitFor(node);if(p)art[p.src]=p;if(n.ending){const m=endingMood(n.ending,endings[n.ending]);art[m.portrait.src]=m.portrait;}for(const next of n.choices?.map(c=>c.to)||[n.next])if(next)queue.push([next,depth+1]);}
  void preloadAssets(art,()=>{});
- const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar|city|hall)-/.test(scene)))];
- for(const scene of backgrounds)void loadImage('./assets/'+(scene.startsWith('hall-')?'halloween/':scene.startsWith('city-')?'urban/':'travels/')+scene+'.svg').catch(()=>{});
+ const backgrounds=[...new Set([...seen].map(key=>story[key].scene).filter(scene=>/^(ice|polar|city|hall|winter)-/.test(scene)))];
+ for(const scene of backgrounds){
+  const path=scene.startsWith('winter-')
+   ? 'winter/'+(scene==='winter-corner'?'street':scene.slice('winter-'.length))
+   : (scene.startsWith('hall-')?'halloween/':scene.startsWith('city-')?'urban/':'travels/')+scene;
+  void loadImage('./assets/'+path+'.svg').catch(()=>{});
+ }
 }
 function render(){
  selectMusic(story[state.node].chapter);stopCelebration();
@@ -113,9 +118,16 @@ function showWinterFinale(ending){
  const finale=$('winter-finale'), frog=$('winter-finale-frog');
  $('winter-finale-title').textContent=ending.title;
  $('winter-finale-note').textContent=ending.note;
- if(!textOnly)frog.src=portraits.glance.src;
- frog.hidden=textOnly;
+ finale.setAttribute('data-winter-mood',ending.winterFinale);
+ const showFrog=ending.winterFinale==='violet'&&!textOnly;
+ if(showFrog)frog.src=portraits.laughing.src;
+ frog.hidden=!showFrog;
+ const instant=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+ finale.classList.toggle('winter-instant',instant);
+ $('winter-finale-skip').hidden=instant;
+ $('winter-finale-motion').hidden=true;
  if(!finale.open)finale.showModal();
+ if(instant)$('winter-finale-return').focus();
 }
 function showHomeFromLoading(){
  home();
@@ -143,10 +155,22 @@ $('resume').onclick=()=>enter(state);$('back-home').onclick=home;$('next').oncli
 $('retry-portrait').onclick=()=>requestPortrait(portraitFor(state.node));
 $('winter-start').onclick=()=>startChapter('winter');
 $('winter-tree').onclick=()=>routeTree('winter');
-$('winter-finale-return').onclick=home;
+function finishWinterIntro(skip){
+ const finale=$('winter-finale'), button=$('winter-finale-skip');
+ if(!finale.open||button.hidden)return;
+ if(skip)finale.classList.toggle('winter-instant',true);
+ button.hidden=true;
+ $('winter-finale-motion').hidden=false;
+ if(skip||document.activeElement===button)$('winter-finale-return').focus();
+ }
+ $('winter-finale-skip').onclick=()=>finishWinterIntro(true);
+ $('winter-finale').onanimationend=event=>{
+  if(event.target===$('winter-finale-art')&&event.animationName==='winter-scene-reveal')finishWinterIntro(false);
+ };
+ $('winter-finale-return').onclick=home;
 $('halloween-start').onclick=()=>startChapter('halloween');$('halloween-tree').onclick=()=>routeTree('halloween');
 $('polar-start').onclick=()=>startChapter('polar');$('polar-tree').onclick=()=>routeTree('polar');
-for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声'],['halloween','万圣长夜'],['winter','冬夜序曲'],['winter-finale','冬夜结算']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=paused?'播放动画':'暂停动画';$(id==='winter-finale'?id:id+'-showcase').classList.toggle('motion-paused',paused);};}
+for(const [id,label] of [['dream','惊悚故事集'],['polar','白色回声'],['halloween','万圣长夜'],['winter','冬夜序曲'],['winter-finale','冬夜结算']]){const control=$(id+'-motion');control.onclick=()=>{const paused=control.getAttribute('aria-pressed')!=='true';control.setAttribute('aria-pressed',String(paused));control.setAttribute('aria-label',(paused?'播放':'暂停')+label+'背景动画');control.textContent=id==='winter-finale'?(paused?'播放飘雪':'暂停飘雪'):(paused?'播放动画':'暂停动画');$(id==='winter-finale'?id:id+'-showcase').classList.toggle('motion-paused',paused);};}
 $('dlc-start').onclick=()=>startChapter('nightmares');$('dlc-tree').onclick=()=>routeTree('nightmares');
 $('dream-return').onclick=()=>{const s=read(WAKE);if(validSave(s)&&story[s.node].chapter!=='nightmares')enter(s);else enter(fresh('adventure'));};
 $('rewind').onclick=()=>{const id=[...state.history].reverse().find(id=>story[id].choices);if(!id)return;const cut=state.history.lastIndexOf(id);enter({version:1,node:id,history:state.history.slice(0,cut)});};

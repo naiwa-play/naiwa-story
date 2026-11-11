@@ -4,7 +4,7 @@ import {portraitFor,portraits,scenePortraits,endingMood} from '../portraits.js?v
 import fs from 'node:fs';
 import {canEnterNightmares,nightmareMilestones} from '../nightmares.js';
 const reached=new Set();function walk(s,depth=0){assert(depth<150,'No cyclic story');assert(validSave(s));const n=story[s.node];if(n.ending){assert(endings[n.ending]);reached.add(n.ending);return;}if(n.choices)n.choices.forEach((_,i)=>walk(advance(s,i),depth+1));else{assert(n.next&&story[n.next]);walk(advance(s),depth+1);}}
-for(const id of Object.keys(chapters))walk(fresh(id));assert.equal(reached.size,55);assert.equal(Object.values(endings).filter(e=>e.chapter==='adventure'&&!e.legacy).length,6);
+for(const id of Object.keys(chapters))walk(fresh(id));assert.equal(reached.size,56);assert.equal(Object.values(endings).filter(e=>e.chapter==='adventure'&&!e.legacy).length,6);
 assert(!validSave({version:1,node:'toString',history:[]}));assert(!validSave({version:1,node:'arrival',history:['bad']}));const s=advance(fresh());assert.deepEqual(JSON.parse(JSON.stringify(s)),s);assert.equal(advance({...s,node:'umbrella'},99).node,'umbrella');
 for(const [id,n]of Object.entries(story)){assert(chapters[n.chapter]);}
 for(const id of Object.keys(secrets))assert(story[id]);for(const p of Object.values(portraits))assert(fs.existsSync(new URL('../'+p.src,import.meta.url)));
@@ -14,7 +14,7 @@ for(const node of nightmareMilestones){assert(canEnterNightmares({node,history:[
 assert(canEnterNightmares(fresh(),{},['open_horizon']));assert(!canEnterNightmares(fresh(),{},['journey','snacks']));
 assert.equal(Object.values(endings).filter(e=>e.chapter==='nightmares').length,20);
 for(const [id,n]of Object.entries(story)){if(n.chapter!=='nightmares'||!n.choices)continue;for(const c of n.choices){const next=story[c.to];assert(!next.ending,`${id}: choices must continue narration before ending`);assert(next.next||next.choices);}}
-console.log('PASS: all 12 chapters, 55 active endings, 6 new main endings; no broken branches; legacy saves, secret nodes and all portrait files valid.');
+console.log('PASS: all 12 chapters, 56 active endings, 6 new main endings; no broken branches; legacy saves, secret nodes and all portrait files valid.');
 
 for(const [id,p]of Object.entries(scenePortraits)){assert(story[id],id);assert(portraits[p],p);}for(const [id,e]of Object.entries(endings)){const m=endingMood(id,e);assert(m.portrait);if(e.note.includes('困局'))assert.equal(m.tone,'dream');}assert.equal(portraitFor('opera_script_2'),portraits.laughing);assert(!fs.readFileSync(new URL('../index.html',import.meta.url),'utf8').includes('skip-ending'));
 
@@ -55,9 +55,11 @@ for(const id of ['pumpkin','skull','spider','bat','ghost'])assert(fs.existsSync(
 console.log('PASS: Halloween 96 paths, 80 scenes per reading, six choices, three endings, complete portraits, backgrounds and rewards.');
 
 const winterPaths = [];
+const winterScenes = new Set();
 function walkWinter(save, choiceCount = 0) {
  const node = story[save.node];
  assert.equal(node.chapter, 'winter');
+ winterScenes.add(node.scene);
  assert(portraitFor(save.node));
  if (node.ending) {
   assert.equal(save.history.length + 1, 80);
@@ -70,6 +72,11 @@ function walkWinter(save, choiceCount = 0) {
  else walkWinter(advance(save), choiceCount);
 }
 walkWinter(fresh('winter'));
-assert.equal(winterPaths.length, 16);
-assert.equal(new Set(winterPaths).size, 2);
-console.log('PASS: Winter Overture has 16 playable paths, 80 scenes per path and two endings.');
+assert.equal(winterPaths.length, 24);
+assert.equal(new Set(winterPaths).size, 3);
+assert.equal(winterScenes.size, 10);
+for(const scene of winterScenes){
+ const name=scene==='winter-corner'?'street':scene.slice(7);
+ assert(fs.existsSync(new URL('../assets/winter/'+name+'.svg',import.meta.url)),scene);
+}
+console.log('PASS: Winter Overture has 24 playable paths, 80 scenes per path, ten backgrounds and three endings.');

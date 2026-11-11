@@ -1,7 +1,7 @@
 import * as relics from '../relics.js';
 import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import * as story from '../story.js';import * as portraits from '../portraits.js?v=14';
 function setup(preload,initial=[]){
- const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},load(){this.paused=true;this.currentTime=0;},getBoundingClientRect(){return {left:100,right:700,top:100,bottom:650};},showModal(){this.open=true;},close(){this.open=false;},animate(){}};}
+ const saved=new Map(initial),els=new Map();function element(){return {children:[],textContent:'',hidden:false,paused:true,open:false,append(...v){this.children.push(...v);},replaceChildren(){this.children=[];},getAttribute(k){return this[k]??null;},classList:{toggle(){}},setAttribute(k,v){this[k]=v;},play(){this.paused=false;return Promise.resolve();},pause(){this.paused=true;},load(){this.paused=true;this.currentTime=0;},getBoundingClientRect(){return {left:100,right:700,top:100,bottom:650};},showModal(){this.open=true;},close(){this.open=false;},focus(){},animate(){}};}
  const $=id=>{if(!els.has(id))els.set(id,element());return els.get(id);};const imageCache=new Map(Object.values(portraits.portraits).map(p=>[p.src,element()]));
  const events=new Map();const timers=[],context=vm.createContext({...story,...portraits,...relics,imageCache,mediaCache:new Map(),preloadAssets:preload,loadImage:src=>Promise.resolve(imageCache.get(src)),document:{getElementById:$,createElement:element,createTextNode:t=>t,addEventListener(type,fn){events.set(type,fn);},hidden:false,activeElement:null},window:{addEventListener(type,fn){events.set(type,fn);},scrollTo(){},matchMedia(){return {matches:false};}},localStorage:{getItem:k=>saved.get(k)||null,setItem:(k,v)=>saved.set(k,v)},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},console});
  vm.runInContext(fs.readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import[^\n]+\n/gm,''),context);return {$,saved,context,timers,imageCache,events};
@@ -126,8 +126,27 @@ for(let i=0; i<79; i++){
 }
 assert(winterGame.$('winter-finale').open);
 assert.equal(winterGame.$('winter-finale-title').textContent, story.endings.winter_window.title);
+assert.equal(winterGame.$('winter-finale').getAttribute('data-winter-mood'), 'hush');
+const intro=target=>winterGame.$('winter-finale').onanimationend({target,animationName:'winter-scene-reveal'});
+intro(winterGame.$('winter-finale-skip'));
+assert(!winterGame.$('winter-finale-skip').hidden);
+intro(winterGame.$('winter-finale-art'));
+assert(winterGame.$('winter-finale-skip').hidden);
+assert(!winterGame.$('winter-finale-motion').hidden);
 assert(winterGame.saved.get('naiwa-letter-endings-v1').includes('winter_window'));
 winterGame.$('winter-finale-return').onclick();
 assert(!winterGame.$('winter-finale').open);
 assert(winterGame.$('reader').hidden);
 console.log('PASS: Winter entry, full playthrough, fullscreen ending, autosave and map return.');
+
+vm.runInContext("enter({version:1,node:'winter_cold_3',history:[]})", winterGame.context);
+assert.equal(winterGame.$('winter-finale').getAttribute('data-winter-mood'), 'frost');
+assert(!winterGame.$('winter-finale-skip').hidden);
+winterGame.$('winter-finale-skip').onclick();
+assert(winterGame.$('winter-finale-skip').hidden);
+assert(!winterGame.$('winter-finale-motion').hidden);
+winterGame.$('winter-finale-return').onclick();
+vm.runInContext("enter({version:1,node:'winter_post_3',history:[]})", winterGame.context);
+assert.equal(winterGame.$('winter-finale').getAttribute('data-winter-mood'), 'violet');
+assert(!winterGame.$('winter-finale-frog').hidden);
+console.log('PASS: All winter mood variants, timed intro handoff, and skip control.');

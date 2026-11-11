@@ -1,4 +1,4 @@
-import {addWinter} from './winter.js?v=1';
+import {addWinter} from './winter.js?v=2';
 import {addHalloween} from './halloween.js?v=1';
 import {addUrban} from './urban.js?v=14';
 import {addTravel} from './travels.js?v=14';

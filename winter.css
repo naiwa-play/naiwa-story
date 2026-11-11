@@ -113,8 +113,7 @@
 .winter-showcase.motion-paused .winter-snow::before,
 .winter-showcase.motion-paused .winter-snow::after,
 .winter-finale.motion-paused .winter-snow::before,
-.winter-finale.motion-paused .winter-snow::after,
-.winter-finale.motion-paused .winter-finale-light {
+.winter-finale.motion-paused .winter-snow::after {
   animation-play-state: paused;
 }
 
@@ -122,11 +121,17 @@
 .stage[class*="winter-"] .scenery { background: var(--winter-scene) 65% center / cover no-repeat; }
 .stage[class*="winter-"] .scenery > :not(.winter-snow) { display: none; }
 .stage .winter-snow { display: none; }
-.stage[class*="winter-"]:not(.winter-shop) .winter-snow { display: block; z-index: auto; }
-.winter-gate, .winter-corner, .winter-return, .winter-letter { --winter-scene: url('assets/winter/street.svg'); }
+.stage[class*="winter-"]:not(.winter-shop):not(.winter-room) .winter-snow { display: block; z-index: auto; }
+.winter-gate { --winter-scene: url('assets/winter/gate.svg'); }
+.winter-corner { --winter-scene: url('assets/winter/street.svg'); }
 .winter-shop { --winter-scene: url('assets/winter/shop.svg'); }
 .winter-stop { --winter-scene: url('assets/winter/stop.svg'); }
 .winter-river { --winter-scene: url('assets/winter/river.svg'); }
+.winter-return { --winter-scene: url('assets/winter/return.svg'); }
+.winter-letter { --winter-scene: url('assets/winter/letter.svg'); }
+.winter-room { --winter-scene: url('assets/winter/room.svg'); }
+.winter-post { --winter-scene: url('assets/winter/post.svg'); }
+.winter-cold { --winter-scene: url('assets/winter/cold.svg'); }
 .stage[class*="winter-"] .scene-meta { background: #1b2b3ce8; color: #edf2f4; }
 .stage[class*="winter-"] .dialogue { margin-top: 310px; background: #233447; border-color: #7890a4; }
 .stage[class*="winter-"] :is(#speaker, #page-count, #line) { color: #f0f3f4; }
@@ -152,54 +157,124 @@
   padding: 0;
   overflow: auto;
 }
-.winter-finale::backdrop { background: #1c2a3d; }
+.winter-finale {
+  --winter-violet: #49436e;
+  --winter-blue: #1f3857;
+  --winter-horizon: #777297;
+  --winter-crystal-ink: #e7eaff;
+  --winter-finale-art: url('assets/winter/room.svg');
+  background: radial-gradient(ellipse at 50% 38%, var(--winter-violet), transparent 65%),
+              linear-gradient(164deg, var(--winter-blue), var(--winter-horizon) 146%);
+}
+
+.winter-finale[data-winter-mood="violet"] {
+  --winter-violet: #695785;
+  --winter-blue: #34345c;
+  --winter-horizon: #b795b4;
+  --winter-crystal-ink: #faf0ff;
+  --winter-lamp: #e9d6df;
+  --winter-finale-art: url('assets/winter/post.svg');
+}
+
+.winter-finale[data-winter-mood="frost"] {
+  --winter-violet: #35405b;
+  --winter-blue: #162d47;
+  --winter-horizon: #57758c;
+  --winter-crystal-ink: #d5e8f4;
+  --winter-lamp: #cadbe5;
+  --winter-finale-art: url('assets/winter/cold.svg');
+}
+
+.winter-finale::backdrop { background: #1e2c45; }
 .winter-finale[open] { display: grid; align-items: end; }
+.winter-finale .winter-art {
+  background-color: transparent;
+  background-image: var(--winter-finale-art);
+  animation: winter-scene-reveal 1.85s 1.95s ease-out both;
+}
 .winter-finale .winter-wash {
-  background: linear-gradient(90deg, #172437e8, #1a283942 73%),
-              linear-gradient(0deg, #162336f7, #16233600 62%);
+  background: linear-gradient(90deg, #172437d9, #1a283915 74%),
+              linear-gradient(0deg, #162336f5, #16233600 55%);
+  animation: winter-scene-reveal 1.35s 2.1s ease-out both;
 }
-.winter-finale-light {
+.winter-finale .winter-snow { animation: winter-scene-reveal 1.35s 2.15s ease-out both; }
+.winter-finale[data-winter-mood="hush"] .winter-snow {
+  mask-image: radial-gradient(ellipse at 68% 29%, #000 3%, transparent 42%);
+}
+.winter-finale[data-winter-mood="frost"] .winter-snow::before { animation-duration: 11s; }
+.winter-finale[data-winter-mood="frost"] .winter-snow::after { animation-duration: 8s; }
+
+@keyframes winter-scene-reveal { from { opacity: 0; } to { opacity: 1; } }
+
+.winter-crystal {
   position: absolute;
-  z-index: -2;
-  inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at 69% 55%, #dbc29626, transparent 26%);
-  animation: winter-lamp-reveal 4s ease-out both;
+  inset: 38% auto auto 50%;
+  width: clamp(155px, min(27vw, 43vh), 310px);
+  color: var(--winter-crystal-ink);
+  translate: -50% -50%;
+  animation: winter-crystal-fade 1.5s 2s ease-in both;
+  filter: drop-shadow(0 0 14px #e0dafa77);
 }
-@keyframes winter-lamp-reveal { from { opacity: 0; } to { opacity: 1; } }
+.winter-crystal path {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 1.45;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: winter-draw .86s .25s cubic-bezier(.25,.55,.25,1) forwards;
+}
+.winter-crystal .crystal-branch { animation-delay: .91s; animation-duration: .67s; }
+.winter-crystal .crystal-tip { animation-delay: 1.42s; animation-duration: .5s; stroke-width: 1; }
+.crystal-core { animation: winter-scene-reveal .42s ease-out both; }
+@keyframes winter-draw { to { stroke-dashoffset: 0; } }
+@keyframes winter-crystal-fade {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.1); }
+}
 
 .winter-finale-copy {
   padding: 90px clamp(26px, 8vw, 120px) max(clamp(38px, 9vh, 108px), env(safe-area-inset-bottom));
-  animation: winter-caption-in .85s cubic-bezier(.2,.7,.2,1) both;
+  animation: winter-caption-in .8s 2.8s cubic-bezier(.2,.7,.2,1) both;
 }
 @keyframes winter-caption-in {
-  from { opacity: .5; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; visibility: hidden; transform: translateY(-8px); }
+  1% { visibility: visible; }
+  100% { opacity: 1; visibility: visible; transform: translateY(0); }
 }
+
 .winter-finale-frog {
   position: absolute;
   pointer-events: none;
-  right: 17%;
-  bottom: 18%;
-  width: clamp(104px, 16vw, 222px);
+  right: 25%;
+  bottom: 24%;
+  width: clamp(110px, 17vw, 222px);
   height: auto;
   max-height: 41vh;
   object-fit: contain;
   filter: drop-shadow(0 12px 14px #1220309c);
+  animation: winter-scene-reveal 1.1s 2.35s ease-out both;
 }
+.winter-instant :is(.winter-art, .winter-wash, .winter-snow, .winter-finale-copy, .winter-finale-frog) {
+  animation: none;
+}
+.winter-instant .winter-crystal { display: none; }
 body:has(.winter-finale[open]) { overflow: hidden; }
 
 @media (max-width: 600px) {
   .winter-showcase { min-height: 510px; }
   .stage[class*="winter-"] .dialogue { margin-top: 250px; }
   .winter-wash { background: linear-gradient(0deg, #142133f7 5%, #172639d9 36%, #17263900 80%); }
-  .winter-finale-frog { right: 12%; bottom: 42%; max-height: 27vh; }
+  .winter-finale-frog { right: 9%; bottom: max(26%, 180px); width: clamp(76px, 25vw, 110px); max-height: 27vh; }
+  .winter-finale .winter-art { background-position: 65% center; }
+  .winter-finale[data-winter-mood="hush"] .winter-art { background-position: 77% center; }
   .winter-finale .winter-wash { background: linear-gradient(0deg, #162336f7 6%, #162336cf 35%, #16233600 76%); }
   .winter-finale h2 { font-size: clamp(2.25rem, 10vw, 3.3rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .winter-snow::before, .winter-snow::after,
-  .winter-finale-light, .winter-finale-copy { animation: none; }
+  .winter-finale :is(.winter-art, .winter-wash, .winter-snow, .winter-finale-copy, .winter-finale-frog) { animation: none; }
+  .winter-crystal { display: none; }
   .winter-showcase .showcase-motion, .winter-finale .showcase-motion { display: none; }
 }
